@@ -1,13 +1,27 @@
-import scryptJs from "scrypt-js";
-const scrypt = scryptJs.scrypt;
-
-import { Buffer } from 'node:buffer'; // scrypt-jsで必要になります
+import { scrypt } from 'scrypt-js';
+// import { Buffer } from 'node:buffer'; // scrypt-jsで必要になります
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
+
+// バイト配列を16進数文字列に変換する関数
+function bytesToHex(bytes: Uint8Array): string {
+	return Array.from(bytes)
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('');
+}
+
+// 16進数文字列をバイト配列に変換する関数
+function hexToBytes(hex: string): Uint8Array {
+	const bytes = new Uint8Array(hex.length / 2);
+	for (let i = 0; i < hex.length; i += 2) {
+		bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+	}
+	return bytes;
+}
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
@@ -43,14 +57,14 @@ export const actions: Actions = {
 			// 保存されているハッシュの形式が不正な場合
 			return fail(500, { message: 'Stored password hash is invalid' });
 		}
-		const salt = Buffer.from(saltHex, 'hex');
-		const passwordBuffer = Buffer.from(password, 'utf-8');
+		const salt = hexToBytes(saltHex);
+		const passwordBytes = new TextEncoder().encode(password);
 
 		// 入力されたパスワードとDBのソルトでハッシュを再計算
-		const hashToVerifyBytes = await scrypt(passwordBuffer, salt, 16384, 8, 1, 32);
+		const hashToVerifyBytes = await scrypt(passwordBytes, salt, 16384, 8, 1, 32);
 
 		// 計算したハッシュが、DBに保存されていたものと一致するか比較
-		const validPassword = Buffer.from(hashToVerifyBytes).toString('hex') === storedHashHex;
+		const validPassword = bytesToHex(new Uint8Array(hashToVerifyBytes)) === storedHashHex;
 
 		if (!validPassword) {
 			return fail(400, { message: 'Incorrect username or password' });
@@ -74,14 +88,14 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid password' });
 		}
 
-		const userId = generateUserId();
+		const userId = crypto.randomUUID();
 		const salt = crypto.getRandomValues(new Uint8Array(16));
-		const passwordBuffer = Buffer.from(password, 'utf-8');
+		const passwordBytes = new TextEncoder().encode(password);
 
-		const hashBytes = await scrypt(passwordBuffer, salt, 16384, 8, 1, 32);
+		const hashBytes = await scrypt(passwordBytes, salt, 16384, 8, 1, 32);
 
 		// ソルトとハッシュ値を結合して、一つの文字列としてDBに保存
-		const passwordHash = `${Buffer.from(salt).toString('hex')}:${Buffer.from(hashBytes).toString('hex')}`;
+		const passwordHash = `${bytesToHex(salt)}:${bytesToHex(new Uint8Array(hashBytes))}`;
 
 		try {
 			await db.insert(table.user).values({ id: userId, username, passwordHash });
