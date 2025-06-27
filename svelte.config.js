@@ -13,9 +13,9 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			// See below for an explanation of these options
-			config: undefined,
+			config: 'wrangler.toml',
 			platformProxy: {
-				configPath: undefined,
+				configPath: 'wrangler.toml',
 				environment: undefined,
 				persist: undefined
 			},
