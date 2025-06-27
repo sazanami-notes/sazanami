@@ -1,5 +1,6 @@
-import { scrypt } from 'scrypt-js';
-// import { Buffer } from 'node:buffer'; // scrypt-jsで必要になります
+import scryptJs from "scrypt-js";
+const scrypt = scryptJs.scrypt;
+
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import * as auth from '$lib/server/auth';
