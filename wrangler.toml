@@ -1,7 +1,0 @@
-# wrangler.toml (修正後)
-name = "sazanami"
-
-# Node.jsの互換機能を有効にするための設定
-compatibility_flags = ["nodejs_compat"]
-
-pages_build_output_dir = ".svelte-kit/cloudflare"
