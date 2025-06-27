@@ -63,6 +63,7 @@
 	});
   </script>
   
+  <h1 class=" my-4 mx-6 text-lg font-bold">TipTap</h1>
 
   <div bind:this={element} class="prose m-6 py-2 px-6 shadow-lg bg-gray-100" />
   
