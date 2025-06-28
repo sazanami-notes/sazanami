@@ -6,6 +6,7 @@ MarkdownでかけるScrapBox
 
 [Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
 
+Ver1.0.0までは破壊的変更をしまくります。
 
 あとでなにか書きます。
 
