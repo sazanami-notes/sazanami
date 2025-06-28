@@ -46,13 +46,10 @@
 	},
 	"dependencies": {
 		"@libsql/client": "^0.14.0",
+		"@libsql/client-wasm": "^0.15.9",
 		"@milkdown/crepe": "^7.14.0",
 		"@milkdown/kit": "^7.14.0",
 		"@milkdown/theme-nord": "^7.14.0",
-		"@tiptap/core": "^3.0.0-beta.14",
-		"@tiptap/extension-text-style": "^3.0.0-beta.14",
-		"@tiptap/pm": "^3.0.0-beta.14",
-		"@tiptap/starter-kit": "^3.0.0-beta.14",
 		"drizzle-orm": "^0.40.0",
 		"scrypt-js": "^3.0.1"
 	}
