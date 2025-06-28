@@ -1,5 +1,7 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
 
-<h1 class="text-bold">かえでちゃんだよ</h1>
-<a href="/tiptap">tiptap</a>
+
+<h1 class="text-3xl text-bold pt-10 m-4 ">Sazanami</h1>
+
+<a href="/milkdown" class="btn w-30 m-4" >milkdown</a>
+
+<a href="/demo/lucia" class="btn w-30 m-4" >lucia</a>
