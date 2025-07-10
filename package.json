@@ -4,17 +4,18 @@
 	"version": "0.0.2",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "wrangler pages dev --proxy 5173 -- npm run dev:vite",
+		"dev:vite": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview",
+		"preview": "npm run build && wrangler pages dev .svelte-kit/cloudflare",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"db:generate": "drizzle-kit generate",
-		"db:push": "drizzle-kit push",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate:local": "wrangler d1 migrations apply sazanami --local",
+		"db:migrate:prod": "wrangler d1 migrations apply sazanami",
 		"db:studio": "drizzle-kit studio"
 	},
 	"devDependencies": {
@@ -29,7 +30,7 @@
 		"@types/node": "^22",
 		"@types/scrypt-js": "^2.0.4",
 		"daisyui": "^5.0.43",
-		"drizzle-kit": "^0.30.2",
+		"drizzle-kit": "^0.30.6",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -42,7 +43,8 @@
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
-		"vite": "^6.2.6"
+		"vite": "^6.2.6",
+		"wrangler": "^4.24.0"
 	},
 	"dependencies": {
 		"@libsql/client": "^0.14.0",
@@ -50,7 +52,7 @@
 		"@milkdown/crepe": "^7.14.0",
 		"@milkdown/kit": "^7.14.0",
 		"@milkdown/theme-nord": "^7.14.0",
-		"drizzle-orm": "^0.40.0",
+		"drizzle-orm": "^0.40.1",
 		"scrypt-js": "^3.0.1"
 	}
 }

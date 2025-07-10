@@ -4,6 +4,6 @@
 	let { children } = $props();
 </script>
 
-<div class="my-10 mx-auto w-2/3 bg-base-300 rounded-box shadow-xl h-[80vh]">
+<div class="bg-base-300 rounded-box mx-auto my-10 h-[80vh] w-2/3 shadow-xl">
 	{@render children()}
 </div>

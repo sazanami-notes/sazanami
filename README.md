@@ -1,4 +1,5 @@
 # Sazanami
+
 MarkdownでかけるScrapBox
 を基本コンセプトとしたノートテイキングアプリです。
 
@@ -11,9 +12,11 @@ Ver1.0.0までは破壊的変更をしまくります。
 あとでなにか書きます。
 
 #### Ver.0.1.0ライン
+
 おひとり様Scrapboxを作る。
 
 つくるもの
+
 - [ ] Markdownでのデータベースとのやり取り
 - [ ] PWA
 - [ ] カードビュー
@@ -28,20 +31,18 @@ Ver1.0.0までは破壊的変更をしまくります。
 - [ ] Markdownファイル一括インポート
 - [ ] タグ
 
-
 この時点でつくらないもの
+
 - 認証？
 - 共同編集
 - YouTubeなどの埋め込み
 - テーマ、UserCSS
 - VectorStore
 
-
-
 ## デプロイ
 
 - Turso
-- Cloudflare pages 
+- Cloudflare pages
 - Cloudflare R2
 
 を想定しています。が、すべてローカル環境で動かすことも出来ます。（たぶん？）

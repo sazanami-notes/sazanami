@@ -23,10 +23,7 @@ function encodeBase64Url(bytes: Uint8Array): string {
 		binary += String.fromCharCode(bytes[i]);
 	}
 	// btoaでBase64エンコードし、URLセーフな文字に置換
-	return btoa(binary)
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_')
-		.replace(/=+$/, '');
+	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 export function generateSessionToken() {

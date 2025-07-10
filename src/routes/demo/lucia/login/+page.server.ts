@@ -1,4 +1,4 @@
-import scryptJs from "scrypt-js";
+import scryptJs from 'scrypt-js';
 const scrypt = scryptJs.scrypt;
 
 import { fail, redirect } from '@sveltejs/kit';

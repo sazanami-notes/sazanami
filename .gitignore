@@ -1,5 +1,6 @@
 
 drizzle/
+migrations/
 
 node_modules
 

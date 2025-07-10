@@ -1,7 +1,5 @@
+<h1 class="text-bold m-4 pt-10 text-3xl">Sazanami</h1>
 
+<a href="/milkdown" class="btn m-4 w-30">milkdown</a>
 
-<h1 class="text-3xl text-bold pt-10 m-4 ">Sazanami</h1>
-
-<a href="/milkdown" class="btn w-30 m-4" >milkdown</a>
-
-<a href="/demo/lucia" class="btn w-30 m-4" >lucia</a>
+<a href="/demo/lucia" class="btn m-4 w-30">lucia</a>
