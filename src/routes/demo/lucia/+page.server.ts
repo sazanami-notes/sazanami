@@ -13,7 +13,10 @@ export const actions: Actions = {
 		if (!event.locals.session) {
 			return fail(401);
 		}
-		await auth.invalidateSession(event.locals.session.id);
+		if (!event.locals.db) {
+			return fail(500, { message: 'Database not available' });
+		}
+		await auth.invalidateSession(event.locals.session.id, event.locals.db);
 		auth.deleteSessionTokenCookie(event);
 
 		return redirect(302, '/demo/lucia/login');

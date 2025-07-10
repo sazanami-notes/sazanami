@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as table from '$lib/server/db/schema';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -32,7 +32,7 @@ export function generateSessionToken() {
 	return token;
 }
 
-export async function createSession(token: string, userId: string) {
+export async function createSession(token: string, userId: string, db: DrizzleD1Database) {
 	const sessionId = await sha256Hex(token);
 	const session: table.Session = {
 		id: sessionId,
@@ -43,7 +43,7 @@ export async function createSession(token: string, userId: string) {
 	return session;
 }
 
-export async function validateSessionToken(token: string) {
+export async function validateSessionToken(token: string, db: DrizzleD1Database) {
 	const sessionId = await sha256Hex(token);
 	const [result] = await db
 		.select({
@@ -80,7 +80,7 @@ export async function validateSessionToken(token: string) {
 
 export type SessionValidationResult = Awaited<ReturnType<typeof validateSessionToken>>;
 
-export async function invalidateSession(sessionId: string) {
+export async function invalidateSession(sessionId: string, db: DrizzleD1Database) {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
 }
 

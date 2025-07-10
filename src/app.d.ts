@@ -5,6 +5,7 @@ declare global {
 		interface Locals {
 			user: import('$lib/server/auth').SessionValidationResult['user'];
 			session: import('$lib/server/auth').SessionValidationResult['session'];
+			db: import("drizzle-orm/d1").DrizzleD1Database<typeof import('$lib/server/db/schema')> | null;
 		}
 	} // interface Error {}
 	// interface Locals {}
