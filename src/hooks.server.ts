@@ -4,10 +4,12 @@ import { createDb } from '$lib/server/db';
 
 const handleAuth: Handle = async ({ event, resolve }) => {
 	// D1データベースを初期化し、event.localsにアタッチ
-	if (event.platform?.env?.D1) {
-		event.locals.db = createDb(event.platform.env.D1);
+	console.log('event.platform.env.DB:', event.platform?.env?.DB);
+	if (event.platform?.env?.DB) {
+		event.locals.db = createDb(event.platform.env.DB);
 	} else {
 		event.locals.db = null;
+		console.log('Database not available in event.platform.env.DB');
 	}
 
 	const sessionToken = event.cookies.get(auth.sessionCookieName);
