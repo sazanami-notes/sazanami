@@ -1,10 +1,12 @@
-import * as auth from '$lib/server/auth';
 import { fail, redirect } from '@sveltejs/kit';
-import { getRequestEvent } from '$app/server';
 import type { Actions, PageServerLoad } from './$types';
+import { auth } from '$lib/server/auth'; // authを正しくインポート
 
-export const load: PageServerLoad = async () => {
-	const user = requireLogin();
+export const load: PageServerLoad = async ({ locals }) => {
+	const user = locals.user; // Better Authはevent.locals.userを自動的に設定します
+	if (!user) {
+		redirect(302, '/demo/lucia/login');
+	}
 	return { user };
 };
 
@@ -13,22 +15,9 @@ export const actions: Actions = {
 		if (!event.locals.session) {
 			return fail(401);
 		}
-		if (!event.locals.db) {
-			return fail(500, { message: 'Database not available' });
-		}
-		await auth.invalidateSession(event.locals.session.id, event.locals.db);
-		auth.deleteSessionTokenCookie(event);
+		const betterAuthInstance = auth(event.platform?.env?.DB!); // D1Databaseを渡してBetter Authインスタンスを取得
+		await betterAuthInstance.api.signOut(); // Better Authのapi.signOutを使用
 
 		return redirect(302, '/demo/lucia/login');
 	}
 };
-
-function requireLogin() {
-	const { locals } = getRequestEvent();
-
-	if (!locals.user) {
-		return redirect(302, '/demo/lucia/login');
-	}
-
-	return locals.user;
-}

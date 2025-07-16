@@ -29,6 +29,7 @@
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "^22",
 		"@types/scrypt-js": "^2.0.4",
+		"better-sqlite3": "^12.2.0",
 		"daisyui": "^5.0.43",
 		"drizzle-kit": "^0.30.6",
 		"eslint": "^9.18.0",
@@ -52,6 +53,7 @@
 		"@milkdown/crepe": "^7.14.0",
 		"@milkdown/kit": "^7.14.0",
 		"@milkdown/theme-nord": "^7.14.0",
+		"better-auth": "^1.2.12",
 		"drizzle-orm": "^0.40.1",
 		"scrypt-js": "^3.0.1"
 	}
