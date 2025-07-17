@@ -7,10 +7,10 @@
 		{
 			"binding": "DB", // コードからアクセスするときの名前 (c.env.DB)
 			"database_name": "sazanami",
-			"database_id": "a7c53f64-24a8-4e75-bec2-ac8ace6e0531",
+			"database_id": "5e9b6d0e-6764-4800-ab0f-08f5d5671333",
 			"migrations_dir": "drizzle", // マイグレーションファイルのディレクトリ
 			// ローカル開発用の設定
-			"preview_database_id": "a7c53f64-24a8-4e75-bec2-ac8ace6e0531"
+			"preview_database_id": "5e9b6d0e-6764-4800-ab0f-08f5d5671333"
 		}
 	]
 	// "vars": {
