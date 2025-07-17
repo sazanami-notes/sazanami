@@ -19,6 +19,7 @@
 		"db:studio": "drizzle-kit studio"
 	},
 	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250715.0",
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "^9.18.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
@@ -27,6 +28,7 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.0.0",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^22",
 		"@types/scrypt-js": "^2.0.4",
 		"better-sqlite3": "^12.2.0",
@@ -48,13 +50,10 @@
 		"wrangler": "^4.24.0"
 	},
 	"dependencies": {
-		"@libsql/client": "^0.14.0",
-		"@libsql/client-wasm": "^0.15.9",
 		"@milkdown/crepe": "^7.14.0",
 		"@milkdown/kit": "^7.14.0",
 		"@milkdown/theme-nord": "^7.14.0",
 		"better-auth": "^1.2.12",
-		"drizzle-orm": "^0.40.1",
-		"scrypt-js": "^3.0.1"
+		"drizzle-orm": "^0.40.1"
 	}
 }

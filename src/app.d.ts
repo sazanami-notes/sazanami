@@ -6,6 +6,7 @@ declare global {
 			user: import('better-auth').User | null;
 			session: import('better-auth').Session | null;
 			db: import("drizzle-orm/d1").DrizzleD1Database<typeof import('$lib/server/db/schema')> | null;
+			auth: import('better-auth').BetterAuthSvelteKitAPI;
 		}
 	}
 	interface Platform {
