@@ -5,17 +5,14 @@ declare global {
 		interface Locals {
 			user: import('better-auth').User | null;
 			session: import('better-auth').Session | null;
-			db: import("drizzle-orm/d1").DrizzleD1Database<typeof import('$lib/server/db/schema')> | null;
-			auth: import('better-auth').BetterAuthSvelteKitAPI;
+			auth: ReturnType<typeof import('$lib/server/auth').createAuth>['api'];
+		}
+		interface Platform {
+			env: {
+				DB: D1Database;
+			};
 		}
 	}
-	interface Platform {
-		env?: {
-			DB: D1Database; // D1からDBに変更
-		}
-	}
-} // interface PageData {}
-// interface PageState {}
+}
 
-// interface Platform {}
 export {};

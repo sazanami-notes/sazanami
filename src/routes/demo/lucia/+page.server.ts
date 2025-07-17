@@ -1,9 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { auth } from '$lib/auth'; // authを正しくインポート
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const user = locals.user; // Better Authはevent.locals.userを自動的に設定します
+	// localsからuser情報を取得
+	const { user } = locals;
 	if (!user) {
 		redirect(302, '/demo/lucia/login');
 	}
@@ -11,12 +11,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	logout: async (event) => {
-		if (!event.locals.session) {
+	logout: async ({ locals, request }) => { // requestも受け取る
+		if (!locals.session) {
 			return fail(401);
 		}
-		const betterAuthInstance = auth(event.platform?.env?.DB!); // D1Databaseを渡してBetter Authインスタンスを取得
-		await betterAuthInstance.api.signOut(); // Better Authのapi.signOutを使用
+		// signOutにheadersを渡す
+		await locals.auth.signOut({ headers: request.headers });
 
 		return redirect(302, '/demo/lucia/login');
 	}
