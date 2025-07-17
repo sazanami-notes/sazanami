@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { auth } from '$lib/server/auth'; // authを正しくインポート
+import { auth } from '$lib/auth'; // authを正しくインポート
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user; // Better Authはevent.locals.userを自動的に設定します

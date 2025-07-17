@@ -13,4 +13,9 @@
 			"preview_database_id": "a7c53f64-24a8-4e75-bec2-ac8ace6e0531"
 		}
 	]
+	// "vars": {
+	// 	// 環境変数をここに定義
+	// 	"BETTER_AUTH_SECRET" : "O5mYuDUIfa4su4GeYWz49Y52pv7capK9", //後で変える
+	// 	"BETTER_AUTH_URL" : "http://localhost:8788" //Base URL of your app
+	// }
 }
