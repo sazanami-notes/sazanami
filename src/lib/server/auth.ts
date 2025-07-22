@@ -18,6 +18,5 @@ export const auth = betterAuth({
 	},
 	secret: BETTER_AUTH_SECRET,
 	// [追加] ここにpluginsセクションを追加します
-	plugins: [sveltekitCookies(getRequestEvent)]
-	
+	plugins: [sveltekitCookies(async () => getRequestEvent())]	
 });
