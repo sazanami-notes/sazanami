@@ -11,7 +11,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	logout: async ({ locals, request }) => { // requestも受け取る
+	logout: async ({ locals, request }) => {
+		// requestも受け取る
 		if (!locals.session) {
 			return fail(401);
 		}
