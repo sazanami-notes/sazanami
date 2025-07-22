@@ -28,7 +28,8 @@
 					error = apiError.message || 'ログインに失敗しました。';
 				} else {
 					// ログイン成功後、リダイレクト
-					await goto('/demo/lucia');
+					await console.log('ログイン成功:', data);
+					await goto('/');
 				}
 			} else {
 				// ドキュメント[cite: 3]に沿った登録処理
@@ -42,7 +43,7 @@
 					error = apiError.message || '登録に失敗しました。';
 				} else {
 					message =
-						'確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。';
+						'登録が完了しました。ログインしてください。';
 					// 必要であればログインページに留まるか、特定のページに遷移
 					// await goto('/some-page');
 				}

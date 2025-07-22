@@ -1,14 +1,9 @@
-import { drizzle } from 'drizzle-orm/d1';
-import * as schema from './db/schema';
+import { drizzle } from 'drizzle-orm/libsql';
+import { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } from '$env/static/private';
+import * as schema from '$lib/server/db/schema';
 
-/**
- * D1の接続オブジェクトを受け取って、
- * Drizzleのインスタンスを生成する関数。
- * SvelteKitのサーバーサイドのコード（load関数など）で使います。
- * @param d1 - Cloudflareから提供されるD1データベースの接続オブジェクト
- * @returns Drizzleのインスタンス
- */
 
-export const db = (d1: D1Database) => {
-	return drizzle(d1, { schema });
-};
+export const db = drizzle({ connection: {
+	url: TURSO_DATABASE_URL, 
+	authToken: TURSO_AUTH_TOKEN 
+  }});
