@@ -3,13 +3,22 @@
 <a href="/milkdown" class="btn m-4 w-30">milkdown</a>
 
 {#if $session.data}
-  <button class="btn btn-outline m-4" on:click={() => authClient.signOut()}>
+  <button class="btn btn-outline m-4" on:click={async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          goto('/login');
+        }
+      }
+    });
+  }}>
     Logout
   </button>
 {/if}
 
 <script lang="ts">
 import { authClient } from '$lib/auth-client';
+import { goto } from '$app/navigation';
 const session = authClient.useSession();
 </script>
 
