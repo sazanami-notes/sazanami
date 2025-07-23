@@ -1,10 +1,16 @@
 // src/routes/+layout.server.ts
-
+import { auth } from '$lib/server/auth';
 import type { LayoutServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
-	// hooks.server.tsで検証されたセッション情報を取得し、
-	// simplesmente page dataとしてクライアントに渡す
-	const { user, session } = locals;
-	return { user, session };
+export const load: LayoutServerLoad = async ({ request, url }) => {
+	const session = await auth.api.getSession({
+		headers: request.headers
+	});
+
+	if (!session && url.pathname !== '/login') {
+		throw redirect(303, '/login');
+	}
+
+	return { session };
 };
