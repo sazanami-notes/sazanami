@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { defaultValueCtx, Editor } from '@milkdown/core';
+	// defaultValueCtxとEditorに加えてrootCtxをインポートします
+	import { defaultValueCtx, Editor, rootCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
 
 	// Style imports
 	import '@milkdown/theme-nord/style.css';
-	// commonmarkのスタイルはテーマに含まれるか、個別に提供されない可能性が高いため削除
-	// 以前のplugin-menuやplugin-tooltipのスタイルも削除
 
 	let editorContainerElement: HTMLDivElement;
-	let milkdownEditor: Editor | null = null; // MilkdownEditorのインスタンスを保持
+	let milkdownEditor: Editor | null = null;
 
 	onMount(() => {
 		if (!editorContainerElement) {
@@ -19,12 +18,14 @@
 		}
 
 		Editor.make()
-			.config(nord) // nordテーマをconfigに直接渡す
-
+			.config(nord)
 			.config((ctx) => {
-				ctx.set(defaultValueCtx, '# Hello, Svelte ⎯ Milkdown! \n\nThis is a simple Milkdown editor running in a Svelte component.');
-				// editorViewCtxの直接設定はMilkdownの内部で処理されるため削除。
-				// Listener plugin setupも削除。
+				// この行を追加して、エディタの描画先を指定します
+				ctx.set(rootCtx, editorContainerElement);
+				ctx.set(
+					defaultValueCtx,
+					'# Hello, Sazanami!'
+				);
 			})
 			.use(commonmark)
 			.create()
@@ -44,10 +45,9 @@
 		}
 	});
 </script>
-<h1 class="mx-6 my-4 text-lg font-bold">Milkdown</h1>
+
 
 <div>
-	<div bind:this={editorContainerElement} class="p-4 shadow-lg" style="height: 500px;"></div>
+	<div bind:this={editorContainerElement} class="p-4" style="height: 500px;">
+	</div>
 </div>
-
-

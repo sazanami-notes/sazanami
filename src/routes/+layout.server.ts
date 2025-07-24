@@ -8,7 +8,7 @@ export const load: LayoutServerLoad = async ({ request, url }) => {
 		headers: request.headers
 	});
 
-	if (!session && url.pathname !== '/login' && url.pathname !== '/milkdown') {
+	if (!session && url.pathname !== '/login') {
 		throw redirect(303, '/login');
 	}
 
