@@ -1,10 +1,11 @@
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
+import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
 import { user, session, account, verification } from '../../../../auth-schema';
 
 // NOTES テーブル
 export const notes = sqliteTable('notes', {
-  id: text('id').notNull().primaryKey(), // ULIDなどを想定
+  id: text('id').notNull().primaryKey().$defaultFn(() => ulid()), // ULIDなどを想定
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   title: text('title').notNull().default('Untitled Note'),
   content: text('content'), // Markdown本文
@@ -16,7 +17,7 @@ export const notes = sqliteTable('notes', {
 
 // TAGS テーブル
 export const tags = sqliteTable('tags', {
-  id: text('id').notNull().primaryKey(), // ULIDなどを想定
+  id: text('id').notNull().primaryKey().$defaultFn(() => ulid()), // ULIDなどを想定
   name: text('name').notNull().unique(), // タグの名前 (ユニーク制約)
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
@@ -34,7 +35,7 @@ export const noteTags = sqliteTable('note_tags', {
 
 // NOTE_LINKS テーブル (ノート間のリンク)
 export const noteLinks = sqliteTable('note_links', {
-  id: text('id').notNull().primaryKey(), // ULIDなどを想定
+  id: text('id').notNull().primaryKey().$defaultFn(() => ulid()), // ULIDなどを想定
   sourceNoteId: text('source_note_id').notNull().references(() => notes.id, { onDelete: 'cascade' }),
   targetNoteId: text('target_note_id').notNull().references(() => notes.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
@@ -44,7 +45,7 @@ export const noteLinks = sqliteTable('note_links', {
 
 // ATTACHMENTS テーブル
 export const attachments = sqliteTable('attachments', {
-  id: text('id').notNull().primaryKey(), // ULIDなどを想定
+  id: text('id').notNull().primaryKey().$defaultFn(() => ulid()), // ULIDなどを想定
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   fileName: text('file_name').notNull(),
   filePath: text('file_path').notNull(), // S3などの外部ストレージパスやURL
