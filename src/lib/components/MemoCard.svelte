@@ -3,12 +3,21 @@
 	import { goto } from '$app/navigation';
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
+	import { marked } from 'marked';
 
 	export let note: Note;
 
 	function truncateContent(content: string, maxLength: number = 150): string {
 		if (!content) return '';
-		return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
+		
+		// MarkdownをHTMLに変換
+		const htmlContent = marked.parse(content) as string;
+		
+		// HTMLタグを除去してプレーンテキストに変換
+		const plainText = htmlContent.replace(/<[^>]*>/g, '');
+		
+		// 指定された長さで切り捨て
+		return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
 	}
 
 	function formatDate(date: Date): string {

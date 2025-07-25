@@ -4,11 +4,13 @@ import { db } from '$lib/server/db';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { eq, or, like, desc, sql, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
+import { auth } from '$lib/server/auth';
 
-export const GET: RequestHandler = async ({ url, locals }) => {
-	const session = locals.session;
+export const GET: RequestHandler = async ({ url, request }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
+	console.log('Session in GET:', session);
 	if (!session) {
-		return new Response('Unauthorized', { status: 401 });
+		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 
 	const search = url.searchParams.get('search') || '';
@@ -25,7 +27,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 				.from(notes)
 				.where(
 					and(
-						eq(notes.userId, session.userId),
+						eq(notes.userId, session.session.userId),
 						or(
 							like(notes.title, `%${search}%`),
 							like(notes.content, `%${search}%`)
@@ -39,7 +41,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			notesList = await db
 				.select()
 				.from(notes)
-				.where(eq(notes.userId, session.userId))
+				.where(eq(notes.userId, session.session.userId))
 				.orderBy(desc(notes.updatedAt))
 				.limit(limit)
 				.offset(offset);
@@ -69,7 +71,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 				.from(notes)
 				.where(
 					and(
-						eq(notes.userId, session.userId),
+						eq(notes.userId, session.session.userId),
 						or(
 							like(notes.title, `%${search}%`),
 							like(notes.content, `%${search}%`)
@@ -80,7 +82,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			totalCount = await db
 				.select({ count: sql<number>`COUNT(*)` })
 				.from(notes)
-				.where(eq(notes.userId, session.userId));
+				.where(eq(notes.userId, session.session.userId));
 		}
 
 		return json({
@@ -94,20 +96,30 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		});
 	} catch (error) {
 		console.error('Error fetching notes:', error);
-		return new Response('Internal Server Error', { status: 500 });
+		return json({ message: 'Internal Server Error' }, { status: 500 });
 	}
 };
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-	const session = locals.session;
+export const POST: RequestHandler = async ({ request }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session) {
-		return new Response('Unauthorized', { status: 401 });
+		return json({ message: 'Unauthorized - No session found' }, { status: 401 });
 	}
 
 	try {
-		const body = await request.json();
+		let body;
+		try {
+			body = await request.json();
+		} catch (parseError) {
+			console.error('JSON parse error:', parseError);
+			return json({ message: 'Invalid JSON format' }, { status: 400 });
+		}
+		
+		// [デバッグ用ログ] 受信したリクエストボディを確認
+		console.log('Received request to create note with body:', body);
+
 		if (typeof body !== 'object' || body === null) {
-			return new Response('Invalid request body', { status: 400 });
+			return json({ message: 'Invalid request body' }, { status: 400 });
 		}
 		const { title, content, tags: tagNames } = body as { title?: string; content?: string; tags?: string[] };
 
@@ -117,7 +129,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// 新規メモを作成
 		await db.insert(notes).values({
 			id: noteId,
-			userId: session.userId,
+			userId: session.session.userId,
 			title: title || 'Untitled Note',
 			content: content || '',
 			createdAt: now,
@@ -168,7 +180,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		return json(newNote[0], { status: 201 });
 	} catch (error) {
+		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);
-		return json({ message: 'Internal Server Error' }, { status: 500 });
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		return json({ message: `Internal Server Error: ${errorMessage}` }, { status: 500 });
 	}
 };

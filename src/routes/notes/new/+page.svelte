@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onDestroy } from 'svelte';
-	import { defaultValueCtx, Editor, editorViewCtx, rootCtx } from '@milkdown/core';
+	import { defaultValueCtx, Editor, editorViewCtx, rootCtx, serializerCtx } from '@milkdown/core';
 	import { commonmark } from '@milkdown/preset-commonmark';
 	import { nord } from '@milkdown/theme-nord';
 	import '@milkdown/theme-nord/style.css'; // Milkdown темы стиールをインポート
@@ -47,11 +47,19 @@
 	async function handleSubmit() {
 		saving = true;
 		errorMessage = '';
-		// 保存直前にMilkdownエディタの最新内容をcontent変数に取得
-		content = milkdownEditor?.action((ctx) => ctx.get(editorViewCtx).state.doc.toString()) || '';
+		// 保存直前にMilkdownエディタの最新内容をMarkdown形式でcontent変数に取得
+		content = milkdownEditor?.action((ctx) => {
+			const editorView = ctx.get(editorViewCtx);
+			const serializer = ctx.get(serializerCtx);
+			return serializer(editorView.state.doc);
+		}) || '';
 
+		// [デバッグ用ログ] 送信するデータを確認
+		console.log('Submitting new note with:', { title, content, tags });
+
+		let response: Response;
 		try {
-			const response = await fetch('/api/notes', {
+			response = await fetch('/api/notes', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -63,9 +71,17 @@
 				const newNote: Note = await response.json();
 				goto(`/notes/${newNote.id}`);
 			} else {
-				// errorData は unknown 型なので、明示的に型を assertion するか、安全な方法でアクセス
-				const errorData: { message?: string } = await response.json();
-				errorMessage = errorData.message || 'ノートの作成に失敗しました。';
+				// エラーレスポンスを処理
+				const contentType = response.headers.get('content-type');
+				if (contentType && contentType.includes('application/json')) {
+					const errorData: { message?: string } = await response.json();
+					errorMessage = errorData.message || 'ノートの作成に失敗しました。';
+				} else {
+					// JSONではないレスポンスの場合
+					const text = await response.text();
+					console.error('Server response (non-JSON):', text);
+					errorMessage = `サーバーエラー: ${text}`;
+				}
 			}
 		} catch (error) {
 			console.error('Error creating note:', error);

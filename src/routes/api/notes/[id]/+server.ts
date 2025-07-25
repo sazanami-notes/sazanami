@@ -4,9 +4,10 @@ import { db } from '$lib/server/db';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
+import { auth } from '$lib/server/auth';
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-	const session = await locals.auth.auth();
+export const GET: RequestHandler = async ({ params, request }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
 	}
@@ -21,7 +22,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const note = await db
 			.select()
 			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)))
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
 			.limit(1);
 
 		if (note.length === 0) {
@@ -47,8 +48,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 };
 
-export const PUT: RequestHandler = async ({ params, request, locals }) => {
-	const session = await locals.auth();
+export const PUT: RequestHandler = async ({ params, request }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
 	}
@@ -70,7 +71,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		const existingNote = await db
 			.select()
 			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)))
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
 			.limit(1);
 
 		if (existingNote.length === 0) {
@@ -87,7 +88,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				content: content !== undefined ? content : existingNote[0].content,
 				updatedAt: now
 			})
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)));
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
 		// 既存のタグをクリア
 		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
@@ -130,7 +131,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		const updatedNote = await db
 			.select()
 			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)))
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
 			.limit(1);
 
 		// タグを取得
@@ -152,8 +153,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ params, locals }) => {
-	const session = await locals.auth();
+export const DELETE: RequestHandler = async ({ params, request }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
 	}
@@ -169,7 +170,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		const existingNote = await db
 			.select()
 			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)))
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
 			.limit(1);
 
 		if (existingNote.length === 0) {
@@ -180,7 +181,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
 
 		// ノートを削除
-		await db.delete(notes).where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)));
+		await db.delete(notes).where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
 		return new Response(null, { status: 204 });
 	} catch (error) {
