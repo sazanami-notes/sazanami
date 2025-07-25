@@ -1,48 +1,25 @@
 # Sazanami
 
-MarkdownでかけるScrapBox
-を基本コンセプトとしたノートテイキングアプリです。
+MarkdownでかけるScrapBoxを基本コンセプトとしたノートテイキングアプリです。
 
-[いろいろメモ](https://obsidian.kaedesato.work/Box/%E3%83%A1%E3%83%A2%E3%82%A2%E3%83%97%E3%83%AA%E4%BD%9C%E3%82%8B%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88)
+- [Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
+- [Obsidian Notes](https://obsidian.kaedesato.work/Box/%E3%83%A1%E3%83%A2%E3%82%A2%E3%83%97%E3%83%AA%E4%BD%9C%E3%82%8B%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88)
 
-[Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
+> [!WARNING]
+> Ver1.0.0までは破壊的変更を頻繁に行います。
 
-Ver1.0.0までは破壊的変更をしまくります。
+## ドキュメント
 
-あとでなにか書きます。
+このプロジェクトに関する詳細な情報は、以下のドキュメントを参照してください。
 
-#### Ver.0.1.0ライン
+- **[プロジェクト概要](docs/project.md)**: プロジェクトの目的、技術スタック、実装状況について説明します。
+- **[アーキテクチャ](docs/architecture.md)**: プロジェクトの構造、コンポーネント、データフローについて解説します。
+- **[開発セットアップ](docs/setup.md)**: ローカルで開発環境を構築するための手順を案内します。
+- **[コーディング規約](docs/coding-standards.md)**: コードの一貫性を保つためのルールを定めています。
+- **[API仕様](docs/api.md)**: アプリケーションが提供するAPIのエンドポイントについて説明します。
+- **[テスト戦略](docs/testing.md)**: ユニットテスト、インテグレーションテスト、E2Eテストの方針について説明します。
+- **[デプロイ手順](docs/deployment.md)**: Cloudflare Pagesへのデプロイ方法を解説します。
 
-おひとり様Scrapboxを作る。
+## 開発状況
 
-つくるもの
-
-- [ ] Markdownでのデータベースとのやり取り
-- [ ] PWA
-- [ ] カードビュー
-- [ ] Link, 2-hop-link解析
-- [ ] 検索
-- [ ] 埋め込み
-  - [ ] 画像
-  - [ ] 引用埋め込み
-- [ ] オフライン動作
-- [ ] 公開機能？
-  - [ ] これ認証作らないと公開機能実装できなくない？
-- [ ] Markdownファイル一括インポート
-- [ ] タグ
-
-この時点でつくらないもの
-
-- 認証？
-- 共同編集
-- YouTubeなどの埋め込み
-- テーマ、UserCSS
-- VectorStore
-
-## デプロイ
-
-- Turso
-- Cloudflare pages
-- Cloudflare R2
-
-を想定しています。が、すべてローカル環境で動かすことも出来ます。（たぶん？）
+最新の開発タスクや進捗状況は、[TODOリスト](docs/todo.md)で確認できます。
