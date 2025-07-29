@@ -8,6 +8,7 @@
 	import { nord } from '@milkdown/theme-nord';
 	import '@milkdown/theme-nord/style.css';
 	import type { Note } from '$lib/types';
+	import { ulid } from 'ulid';
 
 	let note: Note | null = null;
 	let loading = true;
@@ -20,8 +21,27 @@
 	let title = '';
 	let content = '';
 	let tagsInput = '';
+	let noteId: string | null = null;
+	let isNewNote = false;
 
-	$: noteId = $page.params.id;
+	$: {
+		const id = $page.params.id;
+		if (id === 'new') {
+			isNewNote = true;
+			noteId = null;
+			loading = false;
+			// 新規メモ作成モードの初期化
+			note = null;
+			title = '';
+			content = '';
+			tagsInput = '';
+		} else {
+			isNewNote = false;
+			noteId = id;
+			// 既存メモ編集モードの初期化
+			fetchNote();
+		}
+	}
 	$: tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 
 	onDestroy(() => {
@@ -30,6 +50,7 @@
 
 	// メモの詳細を取得
 	async function fetchNote() {
+		if (!noteId) return;
 		try {
 			const response = await fetch(`/api/notes/${noteId}`);
 			if (response.ok) {
@@ -57,6 +78,7 @@
 			.config(nord)
 			.config((ctx) => {
 				ctx.set(rootCtx, editorContainerElement);
+				// 新規作成モードの場合はdefaultValueCtxを空に設定
 				ctx.set(defaultValueCtx, content);
 			})
 			.use(commonmark)
@@ -80,28 +102,55 @@
 			return serializer(editorView.state.doc);
 		}) || '';
 
-		try {
-			const response = await fetch(`/api/notes/${noteId}`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ title, content, tags })
-			});
+		const payload = {
+			title,
+			content,
+			tags
+		};
 
-			if (response.ok) {
-				const updatedNote: Note = await response.json();
-				// 更新後に表示を更新
-				note = updatedNote;
-				title = updatedNote.title;
-				content = updatedNote.content;
-				tagsInput = updatedNote.tags ? updatedNote.tags.join(', ') : '';
+		let response: Response;
+		try {
+			if (isNewNote) {
+				// 新規作成の場合
+				const newId = ulid();
+				response = await fetch('/api/notes', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ id: newId, ...payload })
+				});
+
+				if (response.ok) {
+					const createdNote: Note = await response.json();
+					goto(`/notes/${createdNote.id}`);
+				} else {
+					const errorData: { message?: string } = await response.json();
+					errorMessage = errorData.message || 'ノートの作成に失敗しました。';
+				}
 			} else {
-				const errorData: { message?: string } = await response.json();
-				errorMessage = errorData.message || 'メモの更新に失敗しました。';
+				// 既存ノートの更新の場合
+				response = await fetch(`/api/notes/${noteId}`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(payload)
+				});
+
+				if (response.ok) {
+					const updatedNote: Note = await response.json();
+					note = updatedNote;
+					title = updatedNote.title;
+					content = updatedNote.content;
+					tagsInput = updatedNote.tags ? updatedNote.tags.join(', ') : '';
+				} else {
+					const errorData: { message?: string } = await response.json();
+					errorMessage = errorData.message || 'メモの更新に失敗しました。';
+				}
 			}
 		} catch (error) {
-			console.error('Error updating note:', error);
+			console.error('Error saving note:', error);
 			errorMessage = 'ネットワークエラーが発生しました。';
 		} finally {
 			saving = false;
@@ -133,15 +182,20 @@
 
 	// コンポーネントがマウントされたらメモを取得
 	onMount(() => {
-		fetchNote();
+		// isNewNoteがfalseの場合のみfetchNoteを呼び出す
+		if (!isNewNote) {
+			fetchNote();
+		}
 	});
 </script>
 
 <svelte:head>
-	<title>{note?.title || 'メモ'} - Sazanami Notes</title>
+	<title>{isNewNote ? '新規メモ作成' : note?.title || 'メモ'} - Sazanami Notes</title>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8 max-w-4xl">
+	<h1 class="text-3xl font-bold text-gray-900 mb-6">{isNewNote ? '新規メモ作成' : 'メモを編集'}</h1>
+
 	{#if loading}
 		<div class="flex justify-center">
 			<span class="loading loading-spinner loading-lg"></span>
@@ -153,7 +207,7 @@
 			</svg>
 			<span>{errorMessage}</span>
 		</div>
-	{:else if note}
+	{:else}
 		<!-- エラーメッセージ -->
 		{#if errorMessage}
 			<div role="alert" class="alert alert-error mb-4">
@@ -176,7 +230,9 @@
 						placeholder="メモのタイトルを入力"
 					/>
 					<div class="flex gap-2 ml-4">
+						{#if !isNewNote}
 						<button class="btn btn-error" on:click={handleDelete} type="button">削除</button>
+						{/if}
 					</div>
 				</div>
 				
@@ -202,12 +258,14 @@
 					<div bind:this={editorContainerElement} class="textarea textarea-ghost min-h-60 p-2 prose max-w-none focus:outline-none"></div>
 				</div>
 				
+				{#if !isNewNote && note}
 				<div class="mt-6 text-sm text-gray-500">
 					<p>作成日時: {new Date(note.createdAt).toLocaleString('ja-JP')}</p>
 					{#if note.updatedAt !== note.createdAt}
 						<p>更新日時: {new Date(note.updatedAt).toLocaleString('ja-JP')}</p>
 					{/if}
 				</div>
+				{/if}
 			</div>
 
 			<div class="flex items-center justify-end space-x-3">
@@ -219,7 +277,7 @@
 					{#if saving}
 						保存中...
 					{:else}
-						メモを更新
+						{isNewNote ? 'メモを作成' : 'メモを更新'}
 					{/if}
 				</button>
 			</div>

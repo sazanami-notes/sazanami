@@ -121,9 +121,22 @@ export const POST: RequestHandler = async ({ request }) => {
 		if (typeof body !== 'object' || body === null) {
 			return json({ message: 'Invalid request body' }, { status: 400 });
 		}
-		const { title, content, tags: tagNames } = body as { title?: string; content?: string; tags?: string[] };
+		const { id, title, content, tags: tagNames } = body as { id?: string; title?: string; content?: string; tags?: string[] };
 
-		const noteId = ulid();
+		// IDのバリデーション
+		let noteId: string;
+		if (id) {
+			// クライアントから送信されたIDを使用
+			// ULIDの形式を簡易的にチェック（実際のプロジェクトではより厳密なバリデーションを推奨）
+			if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) {
+				return json({ message: 'Invalid ID format' }, { status: 400 });
+			}
+			noteId = id;
+		} else {
+			// IDが提供されていない場合は、従来通りサーバー側で生成
+			noteId = ulid();
+		}
+
 		const now = new Date();
 
 		// 新規メモを作成
