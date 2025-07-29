@@ -34,9 +34,11 @@
 			const response = await fetch(`/api/notes/${noteId}`);
 			if (response.ok) {
 				note = await response.json();
-				title = note.title;
-				content = note.content;
-				tagsInput = note.tags ? note.tags.join(', ') : '';
+				if (note) {
+					title = note.title;
+					content = note.content;
+					tagsInput = note.tags ? note.tags.join(', ') : '';
+				}
 			} else if (response.status === 404) {
 				errorMessage = 'メモが見つかりません';
 			} else {
