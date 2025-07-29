@@ -14,7 +14,8 @@
 		const htmlContent = marked.parse(content) as string;
 		
 		// HTMLタグを除去してプレーンテキストに変換
-		const plainText = htmlContent.replace(/<[^>]*>/g, '');
+		const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
+		const plainText = doc.body.textContent || '';
 		
 		// 指定された長さで切り捨て
 		return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
@@ -32,14 +33,14 @@
 	role="button"
 	tabindex="0"
 >
-	<div class="p-6">
+	<div class="p-8">
 		<!-- タイトル -->
 		<h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
 			{note.title || '無題のメモ'}
 		</h3>
 
 		<!-- コンテンツプレビュー -->
-		<p class="text-gray-600 text-sm mb-4 line-clamp-3">
+		<p class="text-gray-600 text-sm mb-4 line-clamp-4">
 			{truncateContent(note.content)}
 		</p>
 
@@ -68,19 +69,3 @@
 		</div>
 	</div>
 </div>
-
-<style>
-.line-clamp-2 {
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-}
-
-.line-clamp-3 {
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-}
-</style>

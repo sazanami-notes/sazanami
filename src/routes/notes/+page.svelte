@@ -99,7 +99,7 @@
 	<!-- ヘッダー -->
 	<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
 		<div>
-			<h1 class="text-3xl font-bold text-neutral-content mb-2">メモ一覧</h1>
+			<h1 class="text-3xl font-bold text-base-content mb-2">メモ一覧</h1>
 			<p class="text-base-content">あなたのメモを管理しましょう</p>
 		</div>
 		<button
