@@ -4,9 +4,12 @@
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 	import { marked } from 'marked';
+	import { generateSlug } from '$lib/utils/slug'; // generateSlugをインポート
 
 	export let note: Note;
 
+	// Note: MemoCardではMarkdownコンテンツのプレビューを表示するため、
+	// wikiリンクの動的な解決は行わず、単にHTMLタグを除去してプレーンテキストとして扱います。
 	function truncateContent(content: string, maxLength: number = 150): string {
 		if (!content) return '';
 		
@@ -24,12 +27,17 @@
 	function formatDate(date: Date): string {
 		return formatDistanceToNow(new Date(date), { addSuffix: true, locale: ja });
 	}
+
+	// ノート詳細ページへのURLを生成するヘルパー関数
+	function getNoteDetailUrl(note: Note): string {
+		return `/notes/${note.id}/${generateSlug(note.title)}`;
+	}
 </script>
 
 <div
 	class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer border border-gray-200"
-	on:click
-	on:keydown={(e) => e.key === 'Enter' && goto(`/notes/${note.id}`)}
+	on:click={() => goto(getNoteDetailUrl(note))}
+	on:keydown={(e) => e.key === 'Enter' && goto(getNoteDetailUrl(note))}
 	role="button"
 	tabindex="0"
 >

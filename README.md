@@ -3,10 +3,16 @@
 MarkdownでかけるScrapBoxを基本コンセプトとしたノートテイキングアプリです。
 
 - [Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
-- [Obsidian Notes](https://obsidian.kaedesato.work/Box/%E3%83%A1%E3%83%A2%E3%82%A2%E3%83%97%E3%83%AA%E4%BD%9C%E3%82%8B%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88)
+
 
 > [!WARNING]
 > Ver1.0.0までは破壊的変更を頻繁に行います。
+
+Sazanamiの思想・構想などなど
+
+kilocodeのMemory Bankに入れてます。
+- **[brief.md](.kilocode\rules\memory-bank\brief.md)**
+
 
 ## ドキュメント
 
@@ -19,7 +25,3 @@ MarkdownでかけるScrapBoxを基本コンセプトとしたノートテイキ�
 - **[API仕様](.kilocode/rules/memory-bank/api.md)**: アプリケーションが提供するAPIのエンドポイントについて説明します。
 - **[テスト戦略](.kilocode/rules/memory-bank/testing.md)**: ユニットテスト、インテグレーションテスト、E2Eテストの方針について説明します。
 - **[デプロイ手順](.kilocode/rules/memory-bank/deployment.md)**: Cloudflare Pagesへのデプロイ方法を解説します。
-
-## 開発状況
-
-最新の開発タスクや進捗状況は、[TODOリスト](.kilocode/rules/memory-bank/tasks.md)で確認できます。

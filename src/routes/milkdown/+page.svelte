@@ -4,6 +4,7 @@
 	import { defaultValueCtx, Editor, rootCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
+	import { wikiLink } from '$lib/milkdown/wiki-link-plugin'; // wikiLinkプラグインをインポート
 
 	// Style imports
 	import '@milkdown/theme-nord/style.css';
@@ -24,10 +25,11 @@
 				ctx.set(rootCtx, editorContainerElement);
 				ctx.set(
 					defaultValueCtx,
-					'# Hello, Sazanami!'
+					'# Hello, Sazanami!\n\nThis is a test of [[wiki links]].'
 				);
 			})
 			.use(commonmark)
+			.use(wikiLink) // wikiLinkプラグインを使用
 			.create()
 			.then((editor) => {
 				milkdownEditor = editor;

@@ -15,7 +15,9 @@
 		"lint": "prettier --check . && eslint .",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"test": "vitest",
+		"test:unit": "vitest tests/unit"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250722.0",
@@ -46,6 +48,7 @@
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.38.0",
 		"vite": "^7.0.5",
+		"vitest": "^3.2.4",
 		"wrangler": "^4.25.0"
 	},
 	"dependencies": {
@@ -56,6 +59,7 @@
 		"date-fns": "^4.1.0",
 		"drizzle-orm": "^0.44.3",
 		"marked": "^16.1.1",
+		"remark-wiki-link": "^2.0.1",
 		"ulid": "^3.0.1"
 	}
 }

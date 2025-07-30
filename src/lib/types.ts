@@ -20,3 +20,8 @@ export interface NotesResponse {
 	notes: Note[];
 	pagination: Pagination;
 }
+
+export interface ResolvedLink {
+	id: string;
+	slug: string;
+}

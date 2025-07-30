@@ -1,96 +1,117 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import { afterUpdate } from 'svelte';
 	import { marked } from 'marked';
 	import { defaultValueCtx, Editor, editorViewCtx, rootCtx, serializerCtx } from '@milkdown/core';
 	import { commonmark } from '@milkdown/preset-commonmark';
 	import { nord } from '@milkdown/theme-nord';
 	import '@milkdown/theme-nord/style.css';
-	import type { Note } from '$lib/types';
+	import type { Note, ResolvedLink } from '$lib/types'; // ResolvedLink をインポート
 	import { ulid } from 'ulid';
+	import { generateSlug } from '$lib/utils/slug';
 
-	let note: Note | null = null;
-	let loading = true;
+	// +page.server.tsから渡されるデータを受け取る
+	export let data;
+
+	let note: Note | null = data.note;
+	let loading = false; // データはload関数で既に取得されているためfalse
 	let saving = false;
 	let errorMessage = '';
 	let milkdownEditor: Editor | undefined;
 
 	let editorContainerElement: HTMLDivElement;
 
-	let title = '';
-	let content = '';
-	let tagsInput = '';
-	let noteId: string | null = null;
-	let isNewNote = false;
+	let title = note?.title || '';
+	let content = note?.content || '';
+	let tagsInput = note?.tags ? note.tags.join(', ') : '';
+	let noteId: string | null = note?.id || null;
+	let isNewNote = !note; // noteオブジェクトが存在しない場合は新規作成
 
-	$: {
-		const id = $page.params.id;
-		if (id === 'new') {
-			isNewNote = true;
-			noteId = null;
-			loading = false;
-			// 新規メモ作成モードの初期化
-			note = null;
-			title = '';
-			content = '';
-			tagsInput = '';
-		} else {
-			isNewNote = false;
-			noteId = id;
-			// 既存メモ編集モードの初期化
-			fetchNote();
-		}
-	}
 	$: tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 
 	onDestroy(() => {
 		milkdownEditor?.destroy();
 	});
 
-	// メモの詳細を取得
-	async function fetchNote() {
-		if (!noteId) return;
-		try {
-			const response = await fetch(`/api/notes/${noteId}`);
-			if (response.ok) {
-				note = await response.json();
-				if (note) {
-					title = note.title;
-					content = note.content;
-					tagsInput = note.tags ? note.tags.join(', ') : '';
-				}
-			} else if (response.status === 404) {
-				errorMessage = 'メモが見つかりません';
-			} else {
-				errorMessage = 'メモの取得に失敗しました';
-			}
-		} catch (error) {
-			errorMessage = 'ネットワークエラーが発生しました';
-		} finally {
-			loading = false;
-		}
-	}
-
 	// Svelteのライフサイクルでエディタを初期化
+	// noteがnull（新規作成）でない場合、または新規作成モードで初期値がない場合にエディタを初期化
 	$: if (editorContainerElement && !milkdownEditor && !loading) {
 		Editor.make()
 			.config(nord)
 			.config((ctx) => {
 				ctx.set(rootCtx, editorContainerElement);
-				// 新規作成モードの場合はdefaultValueCtxを空に設定
-				ctx.set(defaultValueCtx, content);
+				ctx.set(defaultValueCtx, content); // data.noteから取得したcontentを初期値に設定
 			})
 			.use(commonmark)
 			.create()
 			.then((editor) => {
 				milkdownEditor = editor;
+				// エディタ初期化後、初回レンダリング時にリンク解決を試みる
+				// DOMが完全に構築されるまで少し待つ必要があるかもしれない
+				setTimeout(resolveWikiLinks, 0); // DOM更新サイクルを待つ
 			})
 			.catch(e => {
 				console.error('Failed to create Milkdown editor:', e);
 				errorMessage = 'エディタの初期化に失敗しました。';
 			});
 	}
+
+	// Markdownコンテンツがレンダリングされた後に、wikiリンクを解決する関数
+	async function resolveWikiLinks() {
+		if (!editorContainerElement) return;
+
+		// Milkdownエディタが生成したDOM要素の中から、data-wiki-link属性を持つspan要素をすべて取得
+		const wikiLinkSpans = editorContainerElement.querySelectorAll('span[data-wiki-link]');
+
+		for (const span of Array.from(wikiLinkSpans)) {
+			// spanをHTMLElementにキャスト
+			const htmlSpan = span as HTMLElement;
+			const linkText = htmlSpan.dataset.wikiLink;
+			if (!linkText) continue;
+
+			// 既に処理済みのリンク（aタグに変換済み、またはエラー表示済み）はスキップ
+			if (htmlSpan.closest('a') || htmlSpan.classList.contains('link-unresolved')) {
+				continue;
+			}
+
+			try {
+				// バックエンドAPIを呼び出し、リンクテキストからノートのIDとスラッグを解決
+				const response = await fetch(`/api/notes/resolve-link?title=${encodeURIComponent(linkText)}`);
+				if (response.ok) {
+					const { id, slug }: ResolvedLink = await response.json(); // ResolvedLink 型を指定
+					const url = `/notes/${id}/${slug}`;
+
+					// span要素をaタグに変換（またはラップ）
+					const a = document.createElement('a');
+					a.href = url;
+					a.textContent = linkText;
+					a.className = 'link link-hover text-primary'; // DaisyUIのリンクスタイルを適用
+					a.onclick = (e) => {
+						e.preventDefault();
+						goto(url); // SvelteKitのgoto関数でクライアントサイドルーティング
+					};
+					htmlSpan.replaceWith(a); // spanをaタグで置き換え
+				} else {
+					// ノートが見つからない場合、リンク切れを示すスタイルを適用
+					htmlSpan.classList.add('link-unresolved', 'text-error'); // 赤色のテキストにするなど
+					htmlSpan.title = `ノート「${linkText}」は見つかりませんでした。`; // ツールチップを追加
+				}
+			} catch (error) {
+				console.error(`Failed to resolve wiki link for "${linkText}":`, error);
+				htmlSpan.classList.add('link-unresolved', 'text-error');
+				htmlSpan.title = `リンク解決中にエラーが発生しました: ${linkText}`;
+			}
+		}
+	}
+
+	afterUpdate(() => {
+		// Milkdownエディタが初期化されており、かつDOMが更新された後にリンク解決を試みる
+		if (milkdownEditor) {
+			resolveWikiLinks();
+		}
+	});
 
 	async function handleSubmit() {
 		saving = true;
@@ -123,7 +144,8 @@
 
 				if (response.ok) {
 					const createdNote: Note = await response.json();
-					goto(`/notes/${createdNote.id}`);
+					// 新規作成後、スラッグを含んだURLにリダイレクト
+					goto(`/notes/${createdNote.id}/${generateSlug(createdNote.title)}`);
 				} else {
 					const errorData: { message?: string } = await response.json();
 					errorMessage = errorData.message || 'ノートの作成に失敗しました。';
@@ -144,6 +166,12 @@
 					title = updatedNote.title;
 					content = updatedNote.content;
 					tagsInput = updatedNote.tags ? updatedNote.tags.join(', ') : '';
+					// 更新後、スラッグが変更された場合はリダイレクト
+					const currentSlug = $page.params.slug;
+					const newSlug = generateSlug(updatedNote.title);
+					if (currentSlug !== newSlug) {
+						goto(`/notes/${updatedNote.id}/${newSlug}`, { replaceState: true });
+					}
 				} else {
 					const errorData: { message?: string } = await response.json();
 					errorMessage = errorData.message || 'メモの更新に失敗しました。';
@@ -158,6 +186,7 @@
 	}
 
 	async function handleDelete() {
+		if (!noteId) return; // noteIdがnullの場合は削除処理を行わない
 		if (!confirm('このメモを削除してもよろしいですか？')) return;
 
 		try {
@@ -175,18 +204,10 @@
 		}
 	}
 
-	// MarkdownをHTMLに変換する関数
+	// MarkdownをHTMLに変換する関数 (現在未使用だが残しておく)
 	async function convertMarkdownToHtml(markdown: string): Promise<string> {
 		return marked.parse(markdown);
 	}
-
-	// コンポーネントがマウントされたらメモを取得
-	onMount(() => {
-		// isNewNoteがfalseの場合のみfetchNoteを呼び出す
-		if (!isNewNote) {
-			fetchNote();
-		}
-	});
 </script>
 
 <svelte:head>

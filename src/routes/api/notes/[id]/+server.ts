@@ -5,6 +5,7 @@ import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { auth } from '$lib/server/auth';
+import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
@@ -79,12 +80,15 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		const now = new Date();
+        const updatedTitle = title !== undefined ? title : existingNote[0].title;
+        const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
 
 		// ノートを更新
 		await db
 			.update(notes)
 			.set({
-				title: title || existingNote[0].title,
+				title: updatedTitle,
+                slug: updatedSlug, // スラッグを更新
 				content: content !== undefined ? content : existingNote[0].content,
 				updatedAt: now
 			})

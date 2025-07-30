@@ -2,12 +2,14 @@ import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
 import { user, session, account, verification } from './auth-schema';
+// generateSlug のインポートは不要なので削除
 
 // NOTES テーブル
 export const notes = sqliteTable('notes', {
   id: text('id').notNull().primaryKey().$defaultFn(() => ulid()), // ULIDなどを想定
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   title: text('title').notNull().default('Untitled Note'),
+  slug: text('slug').notNull().unique(), // スラッグを追加 (デフォルト値はマイグレーションで処理)
   content: text('content'), // Markdown本文
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(), // 作成日時 (MSタイムスタンプ)
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)
