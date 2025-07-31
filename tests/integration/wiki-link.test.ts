@@ -27,6 +27,12 @@ const mockSession = {
   }
 };
 
+interface ResolveLinkResponse {
+  id: string;
+  title?: string;
+  message?: string;
+}
+
 describe('Wiki Link Resolution', () => {
   let testUserId: string;
 
@@ -73,7 +79,7 @@ describe('Wiki Link Resolution', () => {
     // モックされたfetch関数を作成
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ id: existingNote.id, slug: existingNote.slug })
+      json: () => Promise.resolve({ id: existingNote.id })
     });
 
     // グローバルなfetchをモックに置き換え
@@ -86,12 +92,11 @@ describe('Wiki Link Resolution', () => {
       const response = await fetch(`/api/notes/resolve-link?title=${encodeURIComponent(linkText)}`);
       
       if (response.ok) {
-        const { id, slug } = await response.json();
-        const url = `/notes/${id}/${slug}`;
+        const data: ResolveLinkResponse = await response.json();
+        const url = `/notes/${data.id}`;
         
-        expect(id).toBe(existingNote.id);
-        expect(slug).toBe(existingNote.slug);
-        expect(url).toBe(`/notes/${existingNote.id}/${existingNote.slug}`);
+        expect(data.id).toBe(existingNote.id);
+        expect(url).toBe(`/notes/${existingNote.id}`);
       } else {
         throw new Error('Failed to resolve wiki link');
       }

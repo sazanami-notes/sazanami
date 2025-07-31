@@ -59,7 +59,6 @@ const createMockRequestEvent = (url: string, method: string, session: any): Requ
 
 interface ResolveLinkResponse {
   id?: string;
-  slug?: string;
   title?: string;
   message?: string;
 }
@@ -168,7 +167,6 @@ describe('GET /api/notes/resolve-link', () => {
     expect(response.status).toBe(200);
     const body: ResolveLinkResponse = await response.json();
     expect(body.title).toBe('Existing Note');
-    expect(body.slug).toBe('existing-note');
     expect(body.id).toBeTypeOf('string');
   });
 
@@ -215,7 +213,6 @@ describe('GET /api/notes/resolve-link', () => {
     expect(response.status).toBe(200);
     const body: ResolveLinkResponse = await response.json();
     expect(body.title).toBe(japaneseTitle);
-    expect(body.slug).toBe(japaneseSlug);
 
     await db.delete(notes).where(eq(notes.id, japaneseNoteId));
   });

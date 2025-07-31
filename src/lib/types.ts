@@ -2,7 +2,8 @@ export interface Note {
 	id: string;
 	userId: string;
 	title: string;
-	content: string;
+	slug: string;
+	content: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 	isPublic: boolean;
@@ -23,5 +24,5 @@ export interface NotesResponse {
 
 export interface ResolvedLink {
 	id: string;
-	slug: string;
+	title: string;
 }

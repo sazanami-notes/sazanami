@@ -44,10 +44,14 @@ export const GET: RequestHandler = async ({ url, request }) => {
         const exactMatch = foundNotes.find(note => generateSlug(note.title) === searchSlug);
 
         if (exactMatch) {
-            return json(exactMatch);
+            // slugを除外してidとtitleのみを返す
+            const { slug, ...exactMatchWithoutSlug } = exactMatch;
+            return json(exactMatchWithoutSlug);
         } else {
             // 完全一致がない場合、最初の（最新の）部分一致を返す
-            return json(foundNotes[0]);
+            // slugを除外してidとtitleのみを返す
+            const { slug, ...firstMatchWithoutSlug } = foundNotes[0];
+            return json(firstMatchWithoutSlug);
         }
 
     } catch (error) {
