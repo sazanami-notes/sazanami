@@ -4,14 +4,65 @@ MarkdownでかけるScrapBoxを基本コンセプトとしたノートテイキ�
 
 - [Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
 
-
 > [!WARNING]
 > Ver1.0.0までは破壊的変更を頻繁に行います。
+
+## 概要
 
 Sazanamiの思想・構想などなど
 
 kilocodeのMemory Bankに入れてます。
-- **[brief.md](.kilocode\rules\memory-bank\brief.md)**
+- **[brief.md](.kilocode/rules/memory-bank/brief.md)**
+
+## Getting Started
+
+### 前提条件
+
+- Node.js (推奨: 最新のLTS版)
+- npm
+
+### インストール
+
+```bash
+npm install
+```
+
+### 開発サーバーの起動
+
+```bash
+npm run dev
+```
+
+開発サーバーが起動したら、ブラウザで `http://localhost:5173` にアクセスしてください。
+
+## 開発
+
+### よく使用するコマンド
+
+```bash
+# 開発サーバーの起動
+npm run dev
+
+# ビルド
+npm run build
+
+# プレビュー
+npm run preview
+
+# コードフォーマット
+npm run format
+
+# リント
+npm run lint
+
+# テスト実行
+npm run test
+
+# データベース関連
+npm run db:generate  # スキーマ生成
+npm run db:migrate   # マイグレーション実行
+npm run db:studio    # Drizzle Studio起動
+```
 
 
 ## ドキュメント
