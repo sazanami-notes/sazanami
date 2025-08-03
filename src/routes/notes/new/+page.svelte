@@ -27,7 +27,7 @@
     };
     
     // API call to create note would go here
-    await goto(`/${sessionData.session?.user?.username}/${slug}`);
+    await goto(`/notes/${note.id}/${slug}`);
   };
 </script>
 

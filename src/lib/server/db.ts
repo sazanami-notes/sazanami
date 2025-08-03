@@ -1,46 +1,65 @@
-import { drizzle } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client';
 import { notes, user } from './db/schema';
 import { eq, and } from 'drizzle-orm';
+import { ulid } from 'ulid';
+import type { Note } from '$lib/types';
+import { generateSlug } from '$lib/utils/slug';
 
-const client = createClient({ url: process.env.DATABASE_URL! });
-export const db = drizzle(client, { schema: { notes, user } });
+// Import the database connection from the connection file in the db directory
+import { db } from './db/connection';
 
-export const getNoteById = async (id: string, userId: string | undefined) => {
-  return await db.query.notes.findFirst({
-    where: and(eq(notes.id, id), eq(notes.userId, userId!)),
-    with: {
-      tags: {
-        with: {
-          tag: true
-        }
-      }
-    }
-  });
+// Export the database connection for other modules to use
+export { db };
+
+export const getNoteById = async (userId: string, id: string) => {
+  const result = await db
+    .select()
+    .from(notes)
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+    .limit(1);
+  
+  return result[0] || null;
 };
 
-export const getNoteByTitle = async (username: string, title: string, userId: string | undefined) => {
-  // ユーザー名からユーザーIDを取得
-  const userRecord = await db.query.user.findFirst({
-    where: eq(user.name, username)
-  });
+export const getNoteBySlug = async (userId: string, username: string, slug: string) => {
+  const userNotes = await db
+    .select()
+    .from(notes)
+    .where(eq(notes.userId, userId));
+  
+  const note = userNotes.find((note: typeof notes.$inferSelect) => generateSlug(note.title) === slug);
+  
+  return note || null;
+};
 
-  if (!userRecord) {
-    return null;
-  }
+export const createNote = async (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt' | 'slug'>) => {
+  const newNote = {
+    ...note,
+    id: ulid(),
+    slug: generateSlug(note.title),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  await db.insert(notes).values(newNote);
+  return newNote;
+};
 
-  // タイトルとユーザーIDでノートを検索
-  return await db.query.notes.findFirst({
-    where: and(
-      eq(notes.title, title),
-      eq(notes.userId, userRecord.id)
-    ),
-    with: {
-      tags: {
-        with: {
-          tag: true
-        }
-      }
-    }
-  });
+export const updateNote = async (id: string, userId: string, updates: Partial<Omit<Note, 'id' | 'userId'>>) => {
+  const updatedNote = {
+    ...updates,
+    updatedAt: new Date()
+  };
+  
+  await db
+    .update(notes)
+    .set(updatedNote)
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)));
+  
+  return getNoteById(userId, id);
+};
+
+export const deleteNote = async (id: string, userId: string) => {
+  await db
+    .delete(notes)
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)));
 };

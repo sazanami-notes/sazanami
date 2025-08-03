@@ -1,29 +1,30 @@
 export interface Note {
-	id: string;
-	userId: string;
-	title: string;
-	slug: string;
-	content: string | null;
-	createdAt: Date;
-	updatedAt: Date;
-	isPublic: boolean;
-	tags: string[];
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isPublic: boolean;
+  tags: string[];
+  slug: string;
 }
 
-export interface Pagination {
-	page: number;
-	limit: number;
-	total: number;
-	totalPages: number;
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface NotesResponse {
-	notes: Note[];
-	pagination: Pagination;
-}
-
-export interface ResolvedLink {
-	id: string;
-	title: string;
-	slug: string;
+export interface Session {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  token: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }

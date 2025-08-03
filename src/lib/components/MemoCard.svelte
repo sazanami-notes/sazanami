@@ -10,6 +10,8 @@
   class:cursor-pointer={note.id}
   on:mouseenter={() => (isHovered = true)}
   on:mouseleave={() => (isHovered = false)}
+  role="region"
+  aria-label="メモカード"
 >
   <a
     href={note.id ? `/${username}/${encodeURIComponent(note.title)}` : undefined}

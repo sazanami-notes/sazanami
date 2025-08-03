@@ -1,14 +1,13 @@
-import type { PageServerLoad } from './$types';
-import { getNoteBySlug } from '$lib/server/db';
+import { getNoteById } from '$lib/server/db';
 import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load = async ({ locals, params }) => {
   if (!locals.user) {
     throw error(401, 'Unauthorized');
   }
   
   try {
-    const note = await getNoteBySlug(locals.user.id, params.username, params.notetitle);
+    const note = await getNoteById(locals.user.id, params.id);
     if (!note) {
       throw error(404, 'Note not found');
     }

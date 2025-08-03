@@ -1,52 +1,19 @@
-import { redirect, type RequestEvent } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
-import { notes, user } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { ulid } from 'ulid';
-import { generateSlug } from '$lib/utils/slug';
-
-export const load = async ({ locals }: RequestEvent) => {
-  if (!locals.session) {
-    throw redirect(302, '/login');
-  }
-  return { initialContent: '# New Note' };
-};
+import { db } from '$lib/server/db/connection';
+import { error } from '@sveltejs/kit';
 
 export const actions = {
-  default: async ({ request, locals }: RequestEvent) => {
+  default: async ({ request, locals }) => {
+    if (!locals.user) {
+      throw error(401, 'Unauthorized');
+    }
+    
     const formData = await request.formData();
-    const title = formData.get('title') as string;
-    const content = formData.get('content') as string;
-    const userId = locals.session?.userId;
+    const title = formData.get('title')?.toString() || 'Untitled Note';
+    const content = formData.get('content')?.toString() || '';
+    const isPublic = formData.get('isPublic') === 'on';
     
-    if (!userId) {
-      throw redirect(302, '/login');
-    }
+    // Create note logic would go here
     
-    // ユーザー名を取得
-    const [userData] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, userId));
-      
-    if (!userData) {
-      throw redirect(302, '/login');
-    }
-    
-    const slug = generateSlug(title);
-    const newNoteId = ulid();
-    
-    await db.insert(notes).values({
-      id: newNoteId,
-      userId,
-      title,
-      content,
-      slug,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isPublic: false
-    });
-    
-    return redirect(302, `/${userData.name}/${slug}`);
+    return { success: true };
   }
 };
