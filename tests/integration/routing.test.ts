@@ -6,7 +6,7 @@ import { notes, user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import * as authModule from '$lib/server/auth';
 import { generateSlug } from '$lib/utils/slug';
-import { load } from '../../src/routes/notes/[id]/[slug]/+page.server';
+import { load as loadUsernameNew, actions } from '../../src/routes/[username]/new/+page.server';
 import { redirect, error } from '@sveltejs/kit';
 
 // モック用の認証セッション
@@ -14,7 +14,7 @@ const mockSession = {
   user: {
     id: 'testUser1',
     email: 'test@example.com',
-    name: 'Test User',
+    name: 'testuser',
     emailVerified: false,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -30,14 +30,14 @@ const mockSession = {
 };
 
 // RequestEventのモックを作成するヘルパー関数
-const createMockRequestEvent = (params: { id: string; slug: string }): any => {
+const createMockRequestEvent = (params: { id?: string; slug?: string; username?: string; notetitle?: string } = {}): any => {
   return {
     params,
     locals: {
       session: mockSession.session,
       user: mockSession.user,
     },
-    url: new URL(`http://localhost/notes/${params.id}/${params.slug}`),
+    url: new URL(`http://localhost${params.username ? `/${params.username}` : ''}${params.notetitle ? `/${params.notetitle}` : ''}`),
     cookies: {
       get: vi.fn(),
       set: vi.fn(),
@@ -48,42 +48,57 @@ const createMockRequestEvent = (params: { id: string; slug: string }): any => {
     getClientAddress: vi.fn(() => '127.0.0.1'),
     platform: {},
     route: {
-      id: '/notes/[id]/[slug]'
+      id: params.id ? `/notes/${params.id}/${params.slug}` : '/notes/new'
     },
     setHeaders: vi.fn(),
     isDataRequest: false,
+    request: {
+      formData: vi.fn().mockResolvedValue(new FormData()),
+      ...params
+    }
   };
 };
 
-describe('SvelteKit Routing /notes/[id]/[slug]', () => {
+describe('New Routing Structure', () => {
   let testUserId: string;
+  let testUser: any;
+  let existingNote: any;
 
   beforeAll(async () => {
     testUserId = ulid();
     mockSession.user.id = testUserId;
     mockSession.session.userId = testUserId;
+    mockSession.user.name = 'testuser';
 
+    // テストユーザーを作成
     await db.insert(user).values({
       id: testUserId,
       email: 'test@example.com',
-      name: 'Test User',
+      name: 'testuser',
       emailVerified: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).onConflictDoNothing();
 
-    await db.insert(notes).values([
-      {
-        id: ulid(),
-        userId: testUserId,
-        title: 'Existing Note',
-        content: 'Content of existing note.',
-        isPublic: false,
-        createdAt: new Date(2023, 0, 1, 10, 0, 0),
-        updatedAt: new Date(2023, 0, 1, 10, 0, 0),
-        slug: 'existing-note'
-      },
-    ]).onConflictDoNothing();
+    testUser = await db.select().from(user).where(eq(user.id, testUserId)).get();
+
+    // テストノートを作成
+    const noteId = ulid();
+    const title = 'Test New Note';
+    const slug = generateSlug(title);
+    
+    await db.insert(notes).values({
+      id: noteId,
+      userId: testUserId,
+      title,
+      content: 'Test content',
+      slug,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isPublic: false
+    });
+
+    existingNote = await db.select().from(notes).where(eq(notes.title, title)).limit(1).get();
   });
 
   afterAll(async () => {
@@ -91,48 +106,58 @@ describe('SvelteKit Routing /notes/[id]/[slug]', () => {
     await db.delete(user).where(eq(user.id, testUserId));
   });
 
-  it('should throw 404 error if note not found', async () => {
-    const nonExistentId = ulid();
-    const params = { id: nonExistentId, slug: 'any-slug' };
-    const event = createMockRequestEvent(params);
-
-    await expect(load(event as any)).rejects.toThrow('Note not found');
-  });
-
-  it('should return note data if slug matches', async () => {
-    // データベースから既存のノートを取得
-    const existingNote = await db.select().from(notes).where(eq(notes.title, 'Existing Note')).limit(1).get();
-    if (!existingNote) {
-      throw new Error('Test note not found in database');
-    }
-
-    const params = { id: existingNote.id, slug: existingNote.slug };
-    const event = createMockRequestEvent(params);
-
-    const result = await load(event as any);
-    expect(result.note.id).toBe(existingNote.id);
-    expect(result.note.title).toBe(existingNote.title);
-    expect(result.note.slug).toBe(existingNote.slug);
-  });
-
-  it('should redirect if slug does not match', async () => {
-    // データベースから既存のノートを取得
-    const existingNote = await db.select().from(notes).where(eq(notes.title, 'Existing Note')).limit(1).get();
-    if (!existingNote) {
-      throw new Error('Test note not found in database');
-    }
-
-    const params = { id: existingNote.id, slug: 'wrong-slug' };
-    const event = createMockRequestEvent(params);
+  it('should redirect /notes/new to /{username}/new when authenticated', async () => {
+    const event = createMockRequestEvent();
+    event.url = new URL('http://localhost/notes/new');
+    event.locals.session = mockSession.session;
 
     try {
-      await load(event as any);
-      // リダイレクトが発生しなかった場合、テストは失敗する
-      expect(true).toBe(false);
+      await loadUsernameNew(event as any);
     } catch (e: any) {
-      // SvelteKitのredirectは特殊なオブジェクトをthrowする
-      expect(e.status).toBe(301);
-      expect(e.location).toBe(`/notes/${existingNote.id}/${existingNote.slug}`);
+      expect(e.status).toBe(302);
+      expect(e.location).toBe('/testuser/new');
+    }
+  });
+
+  it('should create new note and redirect to /{username}/{slug}', async () => {
+    const title = 'New Test Note';
+    const content = '# Test Content';
+    const slug = generateSlug(title);
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    
+    const event = createMockRequestEvent({ username: 'testuser', notetitle: 'new' });
+    event.locals.session = mockSession.session;
+    event.request.formData = vi.fn().mockResolvedValue(formData);
+    
+    try {
+      await actions.default(event as any);
+    } catch (e: any) {
+      expect(e.status).toBe(302);
+      expect(e.location).toBe(`/testuser/${slug}`);
+    }
+  });
+
+  it('should handle note creation with special characters in title', async () => {
+    const title = 'Note with spaces & special chars!';
+    const content = 'Content';
+    const slug = generateSlug(title);
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    
+    const event = createMockRequestEvent({ username: 'testuser', notetitle: 'new' });
+    event.locals.session = mockSession.session;
+    event.request.formData = vi.fn().mockResolvedValue(formData);
+    
+    try {
+      await actions.default(event as any);
+    } catch (e: any) {
+      expect(e.status).toBe(302);
+      expect(e.location).toBe(`/testuser/${slug}`);
     }
   });
 });

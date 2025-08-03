@@ -44,14 +44,15 @@ export const GET: RequestHandler = async ({ url, request }) => {
         const exactMatch = foundNotes.find(note => generateSlug(note.title) === searchSlug);
 
         if (exactMatch) {
-            // slugを除外してidとtitleのみを返す
-            const { slug, ...exactMatchWithoutSlug } = exactMatch;
-            return json(exactMatchWithoutSlug);
+            return json({
+                username: session.user.name,
+                title: exactMatch.title
+            });
         } else {
-            // 完全一致がない場合、最初の（最新の）部分一致を返す
-            // slugを除外してidとtitleのみを返す
-            const { slug, ...firstMatchWithoutSlug } = foundNotes[0];
-            return json(firstMatchWithoutSlug);
+            return json({
+                username: session.user.name,
+                title: foundNotes[0].title
+            });
         }
 
     } catch (error) {

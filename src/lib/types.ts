@@ -25,4 +25,5 @@ export interface NotesResponse {
 export interface ResolvedLink {
 	id: string;
 	title: string;
+	slug: string;
 }
