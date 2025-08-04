@@ -28,7 +28,7 @@
 					error = apiError.message || 'ログインに失敗しました。';
 				} else {
 					// ログイン成功後、リダイレクト
-					await console.log('ログイン成功:', data);
+					console.log('ログイン成功:', data);
 					await goto('/');
 				}
 			} else {
