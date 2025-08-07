@@ -6,32 +6,46 @@ import { generateSlug } from '$lib/utils/slug';
 import { ulid } from 'ulid';
 import { getUserByName } from '$lib/server/db';
 
-export const load = async ({ params, request, cookies }) => {
+export const load = async ({ params, request, cookies, locals }) => {
 	console.log('Loading new note page for user:', params.username);
 	
 	try {
-		// Get session data
-		const sessionData = await auth.api.getSession({
-			headers: request.headers,
-			cookies
-		});
-
-		console.log('Session data:', sessionData ? 'Found' : 'Not found');
-
-		if (!sessionData?.session) {
-			console.log('No session, redirecting to login');
+		// Get user from locals (set in hooks.server.ts)
+		const user = locals.user;
+		
+		// Fallback to getting session directly if not in locals
+		if (!user) {
+			console.log('User not in locals, getting session directly');
+			const sessionData = await auth.api.getSession({
+				headers: request.headers,
+				cookies
+			});
+			
+			if (!sessionData?.session) {
+				console.log('No session, redirecting to login');
+				throw redirect(302, '/login');
+			}
+			
+			// Use the user from the session
+			locals.user = sessionData.user;
+		}
+		
+		if (!locals.user) {
+			console.log('Still no user after fallback, redirecting to login');
 			throw redirect(302, '/login');
 		}
+		
+		console.log('User found:', locals.user.name);
 
 		// Ensure the username in the URL matches the logged-in user
-		if (params.username !== sessionData.user.name) {
+		if (params.username !== locals.user.name) {
 			console.log('Username mismatch, redirecting to correct URL');
-			throw redirect(302, `/${sessionData.user.name}/new`);
+			throw redirect(302, `/${locals.user.name}/new`);
 		}
 
 		console.log('New note page loaded successfully');
 		return {
-			user: sessionData.user
+			user: locals.user
 		};
 	} catch (err) {
 		console.error('Error in new note page load:', err);
@@ -43,20 +57,36 @@ export const load = async ({ params, request, cookies }) => {
 };
 
 export const actions = {
-	default: async ({ request, params, cookies }) => {
+	default: async ({ request, params, cookies, locals }) => {
 		console.log('Processing new note form submission');
 		
 		try {
-			// Get session data
-			const sessionData = await auth.api.getSession({
-				headers: request.headers,
-				cookies
-			});
-
-			if (!sessionData?.session) {
-				console.log('No session, redirecting to login');
+			// Get user from locals (set in hooks.server.ts)
+			const user = locals.user;
+			
+			// Fallback to getting session directly if not in locals
+			if (!user) {
+				console.log('User not in locals, getting session directly');
+				const sessionData = await auth.api.getSession({
+					headers: request.headers,
+					cookies
+				});
+				
+				if (!sessionData?.session) {
+					console.log('No session, redirecting to login');
+					throw redirect(302, '/login');
+				}
+				
+				// Use the user from the session
+				locals.user = sessionData.user;
+			}
+			
+			if (!locals.user) {
+				console.log('Still no user after fallback, redirecting to login');
 				throw redirect(302, '/login');
 			}
+			
+			console.log('User found:', locals.user.name);
 
 			// Get form data
 			const formData = await request.formData();
@@ -67,14 +97,20 @@ export const actions = {
 			console.log('Form data received - Title:', title, 'Content length:', content.length, 'Public:', isPublic);
 
 			// Ensure the username in the URL matches the logged-in user
-			if (params.username !== sessionData.user.name) {
+			if (params.username !== locals.user.name) {
 				console.log('Username mismatch');
 				throw error(403, 'You do not have permission to create notes for this user');
 			}
 
 			// Generate note ID and slug
 			const noteId = ulid();
-			const slug = generateSlug(title);
+			let slug = generateSlug(title);
+			
+			// Make sure slug is not empty
+			if (!slug || slug.trim() === '') {
+				slug = `note-${noteId.toLowerCase().substring(0, 8)}`;
+			}
+			
 			const now = new Date();
 
 			console.log('Creating note with ID:', noteId, 'Slug:', slug);
@@ -82,7 +118,7 @@ export const actions = {
 			// Create the note
 			await db.insert(notes).values({
 				id: noteId,
-				userId: sessionData.user.id,
+				userId: locals.user.id,
 				title,
 				content,
 				slug,
