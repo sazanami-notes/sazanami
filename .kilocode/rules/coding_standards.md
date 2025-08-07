@@ -1,8 +1,8 @@
 # コーディング規約
 
 ## 基本原則
-常に最新のドキュメントを確認しながらコーディングをしてください。
 
+常に最新のドキュメントを確認しながらコーディングをしてください。
 
 - 可読性と保守性を重視したコードを書く。
 - 一貫性のある命名規則とフォーマットを使用する。
@@ -18,15 +18,19 @@
 ## 命名規則
 
 ### 変数・関数
+
 - `camelCase` を使用する (例: `userName`, `getUserData`)。
 
 ### 定数
+
 - `UPPER_SNAKE_CASE` を使用する (例: `MAX_RETRY_COUNT`)。
 
 ### クラス・インターフェース
+
 - `PascalCase` を使用する (例: `UserService`, `NoteInterface`)。
 
 ### ファイル名
+
 - **Svelteコンポーネント:** `PascalCase.svelte` (例: `MemoCard.svelte`)
 - **その他のTypeScriptファイル:** `kebab-case.ts` (例: `auth-client.ts`)
 
@@ -51,9 +55,11 @@
 ## データベース (Drizzle ORM)
 
 ### テーブル名
+
 - `snake_case` の複数形を使用する (例: `notes`, `note_tags`)。
 
 ### カラム名
+
 - `snake_case` を使用する (例: `user_id`, `created_at`)。
 
 ## APIエンドポイント

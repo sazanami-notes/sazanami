@@ -42,8 +42,7 @@
 				if (apiError) {
 					error = apiError.message || '登録に失敗しました。';
 				} else {
-					message =
-						'登録が完了しました。ログインしてください。';
+					message = '登録が完了しました。ログインしてください。';
 					// 必要であればログインページに留まるか、特定のページに遷移
 					// await goto('/some-page');
 				}

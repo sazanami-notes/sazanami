@@ -4,15 +4,14 @@ MarkdownでかけるScrapBoxを基本コンセプトとしたノートテイキ�
 
 - [Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
 
-
 > [!WARNING]
 > Ver1.0.0までは破壊的変更を頻繁に行います。
 
 Sazanamiの思想・構想などなど
 
 kilocodeのMemory Bankに入れてます。
-- **[brief.md](.kilocode\rules\memory-bank\brief.md)**
 
+- **[brief.md](.kilocode\rules\memory-bank\brief.md)**
 
 ## ドキュメント
 

@@ -17,13 +17,8 @@
 </script>
 
 <div class="relative">
-	<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-		<svg
-			class="h-5 w-5 text-gray-400"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
+	<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+		<svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 			<path
 				stroke-linecap="round"
 				stroke-linejoin="round"
@@ -37,7 +32,7 @@
 		bind:value={searchQuery}
 		on:keydown={handleKeydown}
 		placeholder="メモを検索..."
-		class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+		class="block w-full rounded-lg border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-blue-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:outline-none"
 	/>
 	{#if searchQuery}
 		<button
@@ -45,7 +40,7 @@
 				searchQuery = '';
 				handleSearch();
 			}}
-			class="absolute inset-y-0 right-0 pr-3 flex items-center"
+			class="absolute inset-y-0 right-0 flex items-center pr-3"
 			aria-label="クリア"
 		>
 			<svg

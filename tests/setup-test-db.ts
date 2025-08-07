@@ -9,8 +9,8 @@ export const db = drizzle(sqlite, { schema });
 
 // スキーマからテーブルを作成する関数
 export async function createTables() {
-  // notes テーブルのスキーマを直接作成
-  sqlite.exec(`
+	// notes テーブルのスキーマを直接作成
+	sqlite.exec(`
     CREATE TABLE IF NOT EXISTS notes (
       id TEXT PRIMARY KEY NOT NULL,
       user_id TEXT NOT NULL,
@@ -23,8 +23,8 @@ export async function createTables() {
     );
   `);
 
-  // user テーブルのスキーマを直接作成
-  sqlite.exec(`
+	// user テーブルのスキーマを直接作成
+	sqlite.exec(`
     CREATE TABLE IF NOT EXISTS user (
       id TEXT PRIMARY KEY NOT NULL,
       name TEXT NOT NULL,
@@ -39,6 +39,6 @@ export async function createTables() {
 
 // テーブルを削除する関数（テストのクリーンアップ用）
 export async function dropTables() {
-  sqlite.exec(`DROP TABLE IF EXISTS notes;`);
-  sqlite.exec(`DROP TABLE IF EXISTS user;`);
+	sqlite.exec(`DROP TABLE IF EXISTS notes;`);
+	sqlite.exec(`DROP TABLE IF EXISTS user;`);
 }

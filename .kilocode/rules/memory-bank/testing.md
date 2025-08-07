@@ -3,18 +3,21 @@
 ## テストの種類
 
 ### ユニットテスト
+
 - 個々の関数やコンポーネントの動作を検証する
 - データベース操作やAPI呼び出しをモックする
 - テストフレームワーク: Vitest
 - モックライブラリ: @vitest/mock
 
 ### インテグレーションテスト
+
 - 複数のコンポーネントやモジュールの連携を検証する
 - データベースとのやり取りを検証する
 - APIエンドポイントの動作を検証する
 - テストフレームワーク: Vitest
 
 ### E2Eテスト
+
 - ユーザーの操作フロー全体を検証する
 - ブラウザ上で実際にアプリケーションを操作してテストする
 - テストフレームワーク: Playwright
@@ -46,31 +49,32 @@ sazanami/
 4. 期待する結果と実際の結果を比較する
 
 例:
+
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
 import { getNoteById } from '../src/lib/server/db';
 
 // モックの作成
 vi.mock('../src/lib/server/db', () => ({
-  getNoteById: vi.fn()
+	getNoteById: vi.fn()
 }));
 
 describe('getNoteById', () => {
-  it('should return a note when given a valid id', async () => {
-    // モックの戻り値を設定
-    (getNoteById as vi.Mock).mockResolvedValue({
-      id: '1',
-      title: 'Test Note',
-      content: 'This is a test note.'
-    });
+	it('should return a note when given a valid id', async () => {
+		// モックの戻り値を設定
+		(getNoteById as vi.Mock).mockResolvedValue({
+			id: '1',
+			title: 'Test Note',
+			content: 'This is a test note.'
+		});
 
-    const note = await getNoteById('1');
-    expect(note).toEqual({
-      id: '1',
-      title: 'Test Note',
-      content: 'This is a test note.'
-    });
-  });
+		const note = await getNoteById('1');
+		expect(note).toEqual({
+			id: '1',
+			title: 'Test Note',
+			content: 'This is a test note.'
+		});
+	});
 });
 ```
 
@@ -83,26 +87,27 @@ describe('getNoteById', () => {
 5. テストデータをクリーンアップする
 
 例:
+
 ```typescript
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { app } from '../src/app';
 import { setupTestDB, teardownTestDB } from './test-utils';
 
 describe('GET /api/notes', () => {
-  beforeAll(async () => {
-    await setupTestDB();
-  });
+	beforeAll(async () => {
+		await setupTestDB();
+	});
 
-  afterAll(async () => {
-    await teardownTestDB();
-  });
+	afterAll(async () => {
+		await teardownTestDB();
+	});
 
-  it('should return a list of notes', async () => {
-    const response = await app.request('/api/notes');
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(Array.isArray(data.notes)).toBe(true);
-  });
+	it('should return a list of notes', async () => {
+		const response = await app.request('/api/notes');
+		expect(response.status).toBe(200);
+		const data = await response.json();
+		expect(Array.isArray(data.notes)).toBe(true);
+	});
 });
 ```
 
@@ -116,52 +121,57 @@ describe('GET /api/notes', () => {
 6. ブラウザを終了する
 
 例:
+
 ```typescript
 import { test, expect } from '@playwright/test';
 
 test('should create a new note', async ({ page }) => {
-  // ログインページにアクセス
-  await page.goto('/login');
-  
-  // ログイン情報を入力
-  await page.fill('input[name="email"]', 'test@test.com');
-  await page.fill('input[name="password"]', 'testtest');
-  await page.click('button[type="submit"]');
-  
-  // ノート一覧ページに遷移
-  await page.goto('/notes');
-  
-  // 新規ノート作成ボタンをクリック
-  await page.click('button:has-text("新規メモ作成")');
-  
-  // ノート情報を入力
-  await page.fill('input[name="title"]', 'Test Note');
-  await page.fill('textarea[name="content"]', 'This is a test note.');
-  await page.click('button[type="submit"]');
-  
-  // ノートが作成されたことを確認
-  await expect(page.locator('h1:has-text("Test Note")')).toBeVisible();
+	// ログインページにアクセス
+	await page.goto('/login');
+
+	// ログイン情報を入力
+	await page.fill('input[name="email"]', 'test@test.com');
+	await page.fill('input[name="password"]', 'testtest');
+	await page.click('button[type="submit"]');
+
+	// ノート一覧ページに遷移
+	await page.goto('/notes');
+
+	// 新規ノート作成ボタンをクリック
+	await page.click('button:has-text("新規メモ作成")');
+
+	// ノート情報を入力
+	await page.fill('input[name="title"]', 'Test Note');
+	await page.fill('textarea[name="content"]', 'This is a test note.');
+	await page.click('button[type="submit"]');
+
+	// ノートが作成されたことを確認
+	await expect(page.locator('h1:has-text("Test Note")')).toBeVisible();
 });
 ```
 
 ## テストの実行方法
 
 ### すべてのテストを実行
+
 ```bash
 npm run test
 ```
 
 ### ユニットテストのみ実行
+
 ```bash
 npm run test:unit
 ```
 
 ### インテグレーションテストのみ実行
+
 ```bash
 npm run test:integration
 ```
 
 ### E2Eテストのみ実行
+
 ```bash
 npm run test:e2e
 ```

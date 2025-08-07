@@ -7,7 +7,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { BETTER_AUTH_SECRET } from '$env/static/private';
 import { db } from './db/connection';
 import * as schema from './db/auth-schema';
-import { getRequestEvent } from "$app/server";
+import { getRequestEvent } from '$app/server';
 
 export const auth = betterAuth({
 	emailAndPassword: {

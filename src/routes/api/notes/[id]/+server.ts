@@ -39,7 +39,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 
 		const noteWithTags = {
 			...note[0],
-			tags: noteTagsList.map(nt => nt.name).filter(Boolean)
+			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
 		return json(noteWithTags);
@@ -66,7 +66,11 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		if (typeof body !== 'object' || body === null) {
 			return new Response('Invalid request body', { status: 400 });
 		}
-		const { title, content, tags: tagNames } = body as { title?: string; content?: string; tags?: string[] };
+		const {
+			title,
+			content,
+			tags: tagNames
+		} = body as { title?: string; content?: string; tags?: string[] };
 
 		// ノートが存在するか確認
 		const existingNote = await db
@@ -80,15 +84,15 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		const now = new Date();
-        const updatedTitle = title !== undefined ? title : existingNote[0].title;
-        const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
+		const updatedTitle = title !== undefined ? title : existingNote[0].title;
+		const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
 
 		// ノートを更新
 		await db
 			.update(notes)
 			.set({
 				title: updatedTitle,
-                slug: updatedSlug, // スラッグを更新
+				slug: updatedSlug, // スラッグを更新
 				content: content !== undefined ? content : existingNote[0].content,
 				updatedAt: now
 			})
@@ -103,15 +107,12 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				if (!tagName || !tagName.trim()) continue;
 
 				const trimmedTagName = tagName.trim();
-				
+
 				// タグが存在するか確認
-				const existingTag = await db
-					.select()
-					.from(tags)
-					.where(eq(tags.name, trimmedTagName));
+				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
 
 				let tagId: string;
-				
+
 				if (existingTag.length === 0) {
 					// 新規タグを作成
 					tagId = ulid();
@@ -147,7 +148,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		const noteWithTags = {
 			...updatedNote[0],
-			tags: noteTagsList.map(nt => nt.name).filter(Boolean)
+			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
 		return json(noteWithTags);
@@ -185,7 +186,9 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
 
 		// ノートを削除
-		await db.delete(notes).where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+		await db
+			.delete(notes)
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
 		return new Response(null, { status: 204 });
 	} catch (error) {

@@ -24,40 +24,42 @@
  * @returns {string} 生成されたURLフレンドリーなスラッグ。
  */
 export function generateSlug(title: string): string {
-  // 1. 文字列をトリムし、前後の空白を除去します。
-  let slug = title.trim();
+	// 1. 文字列をトリムし、前後の空白を除去します。
+	let slug = title.trim();
 
-  // 2. 全角英数字・記号を半角に変換します。
-  slug = slug
-    .normalize('NFKC') // Unicode正規化（互換文字の正規化）
-    .replace(/[\uFF01-\uFF5E]/g, (match) => { // 全角記号・英数字を半角に
-      return String.fromCharCode(match.charCodeAt(0) - 0xFEE0);
-    })
-    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (match) => { // 全角英数字を半角に
-      return String.fromCharCode(match.charCodeAt(0) - 0xFEE0);
-    });
+	// 2. 全角英数字・記号を半角に変換します。
+	slug = slug
+		.normalize('NFKC') // Unicode正規化（互換文字の正規化）
+		.replace(/[\uFF01-\uFF5E]/g, (match) => {
+			// 全角記号・英数字を半角に
+			return String.fromCharCode(match.charCodeAt(0) - 0xfee0);
+		})
+		.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (match) => {
+			// 全角英数字を半角に
+			return String.fromCharCode(match.charCodeAt(0) - 0xfee0);
+		});
 
-  // 3. 小文字に変換します。
-  slug = slug.toLowerCase();
+	// 3. 小文字に変換します。
+	slug = slug.toLowerCase();
 
-  // 4. スペース、アンダースコアをハイフンに置換します。
-  slug = slug.replace(/[\s_]+/g, '-');
+	// 4. スペース、アンダースコアをハイフンに置換します。
+	slug = slug.replace(/[\s_]+/g, '-');
 
-  // 5. 連続するハイフンを1つのハイフンにまとめます。
-  slug = slug.replace(/--+/g, '-');
+	// 5. 連続するハイフンを1つのハイフンにまとめます。
+	slug = slug.replace(/--+/g, '-');
 
-  // 6. ハイフン以外の特殊文字をすべて除去します。（日本語もここで除去されます）
-  // これにより、URLとして安全な文字（a-z, 0-9, ハイフン）のみが残ります。
-  slug = slug.replace(/[^a-z0-9-]/g, '');
+	// 6. ハイフン以外の特殊文字をすべて除去します。（日本語もここで除去されます）
+	// これにより、URLとして安全な文字（a-z, 0-9, ハイフン）のみが残ります。
+	slug = slug.replace(/[^a-z0-9-]/g, '');
 
-  // 7. 先頭または末尾のハイフンを除去します。
-  slug = slug.replace(/^-+|-+$/g, '');
+	// 7. 先頭または末尾のハイフンを除去します。
+	slug = slug.replace(/^-+|-+$/g, '');
 
-  // 8. 特殊文字を除去した後、再度連続するハイフンを1つのハイフンにまとめます。
-  slug = slug.replace(/--+/g, '-');
+	// 8. 特殊文字を除去した後、再度連続するハイフンを1つのハイフンにまとめます。
+	slug = slug.replace(/--+/g, '-');
 
-  // 9. 再度、先頭または末尾のハイフンを除去します。
-  slug = slug.replace(/^-+|-+$/g, '');
+	// 9. 再度、先頭または末尾のハイフンを除去します。
+	slug = slug.replace(/^-+|-+$/g, '');
 
-  return slug;
+	return slug;
 }

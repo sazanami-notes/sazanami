@@ -5,11 +5,11 @@ import { configDefaults } from 'vitest/config'; // configDefaults をインポ�
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-  test: {
-    include: [...configDefaults.include, 'tests/**/*.{test,spec}.{js,ts}'], // テストファイルのパターン
-    alias: {
-      '$lib/server/db': './tests/setup-test-db.ts', // $lib/server/db をテスト用の db にエイリアス
-    },
-    setupFiles: ['./tests/setup-test-env.ts'], // テスト環境のセットアップファイルを指定
-  }
+	test: {
+		include: [...configDefaults.include, 'tests/**/*.{test,spec}.{js,ts}'], // テストファイルのパターン
+		alias: {
+			'$lib/server/db': './tests/setup-test-db.ts' // $lib/server/db をテスト用の db にエイリアス
+		},
+		setupFiles: ['./tests/setup-test-env.ts'] // テスト環境のセットアップファイルを指定
+	}
 });

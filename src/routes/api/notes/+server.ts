@@ -29,10 +29,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.where(
 					and(
 						eq(notes.userId, session.session.userId),
-						or(
-							like(notes.title, `%${search}%`),
-							like(notes.content, `%${search}%`)
-						)
+						or(like(notes.title, `%${search}%`), like(notes.content, `%${search}%`))
 					)
 				)
 				.orderBy(desc(notes.updatedAt))
@@ -59,7 +56,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 
 				return {
 					...note,
-					tags: noteTagsList.map(nt => nt.name).filter(Boolean)
+					tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 				};
 			})
 		);
@@ -73,10 +70,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.where(
 					and(
 						eq(notes.userId, session.session.userId),
-						or(
-							like(notes.title, `%${search}%`),
-							like(notes.content, `%${search}%`)
-						)
+						or(like(notes.title, `%${search}%`), like(notes.content, `%${search}%`))
 					)
 				);
 		} else {
@@ -115,14 +109,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			console.error('JSON parse error:', parseError);
 			return json({ message: 'Invalid JSON format' }, { status: 400 });
 		}
-		
+
 		// [デバッグ用ログ] 受信したリクエストボディを確認
 		console.log('Received request to create note with body:', body);
 
 		if (typeof body !== 'object' || body === null) {
 			return json({ message: 'Invalid request body' }, { status: 400 });
 		}
-		const { id, title, content, tags: tagNames } = body as { id?: string; title?: string; content?: string; tags?: string[] };
+		const {
+			id,
+			title,
+			content,
+			tags: tagNames
+		} = body as { id?: string; title?: string; content?: string; tags?: string[] };
 
 		// IDのバリデーション
 		let noteId: string;
@@ -139,15 +138,15 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		const now = new Date();
-        const noteTitle = title || 'Untitled Note';
-        const noteSlug = generateSlug(noteTitle); // スラッグを生成
+		const noteTitle = title || 'Untitled Note';
+		const noteSlug = generateSlug(noteTitle); // スラッグを生成
 
 		// 新規メモを作成
 		await db.insert(notes).values({
 			id: noteId,
 			userId: session.session.userId,
 			title: noteTitle,
-            slug: noteSlug, // スラッグを保存
+			slug: noteSlug, // スラッグを保存
 			content: content || '',
 			createdAt: now,
 			updatedAt: now,
@@ -160,15 +159,12 @@ export const POST: RequestHandler = async ({ request }) => {
 				if (!tagName || !tagName.trim()) continue;
 
 				const trimmedTagName = tagName.trim();
-				
+
 				// タグが存在するか確認
-				const existingTag = await db
-					.select()
-					.from(tags)
-					.where(eq(tags.name, trimmedTagName));
+				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
 
 				let tagId: string;
-				
+
 				if (existingTag.length === 0) {
 					// 新規タグを作成
 					tagId = ulid();
@@ -189,11 +185,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		}
 
-		const newNote = await db
-			.select()
-			.from(notes)
-			.where(eq(notes.id, noteId))
-			.limit(1);
+		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
 
 		return json(newNote[0], { status: 201 });
 	} catch (error) {
