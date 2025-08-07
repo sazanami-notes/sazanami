@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { signIn, signUp } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 
 	let mode: 'login' | 'register' = 'login';
 	let name = '';
@@ -30,7 +31,10 @@
 					// ユーザー名を取得してリダイレクト
 					const username = data.user?.name;
 					if (username) {
-						await goto(`/${username}`);
+						// Invalidate all data to ensure fresh data is loaded
+						await invalidateAll();
+						// Redirect to user page using window.location for a full page reload
+						window.location.href = `/${username}`;
 					} else {
 						// ユーザー名が取得できない場合はルートにリダイレクト
 						await goto('/');

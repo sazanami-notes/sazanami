@@ -3,31 +3,51 @@
 	import { page } from '$app/stores';
 	import type { Note } from '$lib/types';
 	import { generateSlug } from '$lib/utils/slug';
-	import { get } from 'svelte/store';
+	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
 
 	let title = '';
 	let content = '';
 	let isPublic = false;
 	let tags: string[] = [];
 
+	const handleContentChange = (value: string) => {
+		content = value;
+	};
+
 	const handleSubmit = async () => {
 		const slug = generateSlug(title);
-		const sessionData = get(page).data;
+		const userData = $page.data.user;
 
-		const note: Note = {
-			id: '',
-			userId: sessionData.session?.user?.id || '',
-			title,
-			content,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			isPublic,
-			tags,
-			slug
-		};
+		if (!userData || !userData.id) {
+			console.error('User data not available');
+			return;
+		}
 
-		// API call to create note would go here
-		await goto(`/${sessionData.session?.user?.username}/${slug}`);
+		try {
+			const response = await fetch('/api/notes', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					title,
+					content,
+					isPublic,
+					tags
+				})
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.message || 'Failed to create note');
+			}
+
+			const newNote = await response.json();
+			await goto(`/${userData.name}/${newNote.slug || slug}`);
+		} catch (error) {
+			console.error('Error creating note:', error);
+			alert('Failed to create note. Please try again.');
+		}
 	};
 </script>
 
@@ -41,12 +61,9 @@
 			class="mb-4 w-full rounded border p-2"
 			required
 		/>
-		<textarea
-			bind:value={content}
-			placeholder="Content (Markdown)"
-			class="mb-4 h-64 w-full rounded border p-2"
-			required
-		></textarea>
+		<div class="mb-4 h-64 w-full">
+			<MilkdownEditor content={content} onChange={handleContentChange} />
+		</div>
 		<div class="mb-4 flex items-center">
 			<input type="checkbox" bind:checked={isPublic} id="isPublic" class="mr-2" />
 			<label for="isPublic">Public</label>
