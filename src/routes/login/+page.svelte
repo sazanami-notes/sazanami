@@ -19,28 +19,35 @@
 
 		try {
 			if (mode === 'login') {
+				console.log('Attempting login with email:', email);
 				const { data, error: apiError } = await signIn.email({
 					email,
 					password
 				});
 
 				if (apiError) {
+					console.error('Login error:', apiError);
 					error = apiError.message || 'ログインに失敗しました。';
 				} else {
-					console.log('ログイン成功:', data);
+					console.log('Login successful:', data);
 					// ユーザー名を取得してリダイレクト
 					const username = data.user?.name;
 					if (username) {
+						console.log('Redirecting to user page:', username);
 						// Invalidate all data to ensure fresh data is loaded
 						await invalidateAll();
+						// Add a small delay to ensure invalidation completes
+						await new Promise(resolve => setTimeout(resolve, 100));
 						// Redirect to user page using window.location for a full page reload
 						window.location.href = `/${username}`;
 					} else {
+						console.log('Username not found, redirecting to home');
 						// ユーザー名が取得できない場合はルートにリダイレクト
 						await goto('/');
 					}
 				}
 			} else {
+				console.log('Attempting registration with email:', email);
 				const { data, error: apiError } = await signUp.email({
 					name,
 					email,
@@ -48,14 +55,18 @@
 				});
 
 				if (apiError) {
+					console.error('Registration error:', apiError);
 					error = apiError.message || '登録に失敗しました。';
 				} else {
+					console.log('Registration successful:', data);
 					message = '登録が完了しました。ログインしてください。';
+					// Switch to login mode after successful registration
+					mode = 'login';
 				}
 			}
 		} catch (e: any) {
+			console.error('Unexpected error:', e);
 			error = '予期せぬエラーが発生しました。';
-			console.error(e);
 		} finally {
 			isLoading = false;
 		}
