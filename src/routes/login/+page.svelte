@@ -18,7 +18,6 @@
 
 		try {
 			if (mode === 'login') {
-				// ドキュメント[cite: 9]に沿ったログイン処理
 				const { data, error: apiError } = await signIn.email({
 					email,
 					password
@@ -27,12 +26,17 @@
 				if (apiError) {
 					error = apiError.message || 'ログインに失敗しました。';
 				} else {
-					// ログイン成功後、リダイレクト
 					console.log('ログイン成功:', data);
-					await goto('/');
+					// ユーザー名を取得してリダイレクト
+					const username = data.user?.name;
+					if (username) {
+						await goto(`/${username}`);
+					} else {
+						// ユーザー名が取得できない場合はルートにリダイレクト
+						await goto('/');
+					}
 				}
 			} else {
-				// ドキュメント[cite: 3]に沿った登録処理
 				const { data, error: apiError } = await signUp.email({
 					name,
 					email,
@@ -43,8 +47,6 @@
 					error = apiError.message || '登録に失敗しました。';
 				} else {
 					message = '登録が完了しました。ログインしてください。';
-					// 必要であればログインページに留まるか、特定のページに遷移
-					// await goto('/some-page');
 				}
 			}
 		} catch (e: any) {

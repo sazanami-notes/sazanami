@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll, goto } from '$app/navigation';
-	import type { LayoutData } from '../../routes/$types'; // LayoutDataをインポート
+	import type { LayoutData } from '../../routes/$types';
 	import { authClient } from '$lib/auth-client';
 
 	/**
@@ -9,7 +9,8 @@
 	 * Optimized for vertical displays.
 	 */
 
-	export let session: LayoutData['session']; // LayoutDataからsessionの型を取得
+	export let session: LayoutData['session'];
+	export let user: LayoutData['user'];
 
 	// Placeholder click handlers for future functionality.
 	const handleMenuClick = () => {
@@ -72,8 +73,8 @@
 		</button>
 	</div>
 	<div class="navbar-center">
-		<!-- Application Logo or Title (Optional, can be added later) -->
-		<a class="btn btn-ghost text-xl" href="/">Sazanami</a>
+		<!-- Application Logo or Title -->
+		<a class="btn btn-ghost text-xl" href={user ? `/${user.name}` : '/'}>Sazanami</a>
 	</div>
 	<div class="navbar-end">
 		<button class="btn btn-ghost btn-circle" on:click={handleSearchClick}>
