@@ -18,6 +18,14 @@
 
       console.log('Initializing Milkdown editor...');
       
+      // Set a timeout to ensure editor is marked as ready even if there's an issue
+      const timeoutId = setTimeout(() => {
+        if (!isEditorReady) {
+          console.warn('Editor initialization timed out, forcing ready state');
+          isEditorReady = true;
+        }
+      }, 3000);
+      
       editor = await Editor
         .make()
         .config((ctx) => {
@@ -37,6 +45,12 @@
 
       console.log('Editor created successfully');
       
+      // Clear the timeout since editor was created successfully
+      clearTimeout(timeoutId);
+      
+      // Set editor as ready immediately after creation
+      isEditorReady = true;
+      
       editor.action((ctx) => {
         const view = ctx.get('view');
         if (view) {
@@ -46,31 +60,35 @@
           if (content) {
             console.log('Setting initial content:', content);
             editor?.action((ctx) => {
-              const parser = ctx.get('parser');
-              if (!parser) {
-                console.error('Parser not found');
-                return;
-              }
-              
-              const doc = parser(content);
-              const view = ctx.get('view');
-              if (doc && view) {
-                view.updateState(
-                  view.state.apply(
-                    view.state.tr.replace(0, view.state.doc.content.size, doc)
-                  )
-                );
+              try {
+                const parser = ctx.get('parser');
+                if (!parser) {
+                  console.error('Parser not found');
+                  return;
+                }
+                
+                const doc = parser(content);
+                const view = ctx.get('view');
+                if (doc && view) {
+                  view.updateState(
+                    view.state.apply(
+                      view.state.tr.replace(0, view.state.doc.content.size, doc)
+                    )
+                  );
+                }
+              } catch (err) {
+                console.error('Error setting initial content:', err);
               }
             });
           }
-          
-          isEditorReady = true;
         } else {
           console.error('Editor view not found');
         }
       });
     } catch (error) {
       console.error('Error initializing Milkdown editor:', error);
+      // Mark as ready even if there's an error, so the UI doesn't get stuck
+      isEditorReady = true;
     }
   });
 
