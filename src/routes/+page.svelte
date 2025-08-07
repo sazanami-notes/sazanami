@@ -29,7 +29,7 @@
 	}
 
 	function createNewNote() {
-		const username = get(page).data.user?.username; // name → username に修正
+		const username = get(page).data.user?.name;
 		if (username) {
 			goto(`/${username}/new`);
 		}

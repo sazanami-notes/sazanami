@@ -16,6 +16,8 @@ Sazanamiは、SvelteKitをフレームワークとして採用し、フロント
     - `types.ts`: プロジェクト全体で使われる型定義。
   - `routes/`: SvelteKitのファイルベースルーティング。
     - `api/`: RESTful APIエンドポイント。
+      - `notes/`: ノート関連API
+        - `resolve-link/+server.ts`: Wikiリンク解決API
     - `login/`: ログインページ。
   - `hooks.server.ts`: サーバーサイドのフックを定義。主に認証処理。
 - `drizzle.config.ts`: Drizzle Kitの設定ファイル。
@@ -27,6 +29,9 @@ Sazanamiは、SvelteKitをフレームワークとして採用し、フロント
 - **スタイリング:** Tailwind CSSをベースにしたDaisyUIコンポーネントライブラリを使用し、迅速なUI開発を実現します。
 - **状態管理:** Svelteの組み込みストア (`svelte/store`) を基本的な状態管理に使用します。
 - **Markdown編集:** Milkdownライブラリを導入し、高機能なWYSIWYG Markdownエディタを提供します。
+- **Wikiリンク処理:**
+  - `src/lib/milkdown/wiki-link-plugin.ts`: remark-wiki-linkプラグインを統合し、`[[Wikiリンク]]`表記をサポート
+  - `src/routes/[username]/[notetitle]/+page.svelte`: ノート表示ページでWikiリンクをクリックした際の処理
 
 ## バックエンドアーキテクチャ
 

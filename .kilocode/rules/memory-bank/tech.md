@@ -7,6 +7,7 @@
 - **UIコンポーネント:** [DaisyUI](https://daisyui.com/llms.txt) (Tailwind CSSベース)
 - **CSSフレームワーク:** [Tailwind CSS](https://tailwindcss.com/)
 - **Markdownエディタ:** [Milkdown](https://milkdown.dev/)
+- **Wikiリンク処理:** [remark-wiki-link](https://github.com/landakram/remark-wiki-link) (Milkdownプラグインとして統合)
 
 ## バックエンド
 

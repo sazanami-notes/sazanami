@@ -14,9 +14,12 @@ export const auth = betterAuth({
 		enabled: true
 	},
 	secret: BETTER_AUTH_SECRET,
+	cookie: {
+		path: '/'
+	},
 	plugins: [
 		username(), // usernameプラグインを追加
-		sveltekitCookies(getRequestEvent) // sveltekitCookiesプラグインを追加
+		sveltekitCookies(async () => await getRequestEvent())
 	],
 	database: drizzleAdapter(db, {
 		provider: 'sqlite',
