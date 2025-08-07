@@ -14,7 +14,7 @@ export const notes = sqliteTable('notes', {
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	title: text('title').notNull().default('Untitled Note'),
-	slug: text('slug').notNull().unique(), // スラッグを追加 (デフォルト値はマイグレーションで処理)
+	slug: text('slug').notNull(), // スラッグを追加 (デフォルト値はマイグレーションで処理)
 	content: text('content'), // Markdown本文
 	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(), // 作成日時 (MSタイムスタンプ)
 	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)

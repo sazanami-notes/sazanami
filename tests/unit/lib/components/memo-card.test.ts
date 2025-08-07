@@ -15,7 +15,7 @@ describe('MemoCard', () => {
 			userId: 'test-user-id'
 		} as Note;
 
-		const expectedUrl = `/notes/${note.id}/${generateSlug(note.title)}`;
+		const expectedUrl = `/test-user/${generateSlug(note.title)}`;
 		expect(getNoteDetailUrl(note, 'test-user')).toBe(expectedUrl);
 	});
 
@@ -30,7 +30,7 @@ describe('MemoCard', () => {
 			userId: 'test-user-id'
 		} as Note;
 
-		const expectedUrl = `/notes/${note.id}/${generateSlug(note.title)}`;
+		const expectedUrl = `/test-user/${generateSlug(note.title)}`;
 		expect(getNoteDetailUrl(note, 'test-user')).toBe(expectedUrl);
 	});
 
@@ -45,7 +45,7 @@ describe('MemoCard', () => {
 			userId: 'test-user-id'
 		} as Note;
 
-		const expectedUrl = `/notes/${note.id}/${generateSlug(note.title)}`;
+		const expectedUrl = `/test-user/${generateSlug(note.title)}`;
 		expect(getNoteDetailUrl(note, 'test-user')).toBe(expectedUrl);
 	});
 });

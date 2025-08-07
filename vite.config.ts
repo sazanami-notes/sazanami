@@ -15,9 +15,7 @@ export default defineConfig({
 	},
 	test: {
 		include: [...configDefaults.include, 'tests/**/*.{test,spec}.{js,ts}'], // テストファイルのパターン
-		alias: {
-			'$lib/server/db': './tests/setup-test-db.ts' // $lib/server/db をテスト用の db にエイリアス
-		},
+		alias: {},
 		setupFiles: ['./tests/setup-test-env.ts'] // テスト環境のセットアップファイルを指定
 	}
 });
