@@ -4,34 +4,33 @@ import { auth } from '$lib/server/auth';
 
 export const load = async ({ params, request, cookies, locals }) => {
 	console.log('Loading edit page for note:', params.notetitle);
+	console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+	console.log('Cookies available:', cookies.getAll().map(c => c.name).join(', '));
 	
 	try {
-		// Get session data from locals (set in hooks.server.ts)
-		const user = locals.user;
+		// Get session data directly from auth API
+		console.log('Getting session directly from auth API');
+		const sessionData = await auth.api.getSession({
+			headers: request.headers,
+			cookies
+		});
 		
-		// Fallback to getting session directly if not in locals
-		if (!user) {
-			console.log('User not in locals, getting session directly');
-			const sessionData = await auth.api.getSession({
-				headers: request.headers,
-				cookies
-			});
-			
-			if (!sessionData?.session) {
-				console.log('No session, redirecting to login');
-				throw redirect(302, '/login');
-			}
-			
-			// Use the user from the session
-			locals.user = sessionData.user;
-		}
+		console.log('Session data result:', sessionData ? 'Found' : 'Not found');
 		
-		if (!locals.user) {
-			console.log('Still no user after fallback, redirecting to login');
+		if (!sessionData?.session) {
+			console.log('No session, redirecting to login');
 			throw redirect(302, '/login');
 		}
 		
-		console.log('User found:', locals.user.name);
+		// Always use the user from the direct session check
+		const user = sessionData.user;
+		
+		if (!user) {
+			console.log('No user in session, redirecting to login');
+			throw redirect(302, '/login');
+		}
+		
+		console.log('User found:', user.name);
 
 		// Get user by username
 		const userByName = await getUserByName(params.username);
@@ -48,13 +47,13 @@ export const load = async ({ params, request, cookies, locals }) => {
 		}
 
 		// Check if the current user is the owner of the note
-		if (note.userId !== locals.user.id) {
+		if (note.userId !== user.id) {
 			console.log('User does not own this note');
 			throw error(403, 'You do not have permission to edit this note');
 		}
 
 		console.log('Note loaded successfully');
-		return { note, user: locals.user };
+		return { note, user };
 	} catch (err) {
 		console.error('Error in edit page load:', err);
 		if (err.status === 302 || err.status === 403 || err.status === 404) {
@@ -67,34 +66,33 @@ export const load = async ({ params, request, cookies, locals }) => {
 export const actions = {
 	default: async ({ request, params, cookies, locals }) => {
 		console.log('Processing edit form submission');
+		console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+		console.log('Cookies available:', cookies.getAll().map(c => c.name).join(', '));
 		
 		try {
-			// Get user from locals (set in hooks.server.ts)
-			const user = locals.user;
+			// Get session data directly from auth API
+			console.log('Getting session directly from auth API');
+			const sessionData = await auth.api.getSession({
+				headers: request.headers,
+				cookies
+			});
 			
-			// Fallback to getting session directly if not in locals
-			if (!user) {
-				console.log('User not in locals, getting session directly');
-				const sessionData = await auth.api.getSession({
-					headers: request.headers,
-					cookies
-				});
-				
-				if (!sessionData?.session) {
-					console.log('No session, redirecting to login');
-					throw redirect(302, '/login');
-				}
-				
-				// Use the user from the session
-				locals.user = sessionData.user;
-			}
+			console.log('Session data result:', sessionData ? 'Found' : 'Not found');
 			
-			if (!locals.user) {
-				console.log('Still no user after fallback, redirecting to login');
+			if (!sessionData?.session) {
+				console.log('No session, redirecting to login');
 				throw redirect(302, '/login');
 			}
 			
-			console.log('User found:', locals.user.name);
+			// Always use the user from the direct session check
+			const user = sessionData.user;
+			
+			if (!user) {
+				console.log('No user in session, redirecting to login');
+				throw redirect(302, '/login');
+			}
+			
+			console.log('User found:', user.name);
 
 			// Get form data
 			const formData = await request.formData();
@@ -118,14 +116,14 @@ export const actions = {
 			}
 
 			// Check if the current user is the owner of the note
-			if (existingNote.userId !== locals.user.id) {
+			if (existingNote.userId !== user.id) {
 				console.log('User does not own this note');
 				throw error(403, 'You do not have permission to edit this note');
 			}
 
 			// Update note
 			console.log('Updating note...');
-			const updatedNote = await updateNote(existingNote.id, locals.user.id, {
+			const updatedNote = await updateNote(existingNote.id, user.id, {
 				title,
 				content
 			});

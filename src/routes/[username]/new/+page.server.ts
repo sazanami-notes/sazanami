@@ -8,44 +8,43 @@ import { getUserByName } from '$lib/server/db';
 
 export const load = async ({ params, request, cookies, locals }) => {
 	console.log('Loading new note page for user:', params.username);
+	console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+	console.log('Cookies available:', cookies.getAll().map(c => c.name).join(', '));
 	
 	try {
-		// Get user from locals (set in hooks.server.ts)
-		const user = locals.user;
+		// Get session data directly from auth API
+		console.log('Getting session directly from auth API');
+		const sessionData = await auth.api.getSession({
+			headers: request.headers,
+			cookies
+		});
 		
-		// Fallback to getting session directly if not in locals
-		if (!user) {
-			console.log('User not in locals, getting session directly');
-			const sessionData = await auth.api.getSession({
-				headers: request.headers,
-				cookies
-			});
-			
-			if (!sessionData?.session) {
-				console.log('No session, redirecting to login');
-				throw redirect(302, '/login');
-			}
-			
-			// Use the user from the session
-			locals.user = sessionData.user;
-		}
+		console.log('Session data result:', sessionData ? 'Found' : 'Not found');
 		
-		if (!locals.user) {
-			console.log('Still no user after fallback, redirecting to login');
+		if (!sessionData?.session) {
+			console.log('No session, redirecting to login');
 			throw redirect(302, '/login');
 		}
 		
-		console.log('User found:', locals.user.name);
+		// Always use the user from the direct session check
+		const user = sessionData.user;
+		
+		if (!user) {
+			console.log('No user in session, redirecting to login');
+			throw redirect(302, '/login');
+		}
+		
+		console.log('User found:', user.name);
 
 		// Ensure the username in the URL matches the logged-in user
-		if (params.username !== locals.user.name) {
+		if (params.username !== user.name) {
 			console.log('Username mismatch, redirecting to correct URL');
-			throw redirect(302, `/${locals.user.name}/new`);
+			throw redirect(302, `/${user.name}/new`);
 		}
 
 		console.log('New note page loaded successfully');
 		return {
-			user: locals.user
+			user
 		};
 	} catch (err) {
 		console.error('Error in new note page load:', err);
@@ -59,34 +58,33 @@ export const load = async ({ params, request, cookies, locals }) => {
 export const actions = {
 	default: async ({ request, params, cookies, locals }) => {
 		console.log('Processing new note form submission');
+		console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+		console.log('Cookies available:', cookies.getAll().map(c => c.name).join(', '));
 		
 		try {
-			// Get user from locals (set in hooks.server.ts)
-			const user = locals.user;
+			// Get session data directly from auth API
+			console.log('Getting session directly from auth API');
+			const sessionData = await auth.api.getSession({
+				headers: request.headers,
+				cookies
+			});
 			
-			// Fallback to getting session directly if not in locals
-			if (!user) {
-				console.log('User not in locals, getting session directly');
-				const sessionData = await auth.api.getSession({
-					headers: request.headers,
-					cookies
-				});
-				
-				if (!sessionData?.session) {
-					console.log('No session, redirecting to login');
-					throw redirect(302, '/login');
-				}
-				
-				// Use the user from the session
-				locals.user = sessionData.user;
-			}
+			console.log('Session data result:', sessionData ? 'Found' : 'Not found');
 			
-			if (!locals.user) {
-				console.log('Still no user after fallback, redirecting to login');
+			if (!sessionData?.session) {
+				console.log('No session, redirecting to login');
 				throw redirect(302, '/login');
 			}
 			
-			console.log('User found:', locals.user.name);
+			// Always use the user from the direct session check
+			const user = sessionData.user;
+			
+			if (!user) {
+				console.log('No user in session, redirecting to login');
+				throw redirect(302, '/login');
+			}
+			
+			console.log('User found:', user.name);
 
 			// Get form data
 			const formData = await request.formData();
@@ -97,7 +95,7 @@ export const actions = {
 			console.log('Form data received - Title:', title, 'Content length:', content.length, 'Public:', isPublic);
 
 			// Ensure the username in the URL matches the logged-in user
-			if (params.username !== locals.user.name) {
+			if (params.username !== user.name) {
 				console.log('Username mismatch');
 				throw error(403, 'You do not have permission to create notes for this user');
 			}
@@ -118,7 +116,7 @@ export const actions = {
 			// Create the note
 			await db.insert(notes).values({
 				id: noteId,
-				userId: locals.user.id,
+				userId: user.id,
 				title,
 				content,
 				slug,
