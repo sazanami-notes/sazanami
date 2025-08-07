@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
-	import type { PageData } from './$types';
 	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
 	
-	export let data: PageData;
+	// Use page store instead of data prop
+	const userData = $page.data.user;
 	
 	let title = '';
 	let content = '';

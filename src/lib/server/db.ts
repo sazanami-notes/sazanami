@@ -10,6 +10,17 @@ import { db } from './db/connection';
 // Export the database connection for other modules to use
 export { db };
 
+// Get user by username
+export const getUserByName = async (username: string) => {
+  const result = await db
+    .select()
+    .from(user)
+    .where(eq(user.name, username))
+    .limit(1);
+
+  return result[0] || null;
+};
+
 export const getNoteById = async (userId: string, id: string) => {
 	const result = await db
 		.select()
