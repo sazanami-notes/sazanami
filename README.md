@@ -23,7 +23,7 @@ Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした�
 - **UI**: [Tailwind CSS](https://tailwindcss.com/), [daisyUI](https://daisyui.com/)
 - **Bundler**: [Vite](https://vitejs.dev/)
 - **Database ORM**: [Drizzle ORM](https://orm.drizzle.team/)
-- **Database**: [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) (local), [Turso](https://turso.tech/) (production)
+- **Database**: [@libsql/client](https://github.com/tursodatabase/libsql-client-ts) (local, with SQLite), [Turso](https://turso.tech/) (production)
 - **Markdown Editor**: [Milkdown](https://milkdown.dev/)
 - **Testing**: [Vitest](https://vitest.dev/)
 
@@ -45,7 +45,7 @@ Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした�
     ```bash
     cp .env.example .env
     ```
-    最低限、`BETTER_AUTH_SECRET`に適当なシークレット文字列を設定してください。ローカルDBを利用する場合、`.env`ファイルで`DATABASE_URL="file:local.db"`のコメントアウトを解除します。
+    最低限、`BETTER_AUTH_SECRET`に適当なシークレット文字列を設定してください。ローカルで開発する場合は、`.env`ファイルに`TURSO_DATABASE_URL="file:local.db"`のように設定します。
 
 4.  **データベースをマイグレーション**
     ```bash
