@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { Editor } from '@milkdown/core';
+  import { defaultValueCtx, rootCtx } from '@milkdown/core';
   import { commonmark } from '@milkdown/preset-commonmark';
   import { nord } from '@milkdown/theme-nord';
   import { listener, listenerCtx } from '@milkdown/plugin-listener';
@@ -11,6 +12,7 @@
   let editorRef: HTMLDivElement;
   let editor: Editor | null = null;
   let isEditorReady = false;
+  let fallbackTextarea = false;
 
   onMount(async () => {
     try {
@@ -21,89 +23,83 @@
       // Set a timeout to ensure editor is marked as ready even if there's an issue
       const timeoutId = setTimeout(() => {
         if (!isEditorReady) {
-          console.warn('Editor initialization timed out, forcing ready state');
+          console.warn('Editor initialization timed out, switching to fallback textarea');
           isEditorReady = true;
+          fallbackTextarea = true;
         }
       }, 3000);
       
-      editor = await Editor
-        .make()
-        .config((ctx) => {
-          ctx.set(listenerCtx, {
-            markdown: [
-              (markdown) => {
-                console.log('Content changed:', markdown);
-                onChange(markdown);
-              }
-            ]
-          });
-        })
-        .use(nord)
-        .use(commonmark)
-        .use(listener)
-        .create();
-
-      console.log('Editor created successfully');
-      
-      // Clear the timeout since editor was created successfully
-      clearTimeout(timeoutId);
-      
-      // Set editor as ready immediately after creation
-      isEditorReady = true;
-      
-      editor.action((ctx) => {
-        const view = ctx.get('view');
-        if (view) {
-          console.log('Appending editor view to DOM');
-          editorRef.appendChild(view.dom);
-          
-          if (content) {
-            console.log('Setting initial content:', content);
-            editor?.action((ctx) => {
-              try {
-                const parser = ctx.get('parser');
-                if (!parser) {
-                  console.error('Parser not found');
-                  return;
+      try {
+        editor = await Editor
+          .make()
+          .config((ctx) => {
+            ctx.set(rootCtx, editorRef);
+            ctx.set(defaultValueCtx, content);
+            ctx.set(listenerCtx, {
+              markdown: [
+                (markdown) => {
+                  onChange(markdown);
                 }
-                
-                const doc = parser(content);
-                const view = ctx.get('view');
-                if (doc && view) {
-                  view.updateState(
-                    view.state.apply(
-                      view.state.tr.replace(0, view.state.doc.content.size, doc)
-                    )
-                  );
-                }
-              } catch (err) {
-                console.error('Error setting initial content:', err);
-              }
+              ]
             });
-          }
-        } else {
-          console.error('Editor view not found');
-        }
-      });
+          })
+          .use(nord)
+          .use(commonmark)
+          .use(listener)
+          .create();
+          
+        console.log('Editor created successfully');
+        
+        // Clear the timeout since editor was created successfully
+        clearTimeout(timeoutId);
+        
+        // Set editor as ready
+        isEditorReady = true;
+      } catch (err) {
+        console.error('Failed to create editor:', err);
+        clearTimeout(timeoutId);
+        isEditorReady = true;
+        fallbackTextarea = true;
+      }
     } catch (error) {
-      console.error('Error initializing Milkdown editor:', error);
-      // Mark as ready even if there's an error, so the UI doesn't get stuck
+      console.error('Error in Milkdown component:', error);
       isEditorReady = true;
+      fallbackTextarea = true;
     }
   });
 
   onDestroy(() => {
     if (editor) {
-      console.log('Destroying editor');
-      editor.destroy();
+      try {
+        console.log('Destroying editor');
+        editor.destroy();
+      } catch (err) {
+        console.error('Error destroying editor:', err);
+      }
     }
   });
+  
+  function handleTextareaInput(e: Event) {
+    const target = e.target as HTMLTextAreaElement;
+    content = target.value;
+    onChange(content);
+  }
 </script>
 
 <div class="milkdown-editor-container">
-  <div bind:this={editorRef} class="milkdown-editor"></div>
-  {#if !isEditorReady}
-    <div class="editor-loading">Loading editor...</div>
+  {#if fallbackTextarea}
+    <!-- Fallback textarea when Milkdown fails to load -->
+    <textarea 
+      class="fallback-textarea" 
+      value={content} 
+      on:input={handleTextareaInput}
+      placeholder="Enter your content here..."
+    ></textarea>
+  {:else}
+    <div bind:this={editorRef} class="milkdown-editor"></div>
+    {#if !isEditorReady}
+      <div class="editor-loading">Loading editor...</div>
+    {/if}
   {/if}
 </div>
 
@@ -122,6 +118,17 @@
     border-radius: 4px;
     padding: 8px;
     background-color: white;
+  }
+  
+  .fallback-textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: monospace;
+    resize: vertical;
   }
   
   .editor-loading {

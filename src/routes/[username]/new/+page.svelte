@@ -26,18 +26,44 @@
 		
 		console.log('Submitting form with title:', title, 'Content length:', content.length);
 		
-		// Submit the form manually
-		const response = await fetch(form.action, {
-			method: form.method,
-			body: formData
-		});
-		
-		if (response.redirected) {
-			console.log('Redirecting to:', response.url);
-			window.location.href = response.url;
-		} else {
-			console.error('Form submission failed:', response.status);
-			alert('Failed to create note. Please try again.');
+		try {
+			// Submit the form manually with credentials included
+			const response = await fetch(form.action, {
+				method: form.method,
+				body: formData,
+				credentials: 'include' // Important for sending cookies
+			});
+			
+			if (response.redirected) {
+				console.log('Redirecting to:', response.url);
+				window.location.href = response.url;
+			} else if (response.ok) {
+				// If response is OK but not redirected, try to parse JSON
+				try {
+					const data = await response.json();
+					console.log('Form submission successful:', data);
+					
+					// If we have a redirect URL in the response, use it
+					if (data.redirectTo) {
+						window.location.href = data.redirectTo;
+						return false;
+					}
+					
+					// Otherwise redirect to user's page
+					window.location.href = `/${userData.name}`;
+				} catch (jsonError) {
+					console.log('Response was not JSON, redirecting to user page');
+					window.location.href = `/${userData.name}`;
+				}
+			} else {
+				console.error('Form submission failed:', response.status);
+				const errorText = await response.text();
+				console.error('Error details:', errorText);
+				alert(`Failed to create note (${response.status}). Please try again.`);
+			}
+		} catch (error) {
+			console.error('Exception during form submission:', error);
+			alert('Network error while creating note. Please try again.');
 		}
 		
 		return false; // Prevent default form submission
