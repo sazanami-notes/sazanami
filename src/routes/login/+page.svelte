@@ -36,10 +36,8 @@
 						console.log('Redirecting to user page:', username);
 						// Invalidate all data to ensure fresh data is loaded
 						await invalidateAll();
-						// Add a small delay to ensure invalidation completes
-						await new Promise(resolve => setTimeout(resolve, 100));
-						// Redirect to user page using window.location for a full page reload
-						window.location.href = `/${username}`;
+						// Redirect to user page
+						await goto(`/${username}`);
 					} else {
 						console.log('Username not found, redirecting to home');
 						// ユーザー名が取得できない場合はルートにリダイレクト
