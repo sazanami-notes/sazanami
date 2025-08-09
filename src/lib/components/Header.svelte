@@ -12,11 +12,20 @@
 	export let session: LayoutData['session'];
 	export let user: LayoutData['user'];
 
-	// Placeholder click handlers for future functionality.
-	const handleMenuClick = () => {
-		console.log('Hamburger menu clicked');
+	let waveSoundEnabled = false;
+	let audioElement: HTMLAudioElement;
+
+	const handleWaveSoundToggle = () => {
+		waveSoundEnabled = !waveSoundEnabled;
+		if (waveSoundEnabled) {
+			audioElement?.play();
+		} else {
+			audioElement?.pause();
+		}
+		console.log(`Wave sound toggled: ${waveSoundEnabled}`);
 	};
 
+	// Placeholder click handlers for future functionality.
 	const handleSearchClick = () => {
 		console.log('Search icon clicked');
 	};
@@ -54,23 +63,43 @@
 
 <nav class="navbar bg-base-100 shadow-md">
 	<div class="navbar-start">
-		<button class="btn btn-ghost btn-circle" on:click={handleMenuClick}>
-			<!-- Hamburger menu icon -->
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
+		<div class="dropdown">
+			<div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M4 6h16M4 12h16M4 18h7"
+					/>
+				</svg>
+			</div>
+			<ul
+				tabindex="0"
+				class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
 			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M4 6h16M4 12h16M4 18h7"
-				/>
-			</svg>
-		</button>
+				{#if user}
+					<li><a href={'/' + user.name}>Account</a></li>
+				{/if}
+				<li>
+					<div class="flex justify-between">
+						<span>Wave Sound</span>
+						<input
+							type="checkbox"
+							class="toggle"
+							bind:checked={waveSoundEnabled}
+							on:change={handleWaveSoundToggle}
+						/>
+					</div>
+				</li>
+			</ul>
+		</div>
 	</div>
 	<div class="navbar-center">
 		<!-- Application Logo or Title -->
@@ -187,4 +216,5 @@
 			{/if}
 		</button>
 	</div>
+	<audio bind:this={audioElement} src="/sazanami-loop.mp3" loop></audio>
 </nav>
