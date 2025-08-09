@@ -4,7 +4,7 @@ import { betterAuth } from 'better-auth';
 import { username } from 'better-auth/plugins'; // usernameプラグインをインポート
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { BETTER_AUTH_SECRET } from '$env/dynamic/private';
+import { env } from '$env/dynamic/private';
 import { db } from './db/connection';
 import * as schema from './db/auth-schema';
 import { getRequestEvent } from '$app/server';
@@ -13,7 +13,7 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true
 	},
-	secret: BETTER_AUTH_SECRET,
+	secret: env.BETTER_AUTH_SECRET,
 	cookie: {
 		path: '/'
 	},
