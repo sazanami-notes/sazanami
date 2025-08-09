@@ -50,10 +50,44 @@ export async function createTables() {
 			FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 		);
 	`);
+	await client.execute(`
+		CREATE TABLE note_links (
+			id TEXT PRIMARY KEY NOT NULL,
+			source_note_id TEXT NOT NULL,
+			target_note_id TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY (source_note_id) REFERENCES notes(id) ON DELETE CASCADE,
+			FOREIGN KEY (target_note_id) REFERENCES notes(id) ON DELETE CASCADE
+		);
+	`);
+	await client.execute(`
+		CREATE TABLE attachments (
+			id TEXT PRIMARY KEY NOT NULL,
+			user_id TEXT NOT NULL,
+			file_name TEXT NOT NULL,
+			file_path TEXT NOT NULL,
+			mime_type TEXT NOT NULL,
+			file_size INTEGER NOT NULL,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
+	await client.execute(`
+		CREATE TABLE note_attachments (
+			note_id TEXT NOT NULL,
+			attachment_id TEXT NOT NULL,
+			PRIMARY KEY (note_id, attachment_id),
+			FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+			FOREIGN KEY (attachment_id) REFERENCES attachments(id) ON DELETE CASCADE
+		);
+	`);
 }
 
 // Function to drop tables for test cleanup
 export async function dropTables() {
+	await client.execute(`DROP TABLE IF EXISTS note_attachments;`);
+	await client.execute(`DROP TABLE IF EXISTS attachments;`);
+	await client.execute(`DROP TABLE IF EXISTS note_links;`);
 	await client.execute(`DROP TABLE IF EXISTS note_tags;`);
 	await client.execute(`DROP TABLE IF EXISTS tags;`);
 	await client.execute(`DROP TABLE IF EXISTS notes;`);

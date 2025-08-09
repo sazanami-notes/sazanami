@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { db, updateNoteLinks } from '$lib/server/db';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { eq, or, like, desc, sql, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -184,6 +184,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				});
 			}
 		}
+
+		// After creating the note, update its links
+		await updateNoteLinks(noteId, content || '', session.session.userId);
 
 		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
 

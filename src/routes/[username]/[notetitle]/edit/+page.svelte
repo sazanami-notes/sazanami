@@ -4,62 +4,57 @@
 	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
 
 	export let data: PageData;
-	
+
 	let content = data.note.content;
-	
+
 	const handleContentChange = (value: string) => {
 		content = value;
 	};
-	
+
 	const handleSubmit = async (event: SubmitEvent) => {
 		const form = event.target as HTMLFormElement;
 		const formData = new FormData(form);
-		
+
 		// Replace the content from the textarea with our Milkdown content
 		formData.set('content', content);
-		
+
 		// Submit the form manually
 		const response = await fetch(form.action, {
 			method: form.method,
 			body: formData
 		});
-		
+
 		if (response.redirected) {
 			window.location.href = response.url;
 		}
-		
+
 		return false; // Prevent default form submission
 	};
 </script>
 
-<div class="max-w-4xl mx-auto p-4">
-	<h1 class="text-2xl font-bold mb-4">Edit Note</h1>
+<div class="mx-auto max-w-4xl p-4">
+	<h1 class="mb-4 text-2xl font-bold">Edit Note</h1>
 	<form method="post" on:submit|preventDefault={handleSubmit}>
 		<div class="mb-4">
-			<label for="title" class="block text-sm font-medium mb-1">Title</label>
+			<label for="title" class="mb-1 block text-sm font-medium">Title</label>
 			<input
 				type="text"
 				id="title"
 				name="title"
 				value={data.note.title}
-				class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+				class="focus:ring-primary focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none"
 			/>
 		</div>
 		<div class="mb-4">
-			<label for="content" class="block text-sm font-medium mb-1">Content</label>
+			<label for="content" class="mb-1 block text-sm font-medium">Content</label>
 			<div class="h-96 w-full">
-				<MilkdownEditor content={content} onChange={handleContentChange} />
+				<MilkdownEditor {content} onChange={handleContentChange} />
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
 			<textarea id="content" name="content" class="hidden">{content}</textarea>
 		</div>
 		<div class="flex justify-end space-x-2">
-			<button
-				type="submit"
-				class="btn btn-primary"
-			>
-				Save Changes
-			</button>
+			<button type="submit" class="btn btn-primary"> Save Changes </button>
 		</div>
 	</form>
 </div>
