@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/72ee93dc-8b78-473a-a461-0b68bed0dca4/deploy-status)](https://app.netlify.com/projects/sazanami/deploys)
+
 # Sazanami
 
 Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした、おひとり様用のノートテイキングアプリです。Obsidianの複雑さ、Notionの動作の遅さ、Scrapboxの独自フォーマットといった課題を解決し、Markdownによるポータビリティと、素早いメモ書きの体験を提供することを目指しています。
