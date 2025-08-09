@@ -1,10 +1,9 @@
-import { notes, user } from './db/schema';
+import { noteLinks, notes, user } from './db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import type { Note } from '$lib/types';
 import { generateSlug } from '$lib/utils/slug';
 import { extractWikiLinks } from '$lib/utils/note-utils';
-import { noteLinks, notes } from './db/schema';
 
 // Import the database connection from the connection file in the db directory
 import { db } from './db/connection';

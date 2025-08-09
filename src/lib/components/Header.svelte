@@ -80,10 +80,7 @@
 					/>
 				</svg>
 			</div>
-			<ul
-				tabindex="0"
-				class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
-			>
+			<ul class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
 				{#if user}
 					<li><a href={'/' + user.name}>Account</a></li>
 				{/if}
