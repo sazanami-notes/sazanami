@@ -30,24 +30,29 @@ Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした�
 ## クイックスタート
 
 1.  **リポジトリをクローン**
+
     ```bash
     git clone <repository-url>
     cd sazanami
     ```
 
 2.  **依存関係をインストール**
+
     ```bash
     npm install
     ```
 
 3.  **環境変数を設定**
     `.env.example`をコピーして`.env`ファイルを作成し、環境変数を設定します。
+
     ```bash
     cp .env.example .env
     ```
+
     最低限、`BETTER_AUTH_SECRET`に適当なシークレット文字列を設定してください。ローカルで開発する場合は、`.env`ファイルに`TURSO_DATABASE_URL="file:local.db"`のように設定します。
 
 4.  **データベースをマイグレーション**
+
     ```bash
     npm run db:migrate
     ```
@@ -61,11 +66,13 @@ Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした�
 ## テスト
 
 ユニットテストを実行します。
+
 ```bash
 npm run test:unit
 ```
 
 全てのテストを実行します。
+
 ```bash
 npm run test
 ```

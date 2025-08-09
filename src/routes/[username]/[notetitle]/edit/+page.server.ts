@@ -1,14 +1,14 @@
-import { getNoteBySlug, updateNote, getUserByName } from '$lib/server/db';
+import { getNoteBySlug, updateNote, getUserByName, updateNoteLinks } from '$lib/server/db';
 import { error, redirect } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 
 export const load = async ({ params, request, cookies, locals }) => {
 	console.log('Loading edit page for note:', params.notetitle);
-	
+
 	try {
 		// Get session data from locals (set in hooks.server.ts)
 		const user = locals.user;
-		
+
 		// Fallback to getting session directly if not in locals
 		if (!user) {
 			console.log('User not in locals, getting session directly');
@@ -16,21 +16,21 @@ export const load = async ({ params, request, cookies, locals }) => {
 				headers: request.headers,
 				cookies
 			});
-			
+
 			if (!sessionData?.session) {
 				console.log('No session, redirecting to login');
 				throw redirect(302, '/login');
 			}
-			
+
 			// Use the user from the session
 			locals.user = sessionData.user;
 		}
-		
+
 		if (!locals.user) {
 			console.log('Still no user after fallback, redirecting to login');
 			throw redirect(302, '/login');
 		}
-		
+
 		console.log('User found:', locals.user.name);
 
 		// Get user by username
@@ -67,11 +67,11 @@ export const load = async ({ params, request, cookies, locals }) => {
 export const actions = {
 	default: async ({ request, params, cookies, locals }) => {
 		console.log('Processing edit form submission');
-		
+
 		try {
 			// Get user from locals (set in hooks.server.ts)
 			const user = locals.user;
-			
+
 			// Fallback to getting session directly if not in locals
 			if (!user) {
 				console.log('User not in locals, getting session directly');
@@ -79,21 +79,21 @@ export const actions = {
 					headers: request.headers,
 					cookies
 				});
-				
+
 				if (!sessionData?.session) {
 					console.log('No session, redirecting to login');
 					throw redirect(302, '/login');
 				}
-				
+
 				// Use the user from the session
 				locals.user = sessionData.user;
 			}
-			
+
 			if (!locals.user) {
 				console.log('Still no user after fallback, redirecting to login');
 				throw redirect(302, '/login');
 			}
-			
+
 			console.log('User found:', locals.user.name);
 
 			// Get form data
@@ -130,10 +130,13 @@ export const actions = {
 				content
 			});
 
+			// After updating the note, update its links
+			await updateNoteLinks(existingNote.id, content, locals.user.id);
+
 			console.log('Note updated successfully');
-			
+
 			// Redirect to the updated note page
-			return redirect(303, `/${params.username}/${updatedNote?.slug || params.notetitle}`);
+			throw redirect(303, `/${params.username}/${updatedNote?.slug || params.notetitle}`);
 		} catch (err) {
 			console.error('Error updating note:', err);
 			if (err.status === 302 || err.status === 403 || err.status === 404) {

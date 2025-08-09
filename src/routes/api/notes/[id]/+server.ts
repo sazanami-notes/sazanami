@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { db, updateNoteLinks } from '$lib/server/db';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -132,6 +132,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				});
 			}
 		}
+
+		// After updating the note, update its links
+		const finalContent = content !== undefined ? content : existingNote[0].content;
+		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 
 		const updatedNote = await db
 			.select()

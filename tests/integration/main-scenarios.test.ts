@@ -103,10 +103,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		await expect(actions.default(event)).rejects.toThrow();
 
 		// Verify the note is in the database
-		const newNotes = await db
-			.select()
-			.from(notesSchema)
-			.where(eq(notesSchema.userId, testUser.id));
+		const newNotes = await db.select().from(notesSchema).where(eq(notesSchema.userId, testUser.id));
 
 		const newNote = newNotes[0];
 		expect(newNote).toBeDefined();
@@ -138,9 +135,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	});
 
 	it('2.3: Updates an existing note', async () => {
-		const { actions } = await import(
-			'../../src/routes/[username]/[notetitle]/edit/+page.server'
-		);
+		const { actions } = await import('../../src/routes/[username]/[notetitle]/edit/+page.server');
 		const updatedNoteData = {
 			title: 'Updated Note',
 			content: 'Content has been updated.'
