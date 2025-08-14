@@ -34,7 +34,7 @@
 					'@milkdown/kit/core'
 				);
 				const { commonmark } = await import('@milkdown/kit/preset/commonmark');
-				const { nord } = await import('@milkdown/kit/theme/nord');
+				const { nord } = await import('@milkdown/theme-nord');
 				const { listener, listenerCtx } = await import('@milkdown/kit/plugin/listener');
 				const { upload, uploader } = await import('@milkdown/kit/plugin/upload');
 
