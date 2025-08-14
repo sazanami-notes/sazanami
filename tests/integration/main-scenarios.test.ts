@@ -200,6 +200,45 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		const foundNote = pageData.notes.find((n) => n.slug === createdNoteSlug);
 		expect(foundNote).toBeUndefined();
 	});
+
+	it('2.5: Loads a note with a Japanese title successfully', async () => {
+		const japaneseNoteData = {
+			title: '日本語のノート',
+			content: 'これはテストです。'
+		};
+
+		// 1. Create the note via the action
+		const createAction = await import('../../src/routes/[username]/new/+page.server');
+		const createEvent = await createMockFormRequestEvent(
+			{ user: mockSession.user, session: mockSession.session },
+			{ username: testUser.name },
+			japaneseNoteData
+		);
+		// Action redirects on success, so we expect it to throw
+		await expect(createAction.actions.default(createEvent)).rejects.toThrow();
+
+		// 2. Try to load the page for the newly created note using the raw title
+		const { load } = await import('../../src/routes/[username]/[notetitle]/+page.server');
+		const loadEvent = {
+			locals: { user: mockSession.user, session: mockSession.session },
+			params: { username: testUser.name, notetitle: japaneseNoteData.title },
+			fetch: vi.fn().mockResolvedValue(
+				new Response(JSON.stringify({ oneHopLinks: [], backlinks: [], twoHopLinks: [] }), {
+					status: 200
+				})
+			)
+		} as unknown as RequestEvent;
+
+		const pageData = await load(loadEvent);
+
+		// 3. Assert that the correct note data was loaded
+		expect(pageData.note).toBeDefined();
+		expect(pageData.note.title).toBe(japaneseNoteData.title);
+		expect(pageData.note.content).toBe(japaneseNoteData.content);
+
+		// Clean up the created note
+		await db.delete(notesSchema).where(eq(notesSchema.id, pageData.note.id));
+	});
 });
 
 describe('Scenario 3: Search and Wiki Link API', () => {

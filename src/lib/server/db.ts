@@ -18,6 +18,17 @@ export const getUserByName = async (username: string) => {
 	return result[0] || null;
 };
 
+export const getNoteByTitle = async (userId: string, username: string, title: string) => {
+	// The username parameter is unused, but kept for consistency with the original function signature.
+	const result = await db
+		.select()
+		.from(notes)
+		.where(and(eq(notes.userId, userId), eq(notes.title, title)))
+		.limit(1);
+
+	return result[0] || null;
+};
+
 export const getNoteById = async (userId: string, id: string) => {
 	const result = await db
 		.select()
