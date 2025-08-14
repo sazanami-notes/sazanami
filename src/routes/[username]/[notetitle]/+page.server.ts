@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { getNoteBySlug } from '$lib/server/db';
+import { getNoteByTitle } from '$lib/server/db';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, locals, fetch }) => {
@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
 	}
 
 	try {
-		const note = await getNoteBySlug(locals.user.id, params.username, params.notetitle);
+		const note = await getNoteByTitle(locals.user.id, params.username, params.notetitle);
 		if (!note) {
 			throw error(404, 'Note not found');
 		}
