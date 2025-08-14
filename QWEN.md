@@ -40,11 +40,13 @@ npm install
 コードの一貫性と品質を維持するために、以下のツールと規約を使用しています。
 
 - **フォーマット**: `prettier` を使用
+
   ```bash
   npm run format
   ```
 
 - **リンティング**: `eslint` と `prettier` を使用
+
   ```bash
   npm run lint
   ```
@@ -61,6 +63,7 @@ npm install
 ローカル開発では SQLite を使用し、Drizzle ORM で操作します。
 
 - **マイグレーション生成**:
+
   ```bash
   npm run db:generate
   ```
