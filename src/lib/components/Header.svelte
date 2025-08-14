@@ -15,15 +15,17 @@
 	let waveSoundEnabled = false;
 	let audioElement: HTMLAudioElement;
 
-	const handleWaveSoundToggle = () => {
-		waveSoundEnabled = !waveSoundEnabled;
-		if (waveSoundEnabled) {
-			audioElement?.play();
-		} else {
-			audioElement?.pause();
+	$: {
+		if (audioElement) {
+			if (waveSoundEnabled) {
+				audioElement.play().catch((e) => {
+					console.error('Failed to play wave sound:', e);
+				});
+			} else {
+				audioElement.pause();
+			}
 		}
-		console.log(`Wave sound toggled: ${waveSoundEnabled}`);
-	};
+	}
 
 	// Placeholder click handlers for future functionality.
 	const handleSearchClick = () => {
@@ -87,12 +89,7 @@
 				<li>
 					<div class="flex justify-between">
 						<span>Wave Sound</span>
-						<input
-							type="checkbox"
-							class="toggle"
-							bind:checked={waveSoundEnabled}
-							on:change={handleWaveSoundToggle}
-						/>
+						<input type="checkbox" class="toggle" bind:checked={waveSoundEnabled} />
 					</div>
 				</li>
 			</ul>
