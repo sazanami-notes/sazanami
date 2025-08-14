@@ -1,4 +1,6 @@
 <script lang="ts">
+	import '@milkdown/crepe/theme/common/style.css';
+	import '@milkdown/crepe/theme/nord/style.css';
 	import { onMount, onDestroy } from 'svelte';
 	import type { Editor } from '@milkdown/core';
 	import type { Node } from '@milkdown/prose/model';
@@ -34,7 +36,6 @@
 					'@milkdown/kit/core'
 				);
 				const { commonmark } = await import('@milkdown/kit/preset/commonmark');
-				const { nord } = await import('@milkdown/theme-nord');
 				const { listener, listenerCtx } = await import('@milkdown/kit/plugin/listener');
 				const { upload, uploader } = await import('@milkdown/kit/plugin/upload');
 
@@ -89,7 +90,6 @@
 							]
 						});
 					})
-					.use(nord)
 					.use(commonmark)
 					.use(listener)
 					.use(
