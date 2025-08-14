@@ -31,12 +31,12 @@
 
 			try {
 				const { Editor, defaultValueCtx, rootCtx, editorViewOptionsCtx } = await import(
-					'@milkdown/core'
+					'@milkdown/kit/core'
 				);
-				const { commonmark } = await import('@milkdown/preset-commonmark');
+				const { commonmark } = await import('@milkdown/kit/preset/commonmark');
 				const { nord } = await import('@milkdown/theme-nord');
-				const { listener, listenerCtx } = await import('@milkdown/plugin-listener');
-				const { upload, uploader } = await import('@milkdown/plugin-upload');
+				const { listener, listenerCtx } = await import('@milkdown/kit/plugin/listener');
+				const { upload, uploader } = await import('@milkdown/kit/plugin/upload');
 
 				// Uploader function
 				const fileUploader = uploader(async (files, schema) => {
