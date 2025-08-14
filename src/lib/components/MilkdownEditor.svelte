@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '@milkdown/crepe/theme/common/style.css';
-	import '@milkdown/crepe/theme/nord/style.css';
+	import '@milkdown/crepe/theme/nord.css';
 	import { onMount, onDestroy } from 'svelte';
 	import type { Editor } from '@milkdown/core';
 	import type { Node } from '@milkdown/prose/model';
