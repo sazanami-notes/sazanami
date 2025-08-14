@@ -1,8 +1,8 @@
 // static/sw.js
 
 // キャッシュ名とバージョンを定義
-const CACHE_NAME = 'sazanami-cache-v1';
-const API_CACHE_NAME = 'sazanami-api-cache-v1';
+const CACHE_NAME = 'sazanami-cache-v2';
+const API_CACHE_NAME = 'sazanami-api-cache-v2';
 
 // キャッシュする静的アセットのリスト
 const ASSETS_TO_CACHE = [
