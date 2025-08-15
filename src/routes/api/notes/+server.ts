@@ -141,17 +141,22 @@ export const POST: RequestHandler = async ({ request }) => {
 		const noteTitle = title || 'Untitled Note';
 		const noteSlug = generateSlug(noteTitle); // スラッグを生成
 
-		// 新規メモを作成
-		await db.insert(notes).values({
-			id: noteId,
-			userId: session.session.userId,
-			title: noteTitle,
-			slug: noteSlug, // スラッグを保存
-			content: content || '',
-			createdAt: now,
-			updatedAt: now,
-			isPublic: false
-		});
+		// 新規メモを作成し、作成したメモを返却してもらう
+		const newNotes = await db
+			.insert(notes)
+			.values({
+				id: noteId,
+				userId: session.session.userId,
+				title: noteTitle,
+				slug: noteSlug, // スラッグを保存
+				content: content || '',
+				createdAt: now,
+				updatedAt: now,
+				isPublic: false
+			})
+			.returning();
+
+		const newNote = newNotes[0];
 
 		// タグの処理
 		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
@@ -188,9 +193,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		// After creating the note, update its links
 		await updateNoteLinks(noteId, content || '', session.session.userId);
 
-		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
-
-		return json(newNote[0], { status: 201 });
+		return json(newNote, { status: 201 });
 	} catch (error) {
 		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);
