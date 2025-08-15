@@ -5,7 +5,7 @@
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 	import { upload, uploadConfig, Uploader } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
-	import { focus } from '@milkdown/kit/commands';
+	import { focus } from '@milkdown/kit/utils';
 
 	export let content = '';
 	export let onChange: (markdown: string) => void = () => {};
@@ -107,6 +107,15 @@
 			editor.action(focus);
 		}
 	}
+
+	function handleContainerKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			if (editor) {
+				editor.action(focus);
+			}
+		}
+	}
 </script>
 
 <div class="milkdown-editor-container">
@@ -126,7 +135,10 @@
 			class="milkdown-editor"
 			bind:this={dom}
 			on:click={handleContainerClick}
-		/>
+			on:keydown={handleContainerKeyDown}
+			role="button"
+			tabindex="0"
+		></div>
 	{/if}
 </div>
 
@@ -164,18 +176,5 @@
 		padding: 8px;
 		font-family: monospace;
 		resize: vertical;
-	}
-
-	.editor-loading {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background-color: rgba(255, 255, 255, 0.8);
-		z-index: 10;
 	}
 </style>
