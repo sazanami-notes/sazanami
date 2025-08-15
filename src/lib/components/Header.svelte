@@ -84,7 +84,7 @@
 			</div>
 			<ul class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
 				{#if user}
-					<li><a href={'/' + user.name}>Account</a></li>
+					<li><a href="/settings/account">Account</a></li>
 				{/if}
 				<li>
 					<div class="flex justify-between">
