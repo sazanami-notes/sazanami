@@ -64,6 +64,8 @@
 						...prev,
 						editable: () => editable
 					}));
+				})
+				.config((ctx) => {
 					ctx.set(listenerCtx, {
 						markdown: [
 							(markdown) => {
@@ -71,6 +73,8 @@
 							}
 						]
 					});
+				})
+				.config((ctx) => {
 					ctx.update(uploadConfig.key, (prev) => ({
 						...prev,
 						uploader
