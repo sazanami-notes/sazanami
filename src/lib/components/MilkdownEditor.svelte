@@ -2,8 +2,9 @@
 	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx, editorViewCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
+	import { gfm } from '@milkdown/preset-gfm';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
-	import { upload, uploadConfig, Uploader } from '@milkdown/kit/plugin/upload';
+	import { upload, uploadConfig } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
 
 	export let content = '';
@@ -75,6 +76,7 @@
 				})
 				.config(nord) // Correct way to apply a theme
 				.use(commonmark) // Use the commonmark preset
+				.use(gfm)
 				.use(listener) // Use the listener plugin
 				.use(upload) // Use the upload plugin
 				.create();
@@ -135,6 +137,7 @@
 			placeholder="Milkdown editor failed to load. Please use this basic textarea."
 		></textarea>
 	{:else}
+
 		<div
 			use:initializeEditor
 			class="milkdown-editor"
@@ -144,6 +147,7 @@
 			role="button"
 			tabindex="0"
 		></div>
+
 	{/if}
 </div>
 

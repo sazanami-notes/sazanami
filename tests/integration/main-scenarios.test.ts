@@ -135,7 +135,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	});
 
 	it('2.3: Updates an existing note', async () => {
-		const { actions } = await import('../../src/routes/[username]/[notetitle]/edit/+page.server');
+		const { actions } = await import('../../src/routes/[username]/[notetitle]/+page.server');
 		const updatedNoteData = {
 			title: 'Updated Note',
 			content: 'Content has been updated.'
