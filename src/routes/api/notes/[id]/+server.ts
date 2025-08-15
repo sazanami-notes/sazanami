@@ -72,54 +72,41 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			tags: tagNames
 		} = body as { title?: string; content?: string; tags?: string[] };
 
-		// 必要な情報だけを取得して、元のノート情報を取得
-		const originalNote = await db
-			.select({
-				title: notes.title,
-				content: notes.content
-			})
+		// ノートが存在するか確認
+		const existingNote = await db
+			.select()
 			.from(notes)
 			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
 			.limit(1);
 
-		if (originalNote.length === 0) {
+		if (existingNote.length === 0) {
 			return new Response('Note not found', { status: 404 });
 		}
 
 		const now = new Date();
-		const updatedTitle = title !== undefined ? title : originalNote[0].title;
-		const finalContent = content !== undefined ? content : originalNote[0].content;
+		const updatedTitle = title !== undefined ? title : existingNote[0].title;
 		const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
 
-		// ノートを更新し、更新後のデータを返してもらう
-		const updatedNotes = await db
+		// ノートを更新
+		await db
 			.update(notes)
 			.set({
 				title: updatedTitle,
-				slug: updatedSlug,
-				content: finalContent,
+				slug: updatedSlug, // スラッグを更新
+				content: content !== undefined ? content : existingNote[0].content,
 				updatedAt: now
 			})
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
-			.returning();
-
-		if (updatedNotes.length === 0) {
-			// 更新が成功しなかった場合（非常に稀なケース）
-			return new Response('Note not found or update failed', { status: 404 });
-		}
-		const updatedNote = updatedNotes[0];
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
 		// 既存のタグをクリア
 		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
 
-		let processedTagNames: string[] = [];
 		// 新しいタグを設定
 		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
 			for (const tagName of tagNames) {
 				if (!tagName || !tagName.trim()) continue;
 
 				const trimmedTagName = tagName.trim();
-				processedTagNames.push(trimmedTagName);
 
 				// タグが存在するか確認
 				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
@@ -147,11 +134,25 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		// After updating the note, update its links
+		const finalContent = content !== undefined ? content : existingNote[0].content;
 		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 
+		const updatedNote = await db
+			.select()
+			.from(notes)
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+			.limit(1);
+
+		// タグを取得
+		const noteTagsList = await db
+			.select({ name: tags.name })
+			.from(noteTags)
+			.leftJoin(tags, eq(noteTags.tagId, tags.id))
+			.where(eq(noteTags.noteId, noteId));
+
 		const noteWithTags = {
-			...updatedNote,
-			tags: processedTagNames
+			...updatedNote[0],
+			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
 		return json(noteWithTags);
