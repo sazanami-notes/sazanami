@@ -17,14 +17,11 @@ This component provides the following features:
 # Usage
 
 ```typescript
-import {
-  imageBlockComponent,
-  imageBlockConfig,
-} from '@milkdown/components/image-block'
-import { defaultValueCtx, Editor } from '@milkdown/kit/core'
-import { commonmark } from '@milkdown/kit/preset/commonmark'
+import { imageBlockComponent, imageBlockConfig } from '@milkdown/components/image-block';
+import { defaultValueCtx, Editor } from '@milkdown/kit/core';
+import { commonmark } from '@milkdown/kit/preset/commonmark';
 
-await Editor.make().use(commonmark).use(imageBlockComponent).create()
+await Editor.make().use(commonmark).use(imageBlockComponent).create();
 ```
 
 ::iframe{src="https://stackblitz.com/github/Milkdown/examples/tree/main/component-image-block"}
@@ -56,15 +53,15 @@ A function that is called when the image is chosen by the file picker.
 You should return a promise that resolves to the URL of the uploaded image.
 
 ```typescript
-import { imageBlockConfig } from '@milkdown/components/image-block'
+import { imageBlockConfig } from '@milkdown/components/image-block';
 
 ctx.update(imageBlockConfig.key, (defaultConfig) => ({
-  ...defaultConfig,
-  onUpload: async (file: File) => {
-    const url = await YourUploadAPI(file)
-    return url
-  },
-}))
+	...defaultConfig,
+	onUpload: async (file: File) => {
+		const url = await YourUploadAPI(file);
+		return url;
+	}
+}));
 ```
 
 ## `imageIcon`, `captionIcon`, `uploadButton`, `confirmButton`, `uploadPlaceholderText`, `captionPlaceholderText`
@@ -72,17 +69,17 @@ ctx.update(imageBlockConfig.key, (defaultConfig) => ({
 All of these options are **strings**. You can use any string or emoji.
 
 ```typescript
-import { imageBlockConfig } from '@milkdown/components/image-block'
+import { imageBlockConfig } from '@milkdown/components/image-block';
 
 ctx.update(imageBlockConfig.key, (defaultConfig) => ({
-  ...defaultConfig,
-  imageIcon: '🖼️',
-  captionIcon: '📝',
-  uploadButton: 'Upload Image',
-  confirmButton: 'Confirm',
-  uploadPlaceholderText: 'or paste an image URL',
-  captionPlaceholderText: 'Add a caption',
-}))
+	...defaultConfig,
+	imageIcon: '🖼️',
+	captionIcon: '📝',
+	uploadButton: 'Upload Image',
+	confirmButton: 'Confirm',
+	uploadPlaceholderText: 'or paste an image URL',
+	captionPlaceholderText: 'Add a caption'
+}));
 ```
 
 ## `proxyDomURL`
@@ -91,24 +88,22 @@ Whether to proxy the image link to another URL when rendering.
 The value should be a function that returns a string or a promise of a string.
 
 ```typescript
-import { imageBlockConfig } from '@milkdown/components/image-block'
+import { imageBlockConfig } from '@milkdown/components/image-block';
 
 ctx.update(imageBlockConfig.key, (defaultConfig) => ({
-  ...defaultConfig,
-  proxyDomURL: (originalURL: string) => {
-    return `https://example.com/${originalURL}`
-  },
-}))
+	...defaultConfig,
+	proxyDomURL: (originalURL: string) => {
+		return `https://example.com/${originalURL}`;
+	}
+}));
 
 // Promise is also supported
 ctx.update(imageBlockConfig.key, (defaultConfig) => ({
-  ...defaultConfig,
-  proxyDomURL: async (originalURL: string) => {
-    const response = await fetch(
-      `https://api.example.com/proxy?url=${originalURL}`
-    )
-    const url = await response.text()
-    return url
-  },
-}))
+	...defaultConfig,
+	proxyDomURL: async (originalURL: string) => {
+		const response = await fetch(`https://api.example.com/proxy?url=${originalURL}`);
+		const url = await response.text();
+		return url;
+	}
+}));
 ```

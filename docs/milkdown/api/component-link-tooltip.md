@@ -20,18 +20,18 @@ It provides the following features:
 
 ```typescript
 import {
-  configureLinkTooltip,
-  linkTooltipPlugin,
-  linkTooltipConfig,
-} from '@milkdown/components/link-tooltip'
-import { defaultValueCtx, Editor } from '@milkdown/kit/core'
-import { commonmark, linkSchema } from '@milkdown/kit/preset/commonmark'
+	configureLinkTooltip,
+	linkTooltipPlugin,
+	linkTooltipConfig
+} from '@milkdown/components/link-tooltip';
+import { defaultValueCtx, Editor } from '@milkdown/kit/core';
+import { commonmark, linkSchema } from '@milkdown/kit/preset/commonmark';
 
 const editor = await Editor.make()
-  .config(configureLinkTooltip)
-  .use(commonmark)
-  .use(linkTooltipPlugin)
-  .create()
+	.config(configureLinkTooltip)
+	.use(commonmark)
+	.use(linkTooltipPlugin)
+	.create();
 ```
 
 ::iframe{src="https://stackblitz.com/github/Milkdown/examples/tree/main/component-link-tooltip"}
@@ -58,16 +58,16 @@ You can configure the component by updating the `linkTooltipConfig` ctx in `edit
 All of these options are **strings**. You can use any string or emoji.
 
 ```typescript
-import { linkTooltipConfig } from '@milkdown/components/link-tooltip'
+import { linkTooltipConfig } from '@milkdown/components/link-tooltip';
 
 ctx.update(linkTooltipConfig.key, (defaultConfig) => ({
-  ...defaultConfig,
-  linkIcon: '🔗',
-  editButton: '✎',
-  removeButton: '❌',
-  confirmButton: '✔️',
-  inputPlaceholder: 'Paste link here',
-}))
+	...defaultConfig,
+	linkIcon: '🔗',
+	editButton: '✎',
+	removeButton: '❌',
+	confirmButton: '✔️',
+	inputPlaceholder: 'Paste link here'
+}));
 ```
 
 ## `onCopyLink`
@@ -75,15 +75,15 @@ ctx.update(linkTooltipConfig.key, (defaultConfig) => ({
 A callback function triggered when the link is copied.
 
 ```typescript
-import { linkTooltipConfig } from '@milkdown/components/link-tooltip'
+import { linkTooltipConfig } from '@milkdown/components/link-tooltip';
 
 ctx.update(linkTooltipConfig.key, (defaultConfig) => ({
-  ...defaultConfig,
-  onCopyLink: (link: string) => {
-    console.log('Link copied:', link)
-    toast('Link copied')
-  },
-}))
+	...defaultConfig,
+	onCopyLink: (link: string) => {
+		console.log('Link copied:', link);
+		toast('Link copied');
+	}
+}));
 ```
 
 # API
@@ -97,28 +97,21 @@ Insert a link at the given range.
 > The following example is just a simple implementation, you can customize it according to your needs.
 
 ```typescript
-import {
-  linkTooltipAPI,
-  linkTooltipState,
-} from '@milkdown/components/link-tooltip'
-import { editorViewCtx } from '@milkdown/kit/core'
+import { linkTooltipAPI, linkTooltipState } from '@milkdown/components/link-tooltip';
+import { editorViewCtx } from '@milkdown/kit/core';
 
 function addLink(ctx: Ctx) {
-  const view = ctx.get(editorViewCtx)
-  const { selection, doc } = view.state
+	const view = ctx.get(editorViewCtx);
+	const { selection, doc } = view.state;
 
-  // already in edit mode
-  if (ctx.get(linkTooltipState.key).mode === 'edit') return
+	// already in edit mode
+	if (ctx.get(linkTooltipState.key).mode === 'edit') return;
 
-  const has = doc.rangeHasMark(
-    selection.from,
-    selection.to,
-    linkSchema.type(ctx)
-  )
-  // range already has link
-  if (has) return
+	const has = doc.rangeHasMark(selection.from, selection.to, linkSchema.type(ctx));
+	// range already has link
+	if (has) return;
 
-  ctx.get(linkTooltipAPI.key).addLink(selection.from, selection.to)
+	ctx.get(linkTooltipAPI.key).addLink(selection.from, selection.to);
 }
 ```
 
@@ -129,26 +122,21 @@ Edit the link at the given range and mark.
 > The following example is just a simple implementation, you can customize it according to your needs.
 
 ```typescript
-import {
-  linkTooltipAPI,
-  linkTooltipState,
-} from '@milkdown/components/link-tooltip'
-import { editorViewCtx } from '@milkdown/kit/core'
+import { linkTooltipAPI, linkTooltipState } from '@milkdown/components/link-tooltip';
+import { editorViewCtx } from '@milkdown/kit/core';
 
 function editLink(ctx: Ctx) {
-  const view = ctx.get(editorViewCtx)
-  const { selection, doc } = view.state
+	const view = ctx.get(editorViewCtx);
+	const { selection, doc } = view.state;
 
-  const node = view.state.doc.nodeAt(selection.from)
+	const node = view.state.doc.nodeAt(selection.from);
 
-  if (!node) return
+	if (!node) return;
 
-  const mark = node.marks.find(
-    (mark) => mark.type === linkSchema.mark.type(ctx)
-  )
-  if (!mark) return
+	const mark = node.marks.find((mark) => mark.type === linkSchema.mark.type(ctx));
+	if (!mark) return;
 
-  ctx.get(linkTooltipAPI.key).editLink(mark, selection.from, selection.to)
+	ctx.get(linkTooltipAPI.key).editLink(mark, selection.from, selection.to);
 }
 ```
 
@@ -159,16 +147,13 @@ Remove the link at the given range.
 > The following example is just a simple implementation, you can customize it according to your needs.
 
 ```typescript
-import {
-  linkTooltipAPI,
-  linkTooltipState,
-} from '@milkdown/components/link-tooltip'
-import { editorViewCtx } from '@milkdown/kit/core'
+import { linkTooltipAPI, linkTooltipState } from '@milkdown/components/link-tooltip';
+import { editorViewCtx } from '@milkdown/kit/core';
 
 function removeLink(ctx: Ctx) {
-  const view = ctx.get(editorViewCtx)
-  const { selection, doc } = view.state
+	const view = ctx.get(editorViewCtx);
+	const { selection, doc } = view.state;
 
-  ctx.get(linkTooltipAPI.key).removeLink(selection.from, selection.to)
+	ctx.get(linkTooltipAPI.key).removeLink(selection.from, selection.to);
 }
 ```
