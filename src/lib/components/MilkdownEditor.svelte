@@ -133,11 +133,14 @@
 		border-radius: 4px;
 		padding: 8px;
 		background-color: white;
-		overflow: auto;
+		display: flex;
+		flex-direction: column;
 	}
 
 	:global(.milkdown-editor .ProseMirror) {
-		height: 100%;
+		flex-grow: 1;
+		overflow: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.fallback-textarea {
