@@ -9,19 +9,12 @@ The `listItemBlock` component provides custom renderer for ordered/bullet/todo l
 # Usage
 
 ```typescript
-import {
-  listItemBlockComponent,
-  listItemBlockConfig,
-} from '@milkdown/components/list-item-block'
-import { Editor } from '@milkdown/kit/core'
-import { commonmark } from '@milkdown/kit/preset/commonmark'
-import { gfm } from '@milkdown/kit/preset/gfm'
+import { listItemBlockComponent, listItemBlockConfig } from '@milkdown/components/list-item-block';
+import { Editor } from '@milkdown/kit/core';
+import { commonmark } from '@milkdown/kit/preset/commonmark';
+import { gfm } from '@milkdown/kit/preset/gfm';
 
-await Editor.make()
-  .use(commonmark)
-  .use(gfm)
-  .use(listItemBlockComponent)
-  .create()
+await Editor.make().use(commonmark).use(gfm).use(listItemBlockComponent).create();
 ```
 
 ::iframe{src="https://stackblitz.com/github/Milkdown/examples/tree/main/component-list-item"}
@@ -41,31 +34,24 @@ You can write your own renderer for list items by updating the `listItemBlockCon
 **Default:**
 
 ```typescript
-;({ label, listType, checked }) => {
-  const content =
-    checked == null
-      ? listType === 'bullet'
-        ? '⦿'
-        : label
-      : checked
-        ? '☑'
-        : '□'
-  return content
-}
+({ label, listType, checked }) => {
+	const content = checked == null ? (listType === 'bullet' ? '⦿' : label) : checked ? '☑' : '□';
+	return content;
+};
 ```
 
 **Example:**
 
 ```typescript
-import { listItemBlockConfig } from '@milkdown/components/list-item-block'
+import { listItemBlockConfig } from '@milkdown/components/list-item-block';
 
 ctx.set(listItemBlockConfig.key, {
-  renderLabel: ({ label, listType, checked, readonly }) => {
-    if (checked == null) {
-      if (listType === 'bullet') return '•'
-      return label // e.g. '1.', '2.', ...
-    }
-    return checked ? '[x]' : '[ ]'
-  },
-})
+	renderLabel: ({ label, listType, checked, readonly }) => {
+		if (checked == null) {
+			if (listType === 'bullet') return '•';
+			return label; // e.g. '1.', '2.', ...
+		}
+		return checked ? '[x]' : '[ ]';
+	}
+});
 ```
