@@ -5,6 +5,7 @@
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 	import { upload, uploadConfig, Uploader } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
+	import { focus } from '@milkdown/kit/commands';
 
 	export let content = '';
 	export let onChange: (markdown: string) => void = () => {};
@@ -100,6 +101,12 @@
 		content = target.value;
 		onChange(content);
 	}
+
+	function handleContainerClick() {
+		if (editor) {
+			editor.action(focus);
+		}
+	}
 </script>
 
 <div class="milkdown-editor-container">
@@ -114,7 +121,12 @@
 			placeholder="Milkdown editor failed to load. Please use this basic textarea."
 		></textarea>
 	{:else}
-		<div use:initializeEditor class="milkdown-editor" bind:this={dom} />
+		<div
+			use:initializeEditor
+			class="milkdown-editor"
+			bind:this={dom}
+			on:click={handleContainerClick}
+		/>
 	{/if}
 </div>
 
