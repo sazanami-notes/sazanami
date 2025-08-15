@@ -195,6 +195,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		return json({ message: `Internal Server Error: ${errorMessage}` }, { status: 500 });
+		return json({ message: 'Failed to create note', error: errorMessage }, { status: 500 });
 	}
 };

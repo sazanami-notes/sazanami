@@ -106,14 +106,13 @@ export const updateNoteLinks = async (sourceNoteId: string, content: string, use
 			.where(and(eq(notes.userId, userId), inArray(notes.slug, linkedSlugs)));
 	}
 	const targetNoteIds = targetNotes.map((n) => n.id);
-	const uniqueTargetNoteIds = [...new Set(targetNoteIds)];
 
 	// 3. Delete all existing links from this source note
 	await db.delete(noteLinks).where(eq(noteLinks.sourceNoteId, sourceNoteId));
 
 	// 4. Insert new links
-	if (uniqueTargetNoteIds.length > 0) {
-		const newLinks = uniqueTargetNoteIds.map((targetNoteId) => ({
+	if (targetNoteIds.length > 0) {
+		const newLinks = targetNoteIds.map((targetNoteId) => ({
 			sourceNoteId,
 			targetNoteId,
 			createdAt: new Date()

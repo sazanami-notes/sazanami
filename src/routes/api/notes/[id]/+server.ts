@@ -158,7 +158,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		return json(noteWithTags);
 	} catch (error) {
 		console.error('Error updating note:', error);
-		return new Response('Internal Server Error', { status: 500 });
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		return json({ message: 'Failed to update note', error: errorMessage }, { status: 500 });
 	}
 };
 
