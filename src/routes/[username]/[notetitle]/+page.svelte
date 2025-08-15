@@ -2,22 +2,49 @@
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
 	import { page } from '$app/stores';
+	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
+	import { enhance } from '$app/forms';
 
 	export let data: PageData;
+
+	let content = data.note.content;
+
+	const handleContentChange = (value: string) => {
+		content = value;
+	};
 </script>
 
-<div class="prose max-w-none">
-	<h1>{data.note.title}</h1>
-	<!-- This is a security risk. In a real app, we should use a proper Markdown renderer that sanitizes the output. -->
-	<!-- For this project, we will assume the content is trusted. -->
-	<div class="note-content">{@html data.note.content}</div>
-</div>
+<form method="post" use:enhance class="prose max-w-none">
+	<div class="mb-4">
+		<input
+			type="text"
+			id="title"
+			name="title"
+			value={data.note.title}
+			class="focus:ring-primary focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2 text-2xl font-bold shadow-sm focus:outline-none"
+		/>
+	</div>
+
+	<div class="mb-4">
+		<div class="h-96 w-full">
+			<MilkdownEditor {content} onChange={handleContentChange} />
+		</div>
+		<!-- Hidden textarea to maintain compatibility with the form -->
+		<textarea id="content" name="content" class="hidden">{content}</textarea>
+	</div>
+
+	<div class="flex justify-end space-x-2">
+		<button type="submit" class="btn btn-primary"> Save Changes </button>
+	</div>
+</form>
 
 {#if data.links}
-	<LinkExplorer
-		oneHopLinks={data.links.oneHopLinks}
-		backlinks={data.links.backlinks}
-		twoHopLinks={data.links.twoHopLinks}
-		username={$page.params.username}
-	/>
+	<div class="mt-8">
+		<LinkExplorer
+			oneHopLinks={data.links.oneHopLinks}
+			backlinks={data.links.backlinks}
+			twoHopLinks={data.links.twoHopLinks}
+			username={$page.params.username}
+		/>
+	</div>
 {/if}
