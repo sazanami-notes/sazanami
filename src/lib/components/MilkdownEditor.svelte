@@ -133,6 +133,11 @@
 		border-radius: 4px;
 		padding: 8px;
 		background-color: white;
+		overflow: auto;
+	}
+
+	:global(.milkdown-editor .ProseMirror) {
+		height: 100%;
 	}
 
 	.fallback-textarea {
