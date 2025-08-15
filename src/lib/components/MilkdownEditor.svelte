@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx } from '@milkdown/core';
+	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx, editorViewCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 	import { upload, uploadConfig, Uploader } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
-	import { focus } from '@milkdown/kit/utils';
 
 	export let content = '';
 	export let onChange: (markdown: string) => void = () => {};
@@ -104,7 +103,10 @@
 
 	function handleContainerClick() {
 		if (editor) {
-			editor.action(focus);
+			editor.action((ctx) => {
+				const view = ctx.get(editorViewCtx);
+				view.focus();
+			});
 		}
 	}
 
@@ -112,7 +114,10 @@
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
 			if (editor) {
-				editor.action(focus);
+				editor.action((ctx) => {
+					const view = ctx.get(editorViewCtx);
+					view.focus();
+				});
 			}
 		}
 	}
