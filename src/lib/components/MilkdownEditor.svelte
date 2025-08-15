@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
 	import { Editor, defaultValueCtx, rootCtx, editorViewOptionsCtx } from '@milkdown/kit/core';
 	import { commonmark } from '@milkdown/kit/preset/commonmark';
 	import { nord } from '@milkdown/theme-nord';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
-	import { upload, uploader } from '@milkdown/kit/plugin/upload';
+	import { upload, uploadConfig, Uploader } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
 
 	export let content = '';
@@ -16,41 +15,47 @@
 	let editorInstance: Editor | null = null;
 	let fallbackTextarea = false;
 
+	const uploader: Uploader = async (files, schema) => {
+		const images: File[] = [];
+		for (let i = 0; i < files.length; i++) {
+			const file = files.item(i);
+			if (!file) {
+				continue;
+			}
+
+			if (!file.type.includes('image')) {
+				continue;
+			}
+
+			images.push(file);
+		}
+
+		const nodes: Node[] = await Promise.all(
+			images.map(async (image) => {
+				const alt = image.name;
+				const formData = new FormData();
+				formData.append('file', image);
+
+				const res = await fetch('/api/attachments', {
+					method: 'POST',
+					body: formData
+				});
+				const data = await res.json();
+
+				if (data.success) {
+					return schema.nodes.image.create({
+						src: data.url,
+						alt
+					});
+				}
+				return schema.nodes.text.create({ text: `[Upload failed: ${alt}]` });
+			})
+		);
+		return nodes;
+	};
+
 	async function useEditor(dom: HTMLDivElement) {
 		try {
-			const fileUploader = uploader(async (files, schema) => {
-				const images: File[] = [];
-				for (let i = 0; i < files.length; i++) {
-					const file = files[i];
-					if (file.type.startsWith('image/')) {
-						images.push(file);
-					}
-				}
-
-				const nodes: Node[] = await Promise.all(
-					images.map(async (image) => {
-						const alt = image.name;
-						const formData = new FormData();
-						formData.append('file', image);
-
-						const res = await fetch('/api/attachments', {
-							method: 'POST',
-							body: formData
-						});
-						const data = await res.json();
-
-						if (data.success) {
-							return schema.nodes.image.create({
-								src: data.url,
-								alt
-							});
-						}
-						return schema.nodes.text.create({ text: `[Upload failed: ${alt}]` });
-					})
-				);
-				return nodes;
-			});
-
 			const editor = await Editor.make()
 				.config((ctx) => {
 					ctx.set(rootCtx, dom);
@@ -66,11 +71,15 @@
 							}
 						]
 					});
+					ctx.update(uploadConfig.key, (prev) => ({
+						...prev,
+						uploader
+					}));
 				})
 				.config(nord)
 				.use(commonmark)
 				.use(listener)
-				.use(upload.configure(fileUploader))
+				.use(upload)
 				.create();
 
 			editorInstance = editor;
@@ -108,9 +117,9 @@
 			value={content}
 			on:input={handleTextareaInput}
 			placeholder="Enter your content here..."
-		/>
+		></textarea>
 	{:else}
-		<div use:useEditor class="milkdown-editor" />
+		<div use:useEditor class="milkdown-editor"></div>
 	{/if}
 </div>
 
