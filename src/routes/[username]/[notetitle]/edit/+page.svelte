@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { enhance } from '$app/forms';
-	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
+	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 
 	export let data: PageData;
 
@@ -48,7 +47,7 @@
 		<div class="mb-4">
 			<label for="content" class="mb-1 block text-sm font-medium">Content</label>
 			<div class="h-96 w-full">
-				<MilkdownEditor {content} onChange={handleContentChange} />
+				<TiptapEditor {content} onChange={handleContentChange} />
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
 			<textarea id="content" name="content" class="hidden">{content}</textarea>
