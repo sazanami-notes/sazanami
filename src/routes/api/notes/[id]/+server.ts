@@ -135,7 +135,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// After updating the note, update its links
 		const finalContent = content !== undefined ? content : existingNote[0].content;
-		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
+		// await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 
 		const updatedNote = await db
 			.select()
