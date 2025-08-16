@@ -186,7 +186,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// After creating the note, update its links
-		await updateNoteLinks(noteId, content || '', session.session.userId);
+		// await updateNoteLinks(noteId, content || '', session.session.userId);
 
 		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
 
@@ -195,6 +195,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		return json({ message: 'Failed to create note', error: errorMessage }, { status: 500 });
+		return json({ message: `Internal Server Error: ${errorMessage}` }, { status: 500 });
 	}
 };

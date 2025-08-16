@@ -135,7 +135,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// After updating the note, update its links
 		const finalContent = content !== undefined ? content : existingNote[0].content;
-		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
+		// await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 
 		const updatedNote = await db
 			.select()
@@ -158,8 +158,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		return json(noteWithTags);
 	} catch (error) {
 		console.error('Error updating note:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		return json({ message: 'Failed to update note', error: errorMessage }, { status: 500 });
+		return new Response('Internal Server Error', { status: 500 });
 	}
 };
 
