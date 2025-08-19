@@ -2,6 +2,7 @@
 	import { invalidateAll, goto } from '$app/navigation';
 	import type { LayoutData } from '../../routes/$types';
 	import { authClient } from '$lib/auth-client';
+	import { theme } from '$lib/stores/theme';
 
 	/**
 	 * Header component for the Sazanami application.
@@ -14,6 +15,7 @@
 
 	let waveSoundEnabled = false;
 	let audioElement: HTMLAudioElement;
+	let isDarkMode = $theme === 'sazanami-night';
 
 	$: {
 		if (audioElement) {
@@ -25,6 +27,10 @@
 				audioElement.pause();
 			}
 		}
+	}
+
+	$: {
+		$theme = isDarkMode ? 'sazanami-night' : 'sazanami-days';
 	}
 
 	// Placeholder click handlers for future functionality.
@@ -91,6 +97,12 @@
 						<span>Wave Sound</span>
 						<input type="checkbox" class="toggle" bind:checked={waveSoundEnabled} />
 					</div>
+				</li>
+				<li>
+					<label class="flex cursor-pointer justify-between">
+						<span class="label-text">Dark Mode</span>
+						<input type="checkbox" class="toggle" bind:checked={isDarkMode} />
+					</label>
 				</li>
 			</ul>
 		</div>
