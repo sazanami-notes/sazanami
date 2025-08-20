@@ -5,6 +5,7 @@
 Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした、おひとり様用のノートテイキングアプリです。Obsidianの複雑さ、Notionの動作の遅さ、Scrapboxの独自フォーマットといった課題を解決し、Markdownによるポータビリティと、素早いメモ書きの体験を提供することを目指しています。
 
 - [Figma](https://www.figma.com/design/GmQwVZtxtMtLhujgtrmGYl/sazanami?node-id=0-1&t=isQ1ILUFBDQy9zg5-1)
+- [Notion](https://kaedesato.notion.site/Sazanami-21c1121f1cf680c39412f1039f155707?pvs=74)
 
 > [!WARNING]
 > Ver1.0.0までは破壊的変更を頻繁に行います。
