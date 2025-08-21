@@ -186,7 +186,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// After creating the note, update its links
-		await updateNoteLinks(noteId, content || '', session.session.userId);
+		// await updateNoteLinks(noteId, content || '', session.session.userId);
 
 		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
 
