@@ -31,18 +31,11 @@
 				} else {
 					console.log('Login successful:', data);
 					// ユーザー名を取得してリダイレクト
-					const username = data.user?.name;
-					if (username) {
-						console.log('Redirecting to user page:', username);
-						// Invalidate all data to ensure fresh data is loaded
-						await invalidateAll();
-						// Redirect to user page
-						await goto(`/${username}`);
-					} else {
-						console.log('Username not found, redirecting to home');
-						// ユーザー名が取得できない場合はルートにリダイレクト
-						await goto('/');
-					}
+					console.log('Redirecting to home page');
+					// Invalidate all data to ensure fresh data is loaded
+					await invalidateAll();
+					// Redirect to home page
+					await goto('/home');
 				}
 			} else {
 				console.log('Attempting registration with email:', email);
@@ -62,9 +55,13 @@
 					mode = 'login';
 				}
 			}
-		} catch (e: any) {
+		} catch (e: unknown) {
 			console.error('Unexpected error:', e);
-			error = '予期せぬエラーが発生しました。';
+			if (e instanceof Error) {
+				error = e.message;
+			} else {
+				error = '予期せぬエラーが発生しました。';
+			}
 		} finally {
 			isLoading = false;
 		}

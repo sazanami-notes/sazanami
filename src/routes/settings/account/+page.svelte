@@ -43,7 +43,8 @@
 			/>
 		</div>
 		<div>
-			<label for="confirmPassword" class="block text-sm font-medium">新しいパスワード（確認）</label>
+			<label for="confirmPassword" class="block text-sm font-medium">新しいパスワード（確認）</label
+			>
 			<input
 				type="password"
 				id="confirmPassword"

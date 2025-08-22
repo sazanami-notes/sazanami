@@ -1,5 +1,6 @@
 <script lang="ts">
 	type Link = {
+		id: string;
 		title: string;
 		slug: string;
 	};
@@ -21,9 +22,9 @@
 		<div class="mb-6">
 			<h3 class="mb-2 text-lg font-medium text-gray-700">1-Hop Links</h3>
 			<ul class="list-inside list-disc space-y-1">
-				{#each oneHopLinks as link (link.slug)}
+				{#each oneHopLinks as link (link.id)}
 					<li>
-						<a href="/{username}/{link.slug}" class="text-blue-600 hover:underline">
+						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
 							{link.title}
 						</a>
 					</li>
@@ -36,9 +37,9 @@
 		<div class="mb-6">
 			<h3 class="mb-2 text-lg font-medium text-gray-700">Backlinks</h3>
 			<ul class="list-inside list-disc space-y-1">
-				{#each backlinks as link (link.slug)}
+				{#each backlinks as link (link.id)}
 					<li>
-						<a href="/{username}/{link.slug}" class="text-blue-600 hover:underline">
+						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
 							{link.title}
 						</a>
 					</li>
@@ -51,9 +52,9 @@
 		<div>
 			<h3 class="mb-2 text-lg font-medium text-gray-700">2-Hop Links</h3>
 			<ul class="list-inside list-disc space-y-1">
-				{#each twoHopLinks as link (link.slug)}
+				{#each twoHopLinks as link (link.id)}
 					<li>
-						<a href="/{username}/{link.slug}" class="text-blue-600 hover:underline">
+						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
 							{link.title}
 						</a>
 					</li>

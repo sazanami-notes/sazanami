@@ -7,6 +7,7 @@ import { alias } from 'drizzle-orm/sqlite-core';
 import { auth } from '$lib/server/auth';
 
 type Link = {
+	id: string;
 	title: string;
 	slug: string;
 };
@@ -23,6 +24,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		const targetNote = alias(notes, 'targetNote');
 		const oneHopLinksResult = await db
 			.select({
+				id: targetNote.id,
 				title: targetNote.title,
 				slug: targetNote.slug
 			})
@@ -34,6 +36,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		const sourceNote = alias(notes, 'sourceNote');
 		const backlinksResult = await db
 			.select({
+				id: sourceNote.id,
 				title: sourceNote.title,
 				slug: sourceNote.slug
 			})
@@ -54,6 +57,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			const twoHopTargetNote = alias(notes, 'twoHopTargetNote');
 			twoHopLinksResult = await db
 				.select({
+					id: twoHopTargetNote.id,
 					title: twoHopTargetNote.title,
 					slug: twoHopTargetNote.slug
 				})

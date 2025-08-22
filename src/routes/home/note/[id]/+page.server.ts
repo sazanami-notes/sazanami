@@ -1,11 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import {
-	getNoteByTitle,
-	updateNote,
-	getNoteBySlug,
-	getUserByName,
-	updateNoteLinks
-} from '$lib/server/db';
+import { getNoteById, updateNote, updateNoteLinks } from '$lib/server/db';
 import { error, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, locals, fetch }) => {
@@ -14,7 +8,7 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
 	}
 
 	try {
-		const note = await getNoteByTitle(locals.user.id, params.username, params.notetitle);
+		const note = await getNoteById(locals.user.id, params.id);
 		if (!note) {
 			throw error(404, 'Note not found');
 		}
@@ -51,25 +45,14 @@ export const actions: Actions = {
 			const title = formData.get('title')?.toString() || '';
 			const content = formData.get('content')?.toString() || '';
 
-			// Get user by username
-			const userByName = await getUserByName(params.username);
-			if (!userByName) {
-				throw error(404, 'User not found');
-			}
-
 			// Get existing note
-			const existingNote = await getNoteBySlug(userByName.id, params.username, params.notetitle);
+			const existingNote = await getNoteById(locals.user.id, params.id);
 			if (!existingNote) {
 				throw error(404, 'Note not found');
 			}
 
-			// Check if the current user is the owner of the note
-			if (existingNote.userId !== locals.user.id) {
-				throw error(403, 'You do not have permission to edit this note');
-			}
-
 			// Update note
-			const updatedNote = await updateNote(existingNote.id, locals.user.id, {
+			await updateNote(existingNote.id, locals.user.id, {
 				title,
 				content
 			});
@@ -78,9 +61,9 @@ export const actions: Actions = {
 			await updateNoteLinks(existingNote.id, content, locals.user.id);
 
 			// Redirect to the updated note page
-			throw redirect(303, `/${params.username}/${updatedNote?.slug || params.notetitle}`);
+			throw redirect(303, `/home/note/${existingNote.id}`);
 		} catch (err) {
-			if (err.status === 303) {
+			if (err instanceof Error && 'status' in err && err.status === 303) {
 				throw err; // Re-throw redirects
 			}
 			console.error('Error updating note:', err);

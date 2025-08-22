@@ -82,122 +82,95 @@ const createMockFormRequestEvent = async (
 };
 
 describe('Scenario 2: Note Management (CRUD)', () => {
-	// Tests for create, read, update, delete will go here
-	let createdNoteSlug = '';
+	let createdNoteId = '';
 	const noteData = {
 		title: 'My First Note',
 		content: 'This is a test of wiki links. Link to [[Test Page]].'
 	};
 
 	it('2.1: Creates a new note', async () => {
-		// Import the action from the server file
-		const { actions } = await import('../../src/routes/[username]/new/+page.server');
-
+		const { actions } = await import('../../src/routes/home/note/new/+page.server');
 		const event = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session },
-			{ username: testUser.name },
+			{}, // No params needed for the new route
 			noteData
 		);
 
-		// The action should throw a redirect on success
 		await expect(actions.default(event)).rejects.toThrow();
 
-		// Verify the note is in the database
 		const newNotes = await db.select().from(notesSchema).where(eq(notesSchema.userId, testUser.id));
-
 		const newNote = newNotes[0];
 		expect(newNote).toBeDefined();
 		expect(newNote?.title).toBe(noteData.title);
 		expect(newNote?.content).toBe(noteData.content);
-		createdNoteSlug = newNote?.slug || '';
-		expect(createdNoteSlug).not.toBe('');
+		createdNoteId = newNote?.id || '';
+		expect(createdNoteId).not.toBe('');
 	});
 
 	it('2.2: Verifies the new note appears in the list', async () => {
-		const { load } = await import('../../src/routes/[username]/+page.server');
+		const { load } = await import('../../src/routes/home/box/+page.server');
 		const event = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session },
-			{ username: testUser.name },
+			{}, // No params needed
 			{}
 		);
 
-		// The load function in [username]/+page.server.ts doesn't seem to use locals,
-		// so we need to mock getSession to make it think we are logged in.
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
-
 		const pageData = await load(event);
 
 		expect(pageData.notes).toBeDefined();
 		expect(pageData.notes.length).toBeGreaterThan(0);
-		const foundNote = pageData.notes.find((n) => n.slug === createdNoteSlug);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
 		expect(foundNote).toBeDefined();
 		expect(foundNote?.title).toBe(noteData.title);
 	});
 
 	it('2.3: Updates an existing note', async () => {
-		const { actions } = await import('../../src/routes/[username]/[notetitle]/+page.server');
+		const { actions } = await import('../../src/routes/home/note/[id]/+page.server');
 		const updatedNoteData = {
 			title: 'Updated Note',
 			content: 'Content has been updated.'
 		};
-		console.log('Updating note with slug:', createdNoteSlug);
 		const event = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session },
-			{ username: testUser.name, notetitle: createdNoteSlug },
+			{ id: createdNoteId },
 			updatedNoteData
 		);
 
 		await expect(actions.default(event)).rejects.toThrow();
 
-		const updatedNotes = await db
-			.select()
-			.from(notesSchema)
-			.where(eq(notesSchema.userId, testUser.id));
+		const updatedNotes = await db.select().from(notesSchema).where(eq(notesSchema.id, createdNoteId));
 		const updatedNote = updatedNotes[0];
 
 		expect(updatedNote).toBeDefined();
 		expect(updatedNote?.title).toBe(updatedNoteData.title);
 		expect(updatedNote?.content).toBe(updatedNoteData.content);
-		// Update slug for the next test
-		createdNoteSlug = updatedNote?.slug || '';
 	});
 
 	it('2.4: Deletes the note', async () => {
 		const { DELETE } = await import('../../src/routes/api/notes/[id]/+server');
-
-		// Get the note ID from the database using the slug
-		const notes = await db
-			.select()
-			.from(notesSchema)
-			.where(and(eq(notesSchema.userId, testUser.id), eq(notesSchema.slug, createdNoteSlug)));
-		const noteToDelete = notes[0];
-		expect(noteToDelete).toBeDefined();
-		const noteId = noteToDelete!.id;
-
 		const event = {
 			locals: { user: mockSession.user, session: mockSession.session },
-			params: { id: noteId },
-			request: new Request(`http://localhost/api/notes/${noteId}`, { method: 'DELETE' })
+			params: { id: createdNoteId },
+			request: new Request(`http://localhost/api/notes/${createdNoteId}`, { method: 'DELETE' })
 		} as unknown as RequestEvent;
 
 		const response = await DELETE(event);
 		expect(response.status).toBe(204);
 
-		// Verify the note is deleted from the database
-		const deletedNotes = await db.select().from(notesSchema).where(eq(notesSchema.id, noteId));
+		const deletedNotes = await db.select().from(notesSchema).where(eq(notesSchema.id, createdNoteId));
 		expect(deletedNotes.length).toBe(0);
 
 		// Verify the note is gone from the list
-		const { load } = await import('../../src/routes/[username]/+page.server');
+		const { load } = await import('../../src/routes/home/box/+page.server');
 		const listEvent = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session },
-			{ username: testUser.name },
+			{},
 			{}
 		);
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
-
 		const pageData = await load(listEvent);
-		const foundNote = pageData.notes.find((n) => n.slug === createdNoteSlug);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
 		expect(foundNote).toBeUndefined();
 	});
 
@@ -207,21 +180,24 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 			content: 'これはテストです。'
 		};
 
-		// 1. Create the note via the action
-		const createAction = await import('../../src/routes/[username]/new/+page.server');
+		// 1. Create the note
+		const createAction = await import('../../src/routes/home/note/new/+page.server');
 		const createEvent = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session },
-			{ username: testUser.name },
+			{},
 			japaneseNoteData
 		);
-		// Action redirects on success, so we expect it to throw
 		await expect(createAction.actions.default(createEvent)).rejects.toThrow();
 
-		// 2. Try to load the page for the newly created note using the raw title
-		const { load } = await import('../../src/routes/[username]/[notetitle]/+page.server');
+		// Get the created note's ID
+		const newNote = (await db.select().from(notesSchema).where(and(eq(notesSchema.userId, testUser.id), eq(notesSchema.title, japaneseNoteData.title))))[0];
+		expect(newNote).toBeDefined();
+
+		// 2. Load the page for the new note
+		const { load } = await import('../../src/routes/home/note/[id]/+page.server');
 		const loadEvent = {
 			locals: { user: mockSession.user, session: mockSession.session },
-			params: { username: testUser.name, notetitle: japaneseNoteData.title },
+			params: { id: newNote.id },
 			fetch: vi.fn().mockResolvedValue(
 				new Response(JSON.stringify({ oneHopLinks: [], backlinks: [], twoHopLinks: [] }), {
 					status: 200
@@ -231,17 +207,17 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 
 		const pageData = await load(loadEvent);
 
-		// 3. Assert that the correct note data was loaded
+		// 3. Assert correct data was loaded
 		expect(pageData.note).toBeDefined();
 		expect(pageData.note.title).toBe(japaneseNoteData.title);
 		expect(pageData.note.content).toBe(japaneseNoteData.content);
 
-		// Clean up the created note
 		await db.delete(notesSchema).where(eq(notesSchema.id, pageData.note.id));
 	});
 });
 
 describe('Scenario 3: Search and Wiki Link API', () => {
+	// ... (This part of the test doesn't seem to be affected by the routing changes)
 	const notesToCreate = [
 		{
 			title: 'About SvelteKit',
@@ -257,7 +233,6 @@ describe('Scenario 3: Search and Wiki Link API', () => {
 	];
 
 	beforeAll(async () => {
-		// Create notes for testing search and filtering
 		for (const note of notesToCreate) {
 			const noteId = ulid();
 			await db.insert(notesSchema).values({
@@ -270,13 +245,9 @@ describe('Scenario 3: Search and Wiki Link API', () => {
 				updatedAt: new Date(),
 				isPublic: false
 			});
-			// For simplicity, this test doesn't handle tag creation in the db.
-			// The search functionality is on title/content and doesn't depend on tags table.
-			// The resolve-link API also does not depend on tags.
 		}
 	});
 
-	// Tests for search and API will go here
 	it('3.1: Resolves an existing wiki link', async () => {
 		const { GET } = await import('../../src/routes/api/notes/resolve-link/+server');
 		const url = new URL('http://localhost');
