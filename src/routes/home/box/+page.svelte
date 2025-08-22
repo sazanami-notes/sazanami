@@ -29,10 +29,7 @@
 	}
 
 	function createNewNote() {
-		const username = get(page).data.user?.name;
-		if (username) {
-			goto(`/${username}/new`);
-		}
+		goto('/home/note/new');
 	}
 
 	function handleSearch(event: CustomEvent<string>) {
@@ -59,13 +56,12 @@
 	</div>
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-		{#each filteredNotes as note}
+		{#each filteredNotes as note (note.id)}
 			<MemoCard
 				{note}
 				username={get(page).data.user?.name}
 				on:click={() => {
-					const username = get(page).data.user?.name;
-					if (username) goto(`/${username}/${note.slug}`);
+					goto(`/home/note/${note.id}`);
 				}}
 			/>
 		{/each}
