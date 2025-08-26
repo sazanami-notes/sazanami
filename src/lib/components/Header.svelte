@@ -2,7 +2,6 @@
 	import { invalidateAll, goto } from '$app/navigation';
 	import type { LayoutData } from '../../routes/$types';
 	import { authClient } from '$lib/auth-client';
-	import { theme } from '$lib/stores/theme';
 
 	/**
 	 * Header component for the Sazanami application.
@@ -12,26 +11,6 @@
 
 	export let session: LayoutData['session'];
 	export let user: LayoutData['user'];
-
-	let waveSoundEnabled = false;
-	let audioElement: HTMLAudioElement;
-	let isDarkMode = $theme === 'sazanami-night';
-
-	$: {
-		if (audioElement) {
-			if (waveSoundEnabled) {
-				audioElement.play().catch((e) => {
-					console.error('Failed to play wave sound:', e);
-				});
-			} else {
-				audioElement.pause();
-			}
-		}
-	}
-
-	$: {
-		$theme = isDarkMode ? 'sazanami-night' : 'sazanami-days';
-	}
 
 	// Placeholder click handlers for future functionality.
 	const handleSearchClick = () => {
@@ -71,41 +50,22 @@
 
 <nav class="navbar bg-base-100 shadow-md">
 	<div class="navbar-start">
-		<div class="dropdown">
-			<div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 6h16M4 12h16M4 18h7"
-					/>
-				</svg>
-			</div>
-			<ul class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-				{#if user}
-					<li><a href="/settings/account">Account</a></li>
-				{/if}
-				<li>
-					<div class="flex justify-between">
-						<span>Wave Sound</span>
-						<input type="checkbox" class="toggle" bind:checked={waveSoundEnabled} />
-					</div>
-				</li>
-				<li>
-					<label class="flex cursor-pointer justify-between">
-						<span class="label-text">Dark Mode</span>
-						<input type="checkbox" class="toggle" bind:checked={isDarkMode} />
-					</label>
-				</li>
-			</ul>
-		</div>
+		<label for="main-menu-drawer" class="btn btn-ghost btn-circle drawer-button">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-5 w-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M4 6h16M4 12h16M4 18h7"
+				/>
+			</svg>
+		</label>
 	</div>
 	<div class="navbar-center">
 		<!-- Application Logo or Title -->
@@ -222,5 +182,4 @@
 			{/if}
 		</button>
 	</div>
-	<audio bind:this={audioElement} src="/sazanami-loop.mp3" loop></audio>
 </nav>
