@@ -59,9 +59,9 @@
 	class="card bg-base-100 rounded-box overflow-hidden shadow-md transition-transform duration-200 ease-out"
 	class:border-primary={note.isPinned}
 	class:border-2={note.isPinned}
-	{onTouchStart}
-	{onTouchMove}
-	{onTouchEnd}
+	ontouchstart={onTouchStart}
+	ontouchmove={onTouchMove}
+	ontouchend={onTouchEnd}
 	role="article"
 	aria-label="Post card for {note.title}"
 >
@@ -77,7 +77,10 @@
 			</a>
 			<button
 				class="btn btn-ghost btn-sm btn-square"
-				on:click|stopPropagation={handlePinClick}
+				onclick={(e) => {
+					e.stopPropagation();
+					handlePinClick();
+				}}
 				aria-label={note.isPinned ? 'Unpin note' : 'Pin note'}
 			>
 				{#if note.isPinned}
