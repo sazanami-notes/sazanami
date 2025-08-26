@@ -15,11 +15,6 @@ export const load: PageServerLoad = async ({ request, params }) => {
 		throw redirect(302, '/login');
 	}
 
-	// Ensure the username in the URL matches the logged-in user
-	if (params.username !== sessionData.user.name) {
-		throw redirect(302, `/${sessionData.user.name}`);
-	}
-
 	// Fetch notes for this user
 	const userNotes = await db
 		.select()
