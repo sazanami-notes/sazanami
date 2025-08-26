@@ -7,11 +7,11 @@
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
-	let waveSoundEnabled = false;
+	let waveSoundEnabled = $state(false);
 	let audioElement: HTMLAudioElement;
-	let isDarkMode = $theme === 'sazanami-night';
+	let isDarkMode = $state($theme === 'sazanami-night');
 
-	$: {
+	$effect(() => {
 		if (audioElement) {
 			if (waveSoundEnabled) {
 				audioElement.play().catch((e) => {
@@ -21,11 +21,11 @@
 				audioElement.pause();
 			}
 		}
-	}
+	});
 
-	$: {
+	$effect(() => {
 		$theme = isDarkMode ? 'sazanami-night' : 'sazanami-days';
-	}
+	});
 
 	onMount(() => {
 		const unsubscribe = theme.subscribe((value) => {
