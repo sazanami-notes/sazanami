@@ -39,7 +39,7 @@
 	};
 
 	const handleGridClick = () => {
-		console.log('Grid icon clicked');
+		goto('/home/box');
 	};
 
 	const handleMapPinClick = () => {
