@@ -139,7 +139,10 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 
 		await expect(actions.default(event)).rejects.toThrow();
 
-		const updatedNotes = await db.select().from(notesSchema).where(eq(notesSchema.id, createdNoteId));
+		const updatedNotes = await db
+			.select()
+			.from(notesSchema)
+			.where(eq(notesSchema.id, createdNoteId));
 		const updatedNote = updatedNotes[0];
 
 		expect(updatedNote).toBeDefined();
@@ -158,7 +161,10 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		const response = await DELETE(event);
 		expect(response.status).toBe(204);
 
-		const deletedNotes = await db.select().from(notesSchema).where(eq(notesSchema.id, createdNoteId));
+		const deletedNotes = await db
+			.select()
+			.from(notesSchema)
+			.where(eq(notesSchema.id, createdNoteId));
 		expect(deletedNotes.length).toBe(0);
 
 		// Verify the note is gone from the list
@@ -190,7 +196,14 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		await expect(createAction.actions.default(createEvent)).rejects.toThrow();
 
 		// Get the created note's ID
-		const newNote = (await db.select().from(notesSchema).where(and(eq(notesSchema.userId, testUser.id), eq(notesSchema.title, japaneseNoteData.title))))[0];
+		const newNote = (
+			await db
+				.select()
+				.from(notesSchema)
+				.where(
+					and(eq(notesSchema.userId, testUser.id), eq(notesSchema.title, japaneseNoteData.title))
+				)
+		)[0];
 		expect(newNote).toBeDefined();
 
 		// 2. Load the page for the new note

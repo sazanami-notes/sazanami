@@ -31,6 +31,8 @@ export async function createTables() {
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       is_public BOOLEAN DEFAULT FALSE NOT NULL,
+      is_pinned BOOLEAN DEFAULT FALSE NOT NULL,
+      status TEXT DEFAULT 'inbox' NOT NULL,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     );
   `);

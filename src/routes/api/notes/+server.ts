@@ -138,7 +138,19 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		const now = new Date();
-		const noteTitle = title || 'Untitled Note';
+		let noteTitle = title;
+		const noteContent = content || '';
+
+		// タイムラインからのポストの場合、タイトルを自動生成
+		if (title === undefined) {
+			const firstLine = noteContent.split('\n')[0] || '';
+			// 本文からHTMLタグを除去し、最初の50文字をタイトルとする
+			const plainTextFirstLine = firstLine.replace(/<[^>]*>/g, '');
+			noteTitle = plainTextFirstLine.substring(0, 50) || 'Untitled Note';
+		} else {
+			noteTitle = title || 'Untitled Note';
+		}
+
 		const noteSlug = generateSlug(noteTitle); // スラッグを生成
 
 		// 新規メモを作成
@@ -147,7 +159,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			userId: session.session.userId,
 			title: noteTitle,
 			slug: noteSlug, // スラッグを保存
-			content: content || '',
+			content: noteContent,
 			createdAt: now,
 			updatedAt: now,
 			isPublic: false

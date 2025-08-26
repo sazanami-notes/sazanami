@@ -2,13 +2,13 @@
 	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
+	import { replaceAll } from '@milkdown/utils';
 	import { gfm } from '@milkdown/preset-gfm';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 	import { upload, uploadConfig } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
 
 	export let content = '';
-	export let onChange: (markdown: string) => void = () => {};
 	export let editable = true;
 	export let showTitle = true;
 	export let title = '';
@@ -66,7 +66,9 @@
 					}));
 					// Add listener config
 					ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
-						onChange(markdown);
+						if (content !== markdown) {
+							content = markdown;
+						}
 					});
 					// Add upload plugin config
 					ctx.update(uploadConfig.key, (prev) => ({
@@ -97,10 +99,14 @@
 		};
 	};
 
+	// When content prop changes from outside, update the editor
+	$: if (editor && content !== editor.action((ctx) => ctx.get(defaultValueCtx))) {
+		editor.action(replaceAll(content));
+	}
+
 	function handleTextareaInput(e: Event) {
 		const target = e.target as HTMLTextAreaElement;
 		content = target.value;
-		onChange(content);
 	}
 </script>
 
