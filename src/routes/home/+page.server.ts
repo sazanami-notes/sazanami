@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/connection';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { desc } from 'drizzle-orm';
 
 export const load = async ({ parent }: { parent: () => Promise<{ session: any; user: any }> }) => {
@@ -16,8 +16,8 @@ export const load = async ({ parent }: { parent: () => Promise<{ session: any; u
 	const userNotes = await db
 		.select()
 		.from(notes)
-		.where(eq(notes.userId, user.id))
-		.orderBy(desc(notes.updatedAt));
+		.where(and(eq(notes.userId, user.id), eq(notes.status, 'inbox')))
+		.orderBy(desc(notes.isPinned), desc(notes.updatedAt));
 
 	// Fetch all tags for the user
 	const userTagsResult = await db

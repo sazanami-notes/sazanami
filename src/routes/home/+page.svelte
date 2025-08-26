@@ -1,19 +1,35 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import type { Note } from '$lib/types';
-	import MemoCard from '$lib/components/MemoCard.svelte';
+	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
+	import PostCard from '$lib/components/PostCard.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import TagFilter from '$lib/components/TagFilter.svelte';
+	import { onMount } from 'svelte';
 
-	let searchQuery = '';
-	let selectedTags: string[] = [];
+	let notes: Note[] = [];
 	let allTags: string[] = [];
 	let filteredNotes: Note[] = [];
+	let searchQuery = '';
+	let selectedTags: string[] = [];
+	let newPostContent = '';
 
+	// Load initial data
+	onMount(() => {
+		const pageData = get(page).data;
+		notes = (pageData.notes || []) as Note[];
+		allTags = pageData.allTags || [];
+		filterNotes();
+	});
+
+	// Filter notes when search or tags change
 	$: {
-		const notesStore = (get(page).data.notes || []) as Note[];
+		filterNotes();
+	}
+
+	function filterNotes() {
+		const notesStore = notes || [];
 		const filtered = notesStore.filter((note: Note) => {
 			const matchesTitle = note.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
 			const matchesContent = note.content
@@ -28,14 +44,6 @@
 		filteredNotes = filtered;
 	}
 
-	$: if (get(page).data.allTags) {
-		allTags = get(page).data.allTags;
-	}
-
-	function createNewNote() {
-		goto('/home/note/new');
-	}
-
 	function handleSearch(event: CustomEvent<string>) {
 		searchQuery = event.detail;
 	}
@@ -44,52 +52,122 @@
 		selectedTags = event.detail;
 	}
 
-	// ブラウザでのみ実行される
-	$: if (typeof window !== 'undefined' && get(page).data.notes) {
-		// データが読み込まれたことを確認
-		console.log('Notes loaded:', get(page).data.notes?.length || 0);
+	async function handleSubmitPost() {
+		if (!newPostContent.trim()) {
+			return; // Don't submit empty content
+		}
+
+		try {
+			const response = await fetch('/api/notes', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					content: newPostContent
+				})
+			});
+
+			if (response.ok) {
+				const newNote = await response.json();
+				// Add new note to the top of the list
+				notes = [newNote, ...notes];
+				newPostContent = ''; // Clear the editor
+				// We might need to re-fetch or update the editor's content prop
+			} else {
+				console.error('Failed to submit post:', await response.text());
+			}
+		} catch (error) {
+			console.error('Error submitting post:', error);
+		}
+	}
+
+	async function updateNoteStatus(noteId: string, status: 'archived' | 'box') {
+		try {
+			const response = await fetch(`/api/notes/${noteId}/status`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ status })
+			});
+			if (response.ok) {
+				// Remove the note from the local list for immediate UI update
+				notes = notes.filter((n) => n.id !== noteId);
+			} else {
+				console.error(`Failed to move note to ${status}:`, await response.text());
+			}
+		} catch (error) {
+			console.error(`Error moving note to ${status}:`, error);
+		}
+	}
+
+	function handleArchive(event: CustomEvent<string>) {
+		updateNoteStatus(event.detail, 'archived');
+	}
+
+	function handleBox(event: CustomEvent<string>) {
+		updateNoteStatus(event.detail, 'box');
+	}
+
+	async function handlePin(event: CustomEvent<string>) {
+		const noteId = event.detail;
+		try {
+			const response = await fetch(`/api/notes/${noteId}/pin`, {
+				method: 'POST'
+			});
+			if (response.ok) {
+				const data = await response.json();
+				// Update the note in the local list
+				const noteIndex = notes.findIndex((n) => n.id === noteId);
+				if (noteIndex !== -1) {
+					notes[noteIndex].isPinned = data.isPinned;
+					// Trigger reactivity by reassigning the array
+					notes = [...notes];
+					// Re-sort notes
+					notes.sort((a, b) => {
+						if (a.isPinned && !b.isPinned) return -1;
+						if (!a.isPinned && b.isPinned) return 1;
+						return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+					});
+				}
+			} else {
+				console.error('Failed to pin note:', await response.text());
+			}
+		} catch (error) {
+			console.error('Error pinning note:', error);
+		}
 	}
 </script>
 
-{#if get(page).data.notes !== undefined}
-	<div class="container mx-auto px-4 py-8">
-		<div class="mb-6 flex items-center justify-between">
-			<h1 class="text-3xl font-bold">タイムライン</h1>
-			<button on:click={createNewNote} class="btn btn-primary"> 新規ポスト作成 </button>
+<div class="container mx-auto px-4 py-8">
+	<!-- Post Input Area -->
+	<div class="mb-8">
+		<h1 class="mb-4 text-3xl font-bold">タイムライン</h1>
+		<div class="card bg-base-200 p-4">
+			<MilkdownEditor bind:content={newPostContent} editable={true} />
+			<div class="card-actions mt-4 justify-end">
+				<button on:click={handleSubmitPost} class="btn btn-primary">ポスト</button>
+			</div>
 		</div>
+	</div>
 
-		<div class="mb-6">
-			<SearchBar on:search={handleSearch} />
-		</div>
+	<!-- Filters -->
+	<div class="mb-6">
+		<SearchBar on:search={handleSearch} />
+	</div>
+	<div class="mb-6">
+		<TagFilter {allTags} on:tagSelect={handleTagSelect} />
+	</div>
 
-		<div class="mb-6">
-			<TagFilter {allTags} on:tagSelect={handleTagSelect} />
-		</div>
-
-		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-			{#each filteredNotes as note (note.id)}
-				<MemoCard
-					{note}
-					on:click={() => {
-						goto(`/home/note/${note.id}`);
-					}}
-				/>
-			{/each}
-		</div>
+	<!-- Timeline/Post List -->
+	<div class="flex flex-col gap-4">
+		{#each filteredNotes as note (note.id)}
+			<PostCard {note} on:archive={handleArchive} on:box={handleBox} on:pin={handlePin} />
+		{/each}
 
 		{#if filteredNotes.length === 0}
 			<div class="py-12 text-center">
-				<p class="text-gray-500">メモが見つかりません</p>
+				<p class="text-gray-500">ポストが見つかりません</p>
 			</div>
 		{/if}
 	</div>
-{:else}
-	<div class="hero bg-base-200 min-h-screen">
-		<div class="hero-content text-center">
-			<div class="max-w-md">
-				<h1 class="text-5xl font-bold">読み込み中...</h1>
-				<p class="py-6">データを読み込んでいます</p>
-			</div>
-		</div>
-	</div>
-{/if}
+</div>

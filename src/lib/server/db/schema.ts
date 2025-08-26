@@ -18,7 +18,9 @@ export const notes = sqliteTable('notes', {
 	content: text('content'), // Markdown本文
 	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(), // 作成日時 (MSタイムスタンプ)
 	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)
-	isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false)
+	isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
+	isPinned: integer('is_pinned', { mode: 'boolean' }).notNull().default(false),
+	status: text('status').notNull().default('inbox') // inbox, box, archived, trash
 });
 // インデックスはdrizzle-kitのgenerateで自動生成されることを期待
 
