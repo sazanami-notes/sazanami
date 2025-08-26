@@ -109,7 +109,7 @@
 	</div>
 	<div class="navbar-center">
 		<!-- Application Logo or Title -->
-		<a class="btn btn-ghost text-xl" href={user ? `/${user.name}` : '/'}>Sazanami</a>
+		<a class="btn btn-ghost text-xl" href={user ? '/home' : '/'}>Sazanami</a>
 	</div>
 	<div class="navbar-end">
 		<button class="btn btn-ghost btn-circle" on:click={handleSearchClick}>
