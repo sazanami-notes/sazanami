@@ -43,8 +43,8 @@
 
 <div class="container mx-auto px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-3xl font-bold">メモ一覧</h1>
-		<button on:click={createNewNote} class="btn btn-primary"> 新規メモ作成 </button>
+		<h1 class="text-3xl font-bold">ノート一覧</h1>
+		<button on:click={createNewNote} class="btn btn-primary"> 新規ノート作成 </button>
 	</div>
 
 	<div class="mb-6">
@@ -59,7 +59,6 @@
 		{#each filteredNotes as note (note.id)}
 			<MemoCard
 				{note}
-				username={get(page).data.user?.name}
 				on:click={() => {
 					goto(`/home/note/${note.id}`);
 				}}

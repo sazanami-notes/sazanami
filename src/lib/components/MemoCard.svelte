@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Note } from '$lib/types';
 	export let note: Note;
-	export let username: string;
 	let isHovered = false;
 </script>
 
@@ -14,7 +13,7 @@
 	aria-label="メモカード"
 >
 	<a
-		href={note.id ? `/${username}/${encodeURIComponent(note.title)}` : undefined}
+		href={note.id ? `/home/note/${note.id}` : undefined}
 		class="block p-4"
 	>
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>

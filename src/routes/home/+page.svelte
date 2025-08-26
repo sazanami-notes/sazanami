@@ -1,33 +1,95 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
-	import { goto } from '$app/navigation';
+	import type { Note } from '$lib/types';
+	import MemoCard from '$lib/components/MemoCard.svelte';
+	import SearchBar from '$lib/components/SearchBar.svelte';
+	import TagFilter from '$lib/components/TagFilter.svelte';
 
-	// ログインボタンをクリックしたときの処理
-	function handleLogin() {
-		goto('/login');
+	let searchQuery = '';
+	let selectedTags: string[] = [];
+	let allTags: string[] = [];
+	let filteredNotes: Note[] = [];
+
+	$: {
+		const notesStore = (get(page).data.notes || []) as Note[];
+		const filtered = notesStore.filter((note: Note) => {
+			const matchesTitle = note.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
+			const matchesContent = note.content
+				? note.content.toLowerCase().includes(searchQuery.toLowerCase())
+				: false;
+			const matchesSearch = matchesTitle || matchesContent;
+
+			const matchesTags =
+				selectedTags.length === 0 || selectedTags.every((tag) => note.tags?.includes(tag));
+			return matchesSearch && matchesTags;
+		});
+		filteredNotes = filtered;
+	}
+
+	$: if (get(page).data.allTags) {
+		allTags = get(page).data.allTags;
+	}
+
+	function createNewNote() {
+		goto('/home/note/new');
+	}
+
+	function handleSearch(event: CustomEvent<string>) {
+		searchQuery = event.detail;
+	}
+
+	function handleTagSelect(event: CustomEvent<string[]>) {
+		selectedTags = event.detail;
+	}
+
+	// ブラウザでのみ実行される
+	$: if (typeof window !== 'undefined' && get(page).data.notes) {
+		// データが読み込まれたことを確認
+		console.log('Notes loaded:', get(page).data.notes?.length || 0);
 	}
 </script>
 
-<div class="container mx-auto px-4 py-16">
-	<div class="text-center">
-		<h1 class="mb-6 text-4xl font-bold">{get(page).data.landing?.title || 'Sazanami'}</h1>
-		<p class="mb-8 text-xl text-gray-600">
-			{get(page).data.landing?.description || 'Markdownで書けるScrapbox風のメモアプリ'}
-		</p>
-
-		<div class="mb-10">
-			<button on:click={handleLogin} class="btn btn-primary btn-lg"> 今すぐ始める </button>
+{#if get(page).data.notes !== undefined}
+	<div class="container mx-auto px-4 py-8">
+		<div class="mb-6 flex items-center justify-between">
+			<h1 class="text-3xl font-bold">タイムライン</h1>
+			<button on:click={createNewNote} class="btn btn-primary"> 新規ポスト作成 </button>
 		</div>
 
-		<div class="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-			{#each get(page).data.landing?.features || ['Markdownで書ける', '双方向リンク', 'タグ管理', 'SNSライクなメモ機能'] as feature}
-				<div class="card bg-base-100 shadow-xl">
-					<div class="card-body items-center text-center">
-						<h2 class="card-title text-primary">{feature}</h2>
-					</div>
-				</div>
+		<div class="mb-6">
+			<SearchBar on:search={handleSearch} />
+		</div>
+
+		<div class="mb-6">
+			<TagFilter {allTags} on:tagSelect={handleTagSelect} />
+		</div>
+
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+			{#each filteredNotes as note (note.id)}
+				<MemoCard
+					{note}
+					on:click={() => {
+						goto(`/home/note/${note.id}`);
+					}}
+				/>
 			{/each}
 		</div>
+
+		{#if filteredNotes.length === 0}
+			<div class="py-12 text-center">
+				<p class="text-gray-500">メモが見つかりません</p>
+			</div>
+		{/if}
 	</div>
-</div>
+{:else}
+	<div class="hero bg-base-200 min-h-screen">
+		<div class="hero-content text-center">
+			<div class="max-w-md">
+				<h1 class="text-5xl font-bold">読み込み中...</h1>
+				<p class="py-6">データを読み込んでいます</p>
+			</div>
+		</div>
+	</div>
+{/if}
