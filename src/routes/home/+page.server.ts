@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { and, eq, desc, sql } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
@@ -20,14 +20,15 @@ export const load: PageServerLoad = async ({ request }) => {
 			title: notes.title,
 			content: notes.content,
 			updatedAt: notes.updatedAt,
+			isPinned: notes.isPinned,
 			tags: sql<string>`GROUP_CONCAT(${tags.name})`.as('tags')
 		})
 		.from(notes)
 		.leftJoin(noteTags, eq(notes.id, noteTags.noteId))
 		.leftJoin(tags, eq(noteTags.tagId, tags.id))
-		.where(eq(notes.userId, sessionData.user.id))
+		.where(and(eq(notes.userId, sessionData.user.id), eq(notes.status, 'inbox')))
 		.groupBy(notes.id)
-		.orderBy(desc(notes.updatedAt))
+		.orderBy(desc(notes.isPinned), desc(notes.updatedAt))
 		.limit(100);
 
 	const notesWithTags = notesResult.map((note) => ({

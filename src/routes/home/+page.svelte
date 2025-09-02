@@ -2,7 +2,7 @@
 	import type { PageData } from './$types';
 	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
 	import { invalidateAll } from '$app/navigation';
-	import MemoCard from '$lib/components/MemoCard.svelte';
+	import TimelinePost from '$lib/components/TimelinePost.svelte';
 
 	let { data } = $props();
 
@@ -41,10 +41,9 @@
 <div class="container mx-auto px-4 py-8">
 	<!-- Post Input Area -->
 	<div class="mx-auto mb-8 max-w-2xl">
-		<h1 class="mb-4 text-3xl font-bold">タイムライン</h1>
 		<div class="card bg-base-200 p-4">
 			<div class="max-h-48 overflow-y-auto">
-				<MilkdownEditor bind:content={newPostContent} editable={true} />
+				<MilkdownEditor bind:content={newPostContent} editable={true} placeholder="いまどうしてる？" />
 			</div>
 			<div class="card-actions mt-4 justify-end">
 				<button on:click={handleSubmitPost} class="btn btn-primary">ポスト</button>
@@ -52,12 +51,14 @@
 		</div>
 	</div>
 
-	<!-- Notes Grid -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-		{#each notes as note (note.id)}
-			<MemoCard {note} />
-		{:else}
-			<p class="text-center text-base-content text-opacity-60">ノートがまだありません。</p>
-		{/each}
+	<!-- Timeline Feed -->
+	<div class="mx-auto max-w-2xl">
+		<div class="flex flex-col space-y-4">
+			{#each notes as note (note.id)}
+				<TimelinePost {note} />
+			{:else}
+				<p class="text-center text-base-content text-opacity-60">タイムラインにはまだ何もありません。</p>
+			{/each}
+		</div>
 	</div>
 </div>
