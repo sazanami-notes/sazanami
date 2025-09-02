@@ -83,10 +83,23 @@ export async function createTables() {
 			FOREIGN KEY (attachment_id) REFERENCES attachments(id) ON DELETE CASCADE
 		);
 	`);
+	await client.execute(`
+		CREATE TABLE timeline (
+			id TEXT PRIMARY KEY NOT NULL,
+			user_id TEXT NOT NULL,
+			note_id TEXT,
+			type TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			metadata TEXT,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+			FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+		);
+	`);
 }
 
 // Function to drop tables for test cleanup
 export async function dropTables() {
+	await client.execute(`DROP TABLE IF EXISTS timeline;`);
 	await client.execute(`DROP TABLE IF EXISTS note_attachments;`);
 	await client.execute(`DROP TABLE IF EXISTS attachments;`);
 	await client.execute(`DROP TABLE IF EXISTS note_links;`);

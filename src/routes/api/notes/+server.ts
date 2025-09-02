@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db, updateNoteLinks } from '$lib/server/db';
-import { notes, tags, noteTags } from '$lib/server/db/schema';
+import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
 import { eq, or, like, desc, sql, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { auth } from '$lib/server/auth';
@@ -163,6 +163,14 @@ export const POST: RequestHandler = async ({ request }) => {
 			createdAt: now,
 			updatedAt: now,
 			isPublic: false
+		});
+
+		// タイムラインイベントを記録
+		await db.insert(timeline).values({
+			userId: session.session.userId,
+			noteId: noteId,
+			type: 'note_created',
+			createdAt: now
 		});
 
 		// タグの処理

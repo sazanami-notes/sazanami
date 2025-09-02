@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db, updateNoteLinks } from '$lib/server/db';
-import { notes, tags, noteTags } from '$lib/server/db/schema';
+import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { auth } from '$lib/server/auth';
@@ -87,16 +87,37 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const updatedTitle = title !== undefined ? title : existingNote[0].title;
 		const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
 
+		const updatedFields: Record<string, unknown> = {
+			updatedAt: now,
+			slug: updatedSlug
+		};
+		const metadata: Record<string, unknown> = {};
+
+		if (title !== undefined && title !== existingNote[0].title) {
+			updatedFields.title = title;
+			metadata.title = { old: existingNote[0].title, new: title };
+		}
+		if (content !== undefined && content !== existingNote[0].content) {
+			updatedFields.content = content;
+			metadata.content_changed = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
+		}
+
 		// ノートを更新
 		await db
 			.update(notes)
-			.set({
-				title: updatedTitle,
-				slug: updatedSlug, // スラッグを更新
-				content: content !== undefined ? content : existingNote[0].content,
-				updatedAt: now
-			})
+			.set(updatedFields)
 			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+
+		// タイムラインイベントを記録
+		if (Object.keys(metadata).length > 0) {
+			await db.insert(timeline).values({
+				userId: session.session.userId,
+				noteId: noteId,
+				type: 'note_updated',
+				createdAt: now,
+				metadata: JSON.stringify(metadata)
+			});
+		}
 
 		// 既存のタグをクリア
 		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
@@ -188,6 +209,15 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 
 		// 関連するタグの関連付けを削除
 		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
+
+		// タイムラインイベントを記録 (ノート削除前に)
+		await db.insert(timeline).values({
+			userId: session.session.userId,
+			noteId: noteId,
+			type: 'note_deleted',
+			createdAt: new Date(),
+			metadata: JSON.stringify({ title: existingNote[0].title })
+		});
 
 		// ノートを削除
 		await db

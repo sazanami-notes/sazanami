@@ -1,60 +1,64 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { get } from 'svelte/store';
-	import type { Note } from '$lib/types';
+	import type { PageData } from './$types';
 	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
-	import PostCard from '$lib/components/PostCard.svelte';
-	import SearchBar from '$lib/components/SearchBar.svelte';
-	import TagFilter from '$lib/components/TagFilter.svelte';
-	import { onMount } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 
-	let notes: Note[] = [];
-	let allTags: string[] = [];
-	let filteredNotes: Note[] = [];
-	let searchQuery = '';
-	let selectedTags: string[] = [];
+	let { data } = $props();
+
 	let newPostContent = '';
 
-	// Load initial data
-	onMount(() => {
-		const pageData = get(page).data;
-		notes = (pageData.notes || []) as Note[];
-		allTags = pageData.allTags || [];
-		filterNotes();
-	});
+	$: timelineEvents = data.timelineEvents || [];
 
-	// Filter notes when search or tags change
-	$: {
-		filterNotes();
+	function formatTime(date: Date | string) {
+		return new Date(date).toLocaleString();
 	}
 
-	function filterNotes() {
-		const notesStore = notes || [];
-		const filtered = notesStore.filter((note: Note) => {
-			const matchesTitle = note.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
-			const matchesContent = note.content
-				? note.content.toLowerCase().includes(searchQuery.toLowerCase())
-				: false;
-			const matchesSearch = matchesTitle || matchesContent;
+	function getEventMessage(event) {
+		const noteLink = event.note && event.note.id ? `<a href="/home/note/${event.note.id}" class="link link-primary">${event.note.title || 'Untitled'}</a>` : `a note (ID: ${event.noteId})`;
 
-			const matchesTags =
-				selectedTags.length === 0 || selectedTags.every((tag) => note.tags?.includes(tag));
-			return matchesSearch && matchesTags;
-		});
-		filteredNotes = filtered;
-	}
-
-	function handleSearch(event: CustomEvent<string>) {
-		searchQuery = event.detail;
-	}
-
-	function handleTagSelect(event: CustomEvent<string[]>) {
-		selectedTags = event.detail;
+		switch (event.type) {
+			case 'note_created':
+				return `You created ${noteLink}.`;
+			case 'note_updated':
+				if (event.metadata) {
+					try {
+						const changes = JSON.parse(event.metadata);
+						let changeDesc = [];
+						if (changes.title) changeDesc.push('title');
+						if (changes.content_changed) changeDesc.push('content');
+						if (changeDesc.length > 0) {
+							return `You updated the ${changeDesc.join(' and ')} of ${noteLink}.`;
+						}
+					} catch (e) {
+						// metadataがJSONでない場合
+					}
+				}
+				return `You updated ${noteLink}.`;
+			case 'note_deleted':
+				let deletedMeta = {};
+				try {
+					if (event.metadata) deletedMeta = JSON.parse(event.metadata);
+				} catch (e) {}
+				return `You deleted a note (Title: ${deletedMeta.title || 'N/A'}).`;
+			case 'note_status_changed':
+				let statusMeta = {};
+				try {
+					if (event.metadata) statusMeta = JSON.parse(event.metadata);
+				} catch (e) {}
+				return `You moved ${noteLink} from <strong>${statusMeta.from}</strong> to <strong>${statusMeta.to}</strong>.`;
+			case 'note_pinned':
+				return `You pinned ${noteLink}.`;
+			case 'note_unpinned':
+				return `You unpinned ${noteLink}.`;
+			default:
+				return `An unknown event occurred on ${noteLink}.`;
+		}
 	}
 
 	async function handleSubmitPost() {
 		if (!newPostContent.trim()) {
-			return; // Don't submit empty content
+			return;
 		}
 
 		try {
@@ -69,71 +73,13 @@
 			});
 
 			if (response.ok) {
-				const newNote = await response.json();
-				// Add new note to the top of the list
-				notes = [newNote, ...notes];
-				newPostContent = ''; // Clear the editor
-				// We might need to re-fetch or update the editor's content prop
+				newPostContent = '';
+				await invalidateAll(); // データ再読み込み
 			} else {
 				console.error('Failed to submit post:', await response.text());
 			}
 		} catch (error) {
 			console.error('Error submitting post:', error);
-		}
-	}
-
-	async function updateNoteStatus(noteId: string, status: 'archived' | 'box') {
-		try {
-			const response = await fetch(`/api/notes/${noteId}/status`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ status })
-			});
-			if (response.ok) {
-				// Remove the note from the local list for immediate UI update
-				notes = notes.filter((n) => n.id !== noteId);
-			} else {
-				console.error(`Failed to move note to ${status}:`, await response.text());
-			}
-		} catch (error) {
-			console.error(`Error moving note to ${status}:`, error);
-		}
-	}
-
-	function handleArchive(event: CustomEvent<string>) {
-		updateNoteStatus(event.detail, 'archived');
-	}
-
-	function handleBox(event: CustomEvent<string>) {
-		updateNoteStatus(event.detail, 'box');
-	}
-
-	async function handlePin(event: CustomEvent<string>) {
-		const noteId = event.detail;
-		try {
-			const response = await fetch(`/api/notes/${noteId}/pin`, {
-				method: 'POST'
-			});
-			if (response.ok) {
-				const data = await response.json();
-				// Update the note in the local list
-				const noteIndex = notes.findIndex((n) => n.id === noteId);
-				if (noteIndex !== -1) {
-					notes[noteIndex].isPinned = data.isPinned;
-					// Trigger reactivity by reassigning the array
-					notes = [...notes];
-					// Re-sort notes
-					notes.sort((a, b) => {
-						if (a.isPinned && !b.isPinned) return -1;
-						if (!a.isPinned && b.isPinned) return 1;
-						return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-					});
-				}
-			} else {
-				console.error('Failed to pin note:', await response.text());
-			}
-		} catch (error) {
-			console.error('Error pinning note:', error);
 		}
 	}
 </script>
@@ -150,24 +96,40 @@
 		</div>
 	</div>
 
-	<!-- Filters -->
-	<div class="mb-6">
-		<SearchBar on:search={handleSearch} />
-	</div>
-	<div class="mb-6">
-		<TagFilter {allTags} on:tagSelect={handleTagSelect} />
-	</div>
-
-	<!-- Timeline/Post List -->
-	<div class="flex flex-col gap-4">
-		{#each filteredNotes as note (note.id)}
-			<PostCard {note} on:archive={handleArchive} on:box={handleBox} on:pin={handlePin} />
-		{/each}
-
-		{#if filteredNotes.length === 0}
-			<div class="py-12 text-center">
-				<p class="text-gray-500">ポストが見つかりません</p>
-			</div>
-		{/if}
+	<!-- Timeline -->
+	<div class="flow-root">
+		<ul class="-mb-8">
+			{#each timelineEvents as event, i (event.id)}
+				<li>
+					<div class="relative pb-8">
+						{#if i !== timelineEvents.length - 1}
+							<span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-base-300" aria-hidden="true"></span>
+						{/if}
+						<div class="relative flex space-x-3">
+							<div>
+								<span class="h-8 w-8 rounded-full bg-base-300 flex items-center justify-center ring-8 ring-base-100">
+									<!-- Icon can be dynamic based on event.type -->
+									<svg class="h-5 w-5 text-base-content" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
+									</svg>
+								</span>
+							</div>
+							<div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+								<div>
+									<p class="text-sm text-base-content">
+										{@html getEventMessage(event)}
+									</p>
+								</div>
+								<div class="text-right text-sm whitespace-nowrap text-base-content text-opacity-60">
+									<time datetime={new Date(event.createdAt).toISOString()}>{formatTime(event.createdAt)}</time>
+								</div>
+							</div>
+						</div>
+					</div>
+				</li>
+			{:else}
+				<p class="text-center text-base-content text-opacity-60">No timeline events yet.</p>
+			{/each}
+		</ul>
 	</div>
 </div>
