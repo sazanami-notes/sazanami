@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { onMount, type Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import { theme } from '$lib/stores/theme';
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
 	import type { LayoutData } from './$types';
 
+	import { browser } from '$app/environment';
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
 	let waveSoundEnabled = $state(false);
@@ -26,12 +27,10 @@
 		theme.update((current) => (current === 'sazanami-night' ? 'sazanami-days' : 'sazanami-night'));
 	}
 
-	onMount(() => {
-		const unsubscribe = theme.subscribe((value) => {
-			document.documentElement.setAttribute('data-theme', value);
-		});
-
-		return unsubscribe;
+	$effect(() => {
+		if (browser) {
+			document.documentElement.setAttribute('data-theme', $theme);
+		}
 	});
 </script>
 
