@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { invalidateAll, goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import type { LayoutData } from '../../routes/$types';
 	import { authClient } from '$lib/auth-client';
+	import SearchBar from '$lib/components/SearchBar.svelte';
+	import { isSearchVisible } from '$lib/stores/search';
 
 	/**
 	 * Header component for the Sazanami application.
@@ -14,8 +16,16 @@
 
 	// Placeholder click handlers for future functionality.
 	const handleSearchClick = () => {
-		console.log('Search icon clicked');
+		isSearchVisible.update((value) => !value);
 	};
+
+	function handleSearch(event: CustomEvent<string>) {
+		const query = event.detail;
+		if (query) {
+			goto(`/home/search?q=${encodeURIComponent(query)}`);
+			isSearchVisible.set(false); // Hide search bar after searching
+		}
+	}
 
 	const handleGridClick = () => {
 		goto('/home/box');
@@ -48,7 +58,7 @@
 	};
 </script>
 
-<nav class="navbar bg-base-100 shadow-md">
+<nav class="navbar bg-base-100 shadow-md relative">
 	<div class="navbar-start">
 		<label for="main-menu-drawer" class="btn btn-ghost btn-circle drawer-button">
 			<svg
@@ -182,4 +192,22 @@
 			{/if}
 		</button>
 	</div>
+	{#if $isSearchVisible}
+		<div class="search-bar-container">
+			<SearchBar on:search={handleSearch} />
+		</div>
+	{/if}
 </nav>
+
+<style>
+	.search-bar-container {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		padding: 1rem;
+		background-color: var(--fallback-b1, oklch(var(--b1) / 1));
+		z-index: 10;
+		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+	}
+</style>
