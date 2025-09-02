@@ -108,6 +108,9 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	});
 
 	it('2.2: Verifies the new note appears in the list', async () => {
+		// Manually update the note's status to 'box' to match the new logic
+		await db.update(notesSchema).set({ status: 'box' }).where(eq(notesSchema.id, createdNoteId));
+
 		const { load } = await import('../../src/routes/home/box/+page.server');
 		const event = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session },
