@@ -75,6 +75,8 @@
 			{#if data.user}
 				<li><a href="/home">タイムライン</a></li>
 				<li><a href="/home/box">ノート一覧</a></li>
+				<li><a href="/home/archive">アーカイブ</a></li>
+				<li><a href="/home/trash">ゴミ箱</a></li>
 				<div class="divider"></div>
 				<li><a href="/settings/account">アカウント設定</a></li>
 				<li><a href="/settings/import">インポート</a></li>
