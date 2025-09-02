@@ -9,7 +9,6 @@
 
 	let waveSoundEnabled = $state(false);
 	let audioElement: HTMLAudioElement;
-	let isDarkMode = $state($theme === 'sazanami-night');
 
 	$effect(() => {
 		if (audioElement) {
@@ -23,9 +22,9 @@
 		}
 	});
 
-	$effect(() => {
-		$theme = isDarkMode ? 'sazanami-night' : 'sazanami-days';
-	});
+	function toggleTheme() {
+		theme.update((current) => (current === 'sazanami-night' ? 'sazanami-days' : 'sazanami-night'));
+	}
 
 	onMount(() => {
 		const unsubscribe = theme.subscribe((value) => {
@@ -60,7 +59,12 @@
 			<li>
 				<label class="flex cursor-pointer justify-between">
 					<span class="label-text">Dark Mode</span>
-					<input type="checkbox" class="toggle" bind:checked={isDarkMode} />
+					<input
+						type="checkbox"
+						class="toggle"
+						checked={$theme === 'sazanami-night'}
+						on:change={toggleTheme}
+					/>
 				</label>
 			</li>
 		</ul>
