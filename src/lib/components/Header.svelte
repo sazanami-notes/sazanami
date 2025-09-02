@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { invalidateAll, goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import type { LayoutData } from '../../routes/$types';
-	import { authClient } from '$lib/auth-client';
 
 	/**
 	 * Header component for the Sazanami application.
@@ -21,30 +20,8 @@
 		goto('/home/box');
 	};
 
-	const handleMapPinClick = () => {
-		console.log('Map pin icon clicked');
-	};
-
 	const handleHashtagClick = () => {
 		console.log('Hashtag icon clicked');
-	};
-
-	const handleAuthClick = async () => {
-		if (session) {
-			// User is logged in, perform logout
-			await authClient.signOut({
-				fetchOptions: {
-					onSuccess: () => {
-						goto('/login'); // ログアウト後にログインページへ遷移
-					}
-				}
-			});
-			session = null; // Clear session on client side
-			await invalidateAll(); // Invalidate all data to reflect logout
-		} else {
-			// User is not logged in, navigate to login page
-			goto('/login'); // gotoを使用
-		}
 	};
 </script>
 
@@ -106,29 +83,6 @@
 				/>
 			</svg>
 		</button>
-		<button class="btn btn-ghost btn-circle" on:click={handleMapPinClick}>
-			<!-- Map Pin icon (for location-based notes) -->
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-				/>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-				/>
-			</svg>
-		</button>
 		<button class="btn btn-ghost btn-circle" on:click={handleHashtagClick}>
 			<!-- Hashtag icon (for tag filtering) -->
 			<svg
@@ -145,41 +99,6 @@
 					d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
 				/>
 			</svg>
-		</button>
-		<button class="btn btn-ghost btn-circle" on:click={handleAuthClick}>
-			{#if session}
-				<!-- Logout icon -->
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-					/>
-				</svg>
-			{:else}
-				<!-- Login icon -->
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-					/>
-				</svg>
-			{/if}
 		</button>
 	</div>
 </nav>
