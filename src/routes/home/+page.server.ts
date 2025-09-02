@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { timeline, notes } from '$lib/server/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { notes, noteTags, tags } from '$lib/server/db/schema';
+import { eq, desc, sql } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
@@ -14,26 +14,29 @@ export const load: PageServerLoad = async ({ request }) => {
 		throw redirect(302, '/login');
 	}
 
-	const timelineEvents = await db
+	const notesResult = await db
 		.select({
-			id: timeline.id,
-			type: timeline.type,
-			createdAt: timeline.createdAt,
-			metadata: timeline.metadata,
-			note: {
-				id: notes.id,
-				title: notes.title,
-				slug: notes.slug
-			}
+			id: notes.id,
+			title: notes.title,
+			content: notes.content,
+			updatedAt: notes.updatedAt,
+			tags: sql<string>`GROUP_CONCAT(${tags.name})`.as('tags')
 		})
-		.from(timeline)
-		.leftJoin(notes, eq(timeline.noteId, notes.id))
-		.where(eq(timeline.userId, sessionData.user.id))
-		.orderBy(desc(timeline.createdAt))
+		.from(notes)
+		.leftJoin(noteTags, eq(notes.id, noteTags.noteId))
+		.leftJoin(tags, eq(noteTags.tagId, tags.id))
+		.where(eq(notes.userId, sessionData.user.id))
+		.groupBy(notes.id)
+		.orderBy(desc(notes.updatedAt))
 		.limit(100);
 
+	const notesWithTags = notesResult.map((note) => ({
+		...note,
+		tags: note.tags ? note.tags.split(',') : []
+	}));
+
 	return {
-		timelineEvents,
+		notes: notesWithTags,
 		user: sessionData.user,
 		session: sessionData.session
 	};
