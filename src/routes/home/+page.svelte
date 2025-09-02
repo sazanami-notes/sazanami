@@ -8,7 +8,7 @@
 
 	let newPostContent = '';
 
-	$: timelineEvents = data.timelineEvents || [];
+	const timelineEvents = $derived(data.timelineEvents || []);
 
 	function formatTime(date: Date | string) {
 		return new Date(date).toLocaleString();
