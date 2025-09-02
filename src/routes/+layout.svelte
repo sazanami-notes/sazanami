@@ -9,6 +9,7 @@
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
+	let drawerChecked = $state(false);
 	let waveSoundEnabled = $state(false);
 	let audioElement: HTMLAudioElement;
 	let isDarkMode = $state($theme === 'sazanami-night');
@@ -38,6 +39,8 @@
 	});
 
 	const handleAuthClick = async () => {
+		drawerChecked = false;
+
 		if (data.session) {
 			// User is logged in, perform logout
 			await authClient.signOut({
@@ -56,7 +59,7 @@
 </script>
 
 <div class="drawer">
-	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" />
+	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
 	<div class="drawer-content flex flex-col">
 		<Header session={data.session} user={data.user} />
 
