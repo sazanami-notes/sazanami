@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db/connection';
 import { error, redirect } from '@sveltejs/kit';
-import { notes } from '$lib/server/db/schema';
+import { notes, timeline } from '$lib/server/db/schema';
 import { updateNoteLinks } from '$lib/server/db';
 import { generateSlug } from '$lib/utils/slug';
 import { ulid } from 'ulid';
@@ -43,6 +43,14 @@ export const actions: Actions = {
 				createdAt: now,
 				updatedAt: now,
 				isPublic
+			});
+
+			// タイムラインイベントを記録
+			await db.insert(timeline).values({
+				userId: locals.user.id,
+				noteId: noteId,
+				type: 'note_created',
+				createdAt: now
 			});
 
 			await updateNoteLinks(noteId, content, locals.user.id);

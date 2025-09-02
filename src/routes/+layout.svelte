@@ -73,8 +73,13 @@
 		<label for="main-menu-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
 		<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 			{#if data.user}
-				<li><a href="/settings/account">Account</a></li>
+				<li><a href="/home">タイムライン</a></li>
+				<li><a href="/home/box">ノート一覧</a></li>
+				<div class="divider"></div>
+				<li><a href="/settings/account">アカウント設定</a></li>
+				<li><a href="/settings/import">インポート</a></li>
 			{/if}
+			<div class="divider"></div>
 			<li>
 				<div class="flex justify-between">
 					<span>Wave Sound</span>

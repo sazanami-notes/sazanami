@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { notes } from '$lib/server/db/schema';
+import { notes, timeline } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 
@@ -24,6 +24,26 @@ export const POST: RequestHandler = async ({ request, params }) => {
 			return json({ message: 'Invalid status provided' }, { status: 400 });
 		}
 
+		// 既存のノートの状態を取得
+		const existingNote = await db
+			.select({ status: notes.status })
+			.from(notes)
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+			.limit(1);
+
+		if (existingNote.length === 0) {
+			return json(
+				{ message: 'Note not found or you do not have permission to edit it' },
+				{ status: 404 }
+			);
+		}
+		const oldStatus = existingNote[0].status;
+
+		// ステータスが実際に変更された場合のみ更新
+		if (oldStatus === status) {
+			return json({ success: true, message: `Note is already in ${status}` });
+		}
+
 		const now = new Date();
 
 		const result = await db
@@ -34,11 +54,15 @@ export const POST: RequestHandler = async ({ request, params }) => {
 			})
 			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
-		if (result.rowCount === 0) {
-			return json(
-				{ message: 'Note not found or you do not have permission to edit it' },
-				{ status: 404 }
-			);
+		if (result.rowCount > 0) {
+			// タイムラインイベントを記録
+			await db.insert(timeline).values({
+				userId: session.session.userId,
+				noteId: noteId,
+				type: 'note_status_changed',
+				createdAt: now,
+				metadata: JSON.stringify({ from: oldStatus, to: status })
+			});
 		}
 
 		return json({ success: true, message: `Note moved to ${status}` });

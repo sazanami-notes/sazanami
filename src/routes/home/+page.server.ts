@@ -1,38 +1,40 @@
 import { redirect } from '@sveltejs/kit';
-import { db } from '$lib/server/db/connection';
-import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { desc } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { timeline, notes } from '$lib/server/db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { auth } from '$lib/server/auth';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ parent }: { parent: () => Promise<{ session: any; user: any }> }) => {
-	const { session, user } = await parent();
+export const load: PageServerLoad = async ({ request }) => {
+	const sessionData = await auth.api.getSession({
+		headers: request.headers
+	});
 
-	// ログインしていないユーザーはトップページにリダイレクト
-	if (!session) {
-		throw redirect(302, '/');
+	if (!sessionData?.session) {
+		throw redirect(302, '/login');
 	}
 
-	// ログインしているユーザーのためのデータ取得
-	const userNotes = await db
-		.select()
-		.from(notes)
-		.where(and(eq(notes.userId, user.id), eq(notes.status, 'inbox')))
-		.orderBy(desc(notes.isPinned), desc(notes.updatedAt));
-
-	// Fetch all tags for the user
-	const userTagsResult = await db
-		.selectDistinct({ name: tags.name })
-		.from(tags)
-		.innerJoin(noteTags, eq(tags.id, noteTags.tagId))
-		.innerJoin(notes, eq(noteTags.noteId, notes.id))
-		.where(eq(notes.userId, user.id));
-
-	const allTags = userTagsResult.map((t) => t.name);
+	const timelineEvents = await db
+		.select({
+			id: timeline.id,
+			type: timeline.type,
+			createdAt: timeline.createdAt,
+			metadata: timeline.metadata,
+			note: {
+				id: notes.id,
+				title: notes.title,
+				slug: notes.slug
+			}
+		})
+		.from(timeline)
+		.leftJoin(notes, eq(timeline.noteId, notes.id))
+		.where(eq(timeline.userId, sessionData.user.id))
+		.orderBy(desc(timeline.createdAt))
+		.limit(100);
 
 	return {
-		notes: userNotes,
-		allTags,
-		user,
-		session
+		timelineEvents,
+		user: sessionData.user,
+		session: sessionData.session
 	};
 };
