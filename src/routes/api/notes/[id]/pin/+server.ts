@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { notes } from '$lib/server/db/schema';
+import { notes, timeline } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 
@@ -42,6 +42,14 @@ export const POST: RequestHandler = async ({ request, params }) => {
 				updatedAt: now
 			})
 			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+
+		// タイムラインイベントを記録
+		await db.insert(timeline).values({
+			userId: session.session.userId,
+			noteId: noteId,
+			type: newPinnedState ? 'note_pinned' : 'note_unpinned',
+			createdAt: now
+		});
 
 		return json({ success: true, isPinned: newPinnedState });
 	} catch (error) {

@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/connection';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { desc } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 
@@ -15,11 +15,11 @@ export const load: PageServerLoad = async ({ request, params }) => {
 		throw redirect(302, '/login');
 	}
 
-	// Fetch notes for this user
+	// Fetch notes for this user that are in the 'box'
 	const userNotes = await db
 		.select()
 		.from(notes)
-		.where(eq(notes.userId, sessionData.user.id))
+		.where(and(eq(notes.userId, sessionData.user.id), eq(notes.status, 'box')))
 		.orderBy(desc(notes.updatedAt));
 
 	// Fetch all tags for the user

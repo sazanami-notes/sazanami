@@ -4,9 +4,12 @@
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
 	import type { LayoutData } from './$types';
+	import { invalidateAll, goto } from '$app/navigation';
+	import { authClient } from '$lib/auth-client';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
+	let drawerChecked = $state(false);
 	let waveSoundEnabled = $state(false);
 	let audioElement: HTMLAudioElement;
 	let isDarkMode = $state($theme === 'sazanami-night');
@@ -34,14 +37,35 @@
 
 		return unsubscribe;
 	});
+
+	const handleAuthClick = async () => {
+		drawerChecked = false;
+
+		if (data.session) {
+			// User is logged in, perform logout
+			await authClient.signOut({
+				fetchOptions: {
+					onSuccess: () => {
+						goto('/login'); // ログアウト後にログインページへ遷移
+					}
+				}
+			});
+			await invalidateAll(); // Invalidate all data to reflect logout
+		} else {
+			// User is not logged in, navigate to login page
+			goto('/login'); // gotoを使用
+		}
+	};
 </script>
 
 <div class="drawer">
-	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" />
+	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
 	<div class="drawer-content flex flex-col">
 		<Header session={data.session} user={data.user} />
 
-		<main class="bg-base-300 rounded-box mx-auto my-10 h-[80vh] w-2/3 shadow-xl">
+		<main
+			class="bg-base-300 rounded-box my-4 w-full shadow-xl md:mx-auto md:my-10 md:w-2/3 min-h-[80vh]"
+		>
 			{@render children()}
 		</main>
 	</div>
@@ -49,8 +73,15 @@
 		<label for="main-menu-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
 		<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 			{#if data.user}
-				<li><a href="/settings/account">Account</a></li>
+				<li><a href="/home">タイムライン</a></li>
+				<li><a href="/home/box">ノート一覧</a></li>
+				<li><a href="/home/archive">アーカイブ</a></li>
+				<li><a href="/home/trash">ゴミ箱</a></li>
+				<div class="divider"></div>
+				<li><a href="/settings/account">アカウント設定</a></li>
+				<li><a href="/settings/import">インポート</a></li>
 			{/if}
+			<div class="divider"></div>
 			<li>
 				<div class="flex justify-between">
 					<span>Wave Sound</span>
@@ -62,6 +93,13 @@
 					<span class="label-text">Dark Mode</span>
 					<input type="checkbox" class="toggle" bind:checked={isDarkMode} />
 				</label>
+			</li>
+			<li>
+				{#if data.session}
+					<button class="btn btn-ghost" on:click={handleAuthClick}>Sign out</button>
+				{:else}
+					<button class="btn btn-ghost" on:click={handleAuthClick}>Sign in</button>
+				{/if}
 			</li>
 		</ul>
 	</div>

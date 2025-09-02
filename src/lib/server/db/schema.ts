@@ -91,5 +91,20 @@ export const noteAttachments = sqliteTable('note_attachments', {
 	// 複合主キーはdrizzle-kitに認識させるか、後で定義する
 });
 
+// TIMELINE テーブル
+export const timeline = sqliteTable('timeline', {
+	id: text('id')
+		.notNull()
+		.primaryKey()
+		.$defaultFn(() => ulid()),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	noteId: text('note_id').references(() => notes.id, { onDelete: 'cascade' }),
+	type: text('type').notNull(), // e.g., 'note_created', 'note_updated'
+	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+	metadata: text('metadata') // JSON string for extra data
+});
+
 // インポートした認証関連テーブルを再度エクスポート
 export { user, session, account, verification };
