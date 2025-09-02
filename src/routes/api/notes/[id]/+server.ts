@@ -91,15 +91,19 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedAt: now,
 			slug: updatedSlug
 		};
-		const metadata: Record<string, unknown> = {};
+		const metadata: {
+			changes: Record<string, unknown>;
+		} = {
+			changes: {}
+		};
 
 		if (title !== undefined && title !== existingNote[0].title) {
 			updatedFields.title = title;
-			metadata.title = { old: existingNote[0].title, new: title };
+			metadata.changes.title = { before: existingNote[0].title, after: title };
 		}
 		if (content !== undefined && content !== existingNote[0].content) {
 			updatedFields.content = content;
-			metadata.content_changed = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
+			metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
 		// ノートを更新
@@ -109,7 +113,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
 		// タイムラインイベントを記録
-		if (Object.keys(metadata).length > 0) {
+		if (Object.keys(metadata.changes).length > 0) {
 			await db.insert(timeline).values({
 				userId: session.session.userId,
 				noteId: noteId,
@@ -117,6 +121,33 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				createdAt: now,
 				metadata: JSON.stringify(metadata)
 			});
+		}
+
+		// タグの変更を検知してタイムラインに記録
+		if (tagNames && Array.isArray(tagNames)) {
+			const oldTagsResult = await db
+				.select({ name: tags.name })
+				.from(noteTags)
+				.leftJoin(tags, eq(noteTags.tagId, tags.id))
+				.where(eq(noteTags.noteId, noteId));
+			const oldTagNames = new Set(oldTagsResult.map((t) => t.name).filter(Boolean) as string[]);
+			const newTagNames = new Set(tagNames.map((t) => t.trim()).filter(Boolean));
+
+			const addedTags = [...newTagNames].filter((t) => !oldTagNames.has(t));
+			const removedTags = [...oldTagNames].filter((t) => !newTagNames.has(t));
+
+			if (addedTags.length > 0 || removedTags.length > 0) {
+				await db.insert(timeline).values({
+					userId: session.session.userId,
+					noteId: noteId,
+					type: 'note_tags_updated',
+					createdAt: now,
+					metadata: JSON.stringify({
+						added: addedTags,
+						removed: removedTags
+					})
+				});
+			}
 		}
 
 		// 既存のタグをクリア
