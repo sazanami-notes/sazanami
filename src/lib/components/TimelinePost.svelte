@@ -129,13 +129,33 @@
 		<div class="mt-4 flex items-center justify-between text-xs text-base-content/60">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
-				<button class="btn btn-ghost btn-xs" onclick|stopPropagation={togglePin}>
+				<button
+					class="btn btn-ghost btn-xs"
+					onclick={(e) => {
+						e.stopPropagation();
+						togglePin();
+					}}
+				>
 					{note.isPinned ? 'Unpin' : 'Pin'}
 				</button>
-				<button class="btn btn-ghost btn-xs" onclick|stopPropagation={sendToBox}>Box</button>
-				<button class="btn btn-ghost btn-xs" onclick|stopPropagation={sendToArchive}
-					>Archive</button
+				<button
+					class="btn btn-ghost btn-xs"
+					onclick={(e) => {
+						e.stopPropagation();
+						sendToBox();
+					}}
 				>
+					Box
+				</button>
+				<button
+					class="btn btn-ghost btn-xs"
+					onclick={(e) => {
+						e.stopPropagation();
+						sendToArchive();
+					}}
+				>
+					Archive
+				</button>
 			</div>
 		</div>
 	</div>
