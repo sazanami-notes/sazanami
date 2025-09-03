@@ -10,14 +10,16 @@
 
 	const dispatch = createEventDispatcher<{ edit: Note }>();
 
-	let recentlyTapped = false;
-	function handleEditClick() {
-		// This function is called by onclick. We prevent it from firing if a tap
-		// was just handled by the touchend event, as some browsers fire both.
-		if (recentlyTapped) {
-			return;
-		}
+	let interactionDebounce = false;
+	function handleInteraction() {
+		if (interactionDebounce) return;
+		interactionDebounce = true;
+
 		dispatch('edit', note);
+
+		setTimeout(() => {
+			interactionDebounce = false;
+		}, 300);
 	}
 
 	let element: HTMLElement;
@@ -48,11 +50,7 @@
 
 		if (Math.abs(diff) < 10) {
 			// It's a tap, not a swipe.
-			recentlyTapped = true;
-			handleEditClick();
-			setTimeout(() => {
-				recentlyTapped = false;
-			}, 300);
+			handleInteraction();
 		} else if (diff > swipeThreshold) {
 			// Right swipe
 			sendToBox();
@@ -112,8 +110,8 @@
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
-	onclick={handleEditClick}
-	onkeydown={(e) => e.key === 'Enter' && handleEditClick()}
+	onclick={handleInteraction}
+	onkeydown={(e) => e.key === 'Enter' && handleInteraction()}
 	role="button"
 	tabindex="0"
 	aria-label="ノートを編集"
