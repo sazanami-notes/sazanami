@@ -10,7 +10,13 @@
 
 	const dispatch = createEventDispatcher<{ edit: Note }>();
 
+	let recentlyTapped = false;
 	function handleEditClick() {
+		// This function is called by onclick. We prevent it from firing if a tap
+		// was just handled by the touchend event, as some browsers fire both.
+		if (recentlyTapped) {
+			return;
+		}
 		dispatch('edit', note);
 	}
 
@@ -36,7 +42,18 @@
 		if (!isSwiping) return;
 		const diff = touchCurrentX - touchStartX;
 
-		if (diff > swipeThreshold) {
+		// Reset style
+		element.style.transform = 'translateX(0)';
+		isSwiping = false;
+
+		if (Math.abs(diff) < 10) {
+			// It's a tap, not a swipe.
+			recentlyTapped = true;
+			handleEditClick();
+			setTimeout(() => {
+				recentlyTapped = false;
+			}, 300);
+		} else if (diff > swipeThreshold) {
 			// Right swipe
 			sendToBox();
 		} else if (diff < -swipeThreshold) {
@@ -44,9 +61,6 @@
 			sendToArchive();
 		}
 
-		// Reset style
-		element.style.transform = 'translateX(0)';
-		isSwiping = false;
 		touchStartX = 0;
 		touchCurrentX = 0;
 	}
@@ -98,15 +112,13 @@
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
+	onclick={handleEditClick}
+	onkeydown={(e) => e.key === 'Enter' && handleEditClick()}
+	role="button"
+	tabindex="0"
+	aria-label="ノートを編集"
 >
-	<div
-		class="card-body p-4"
-		onclick={handleEditClick}
-		onkeydown={(e) => e.key === 'Enter' && handleEditClick()}
-		role="button"
-		tabindex="0"
-		aria-label="ノートを編集"
-	>
+	<div class="card-body p-4">
 		{#if note.isPinned}
 			<div class="absolute top-2 right-2 text-primary">
 				<svg
