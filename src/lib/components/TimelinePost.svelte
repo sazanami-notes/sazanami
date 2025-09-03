@@ -4,8 +4,15 @@
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 	import { marked } from 'marked';
+	import { createEventDispatcher } from 'svelte';
 
 	export let note: Note & { tags: string[] };
+
+	const dispatch = createEventDispatcher<{ edit: Note }>();
+
+	function handleEditClick() {
+		dispatch('edit', note);
+	}
 
 	let element: HTMLElement;
 	let touchStartX = 0;
@@ -108,7 +115,14 @@
 			</div>
 		{/if}
 
-		<div class="prose max-w-none text-base-content">
+		<div
+			class="prose max-w-none cursor-pointer text-base-content"
+			on:click={handleEditClick}
+			on:keydown={(e) => e.key === 'Enter' && handleEditClick()}
+			role="button"
+			tabindex="0"
+			aria-label="ノートを編集"
+		>
 			{@html marked(note.content || '')}
 		</div>
 
