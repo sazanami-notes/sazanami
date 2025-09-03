@@ -92,7 +92,7 @@
 	on:touchmove={handleTouchMove}
 	on:touchend={handleTouchEnd}
 >
-	<div class="card-body p-4">
+	<div class="card-body p-6">
 		{#if note.isPinned}
 			<div class="absolute top-2 right-2 text-primary">
 				<svg
@@ -108,11 +108,11 @@
 			</div>
 		{/if}
 
-		<div class="prose max-w-none text-base-content">
+		<div class="prose prose-lg max-w-none text-base-content">
 			{@html marked(note.content || '')}
 		</div>
 
-		<div class="mt-4 flex items-center justify-between text-xs text-base-content/60">
+		<div class="mt-4 flex items-center justify-between text-sm text-base-content/60">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
 				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={togglePin}>
