@@ -64,7 +64,7 @@
 		<Header session={data.session} user={data.user} />
 
 		<main
-			class="bg-base-300 rounded-box my-4 w-full shadow-xl md:mx-auto md:my-10 md:w-2/3 min-h-[80vh]"
+			class="rounded-box my-4 w-full md:mx-auto md:my-10 md:w-2/3 min-h-[80vh]"
 		>
 			{@render children()}
 		</main>
