@@ -16,10 +16,10 @@
 <div
 	class="card bg-base-100 rounded-box overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
 	class:cursor-pointer={note.id}
-	on:click={handleClick}
+	onclick={handleClick}
 	role="button"
 	tabindex="0"
-	on:keydown={(e) => e.key === 'Enter' && handleClick()}
+	onkeydown={(e) => e.key === 'Enter' && handleClick()}
 	aria-label="メモを編集"
 >
 	<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>

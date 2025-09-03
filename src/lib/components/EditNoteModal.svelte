@@ -1,54 +1,50 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher, onMount, tick } from 'svelte';
 	import type { Note } from '$lib/types';
 	import MilkdownEditor from './MilkdownEditor.svelte';
 
-	export let note: Note;
-	export let saving = false;
+	let { note, saving = false }: { note: Note | null; saving?: boolean } = $props();
 
 	const dispatch = createEventDispatcher<{ save: string; cancel: void }>();
 
-	let content = note.content;
+	let dialog: HTMLDialogElement;
+	let content = '';
+
+	$effect(() => {
+		if (note) {
+			content = note.content;
+			dialog?.showModal();
+		} else {
+			// When the note is set to null (e.g., by parent), close the dialog
+			dialog?.close();
+		}
+	});
 
 	function handleSave() {
 		dispatch('save', content);
 	}
 
-	function handleCancel() {
+	function handleClose() {
+		// This event is fired by the dialog on ESC or when a form with method="dialog" is submitted
+		// We dispatch 'cancel' to let the parent know it should set its note state to null.
 		dispatch('cancel');
 	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			handleCancel();
-		}
-	}
-
-	onMount(() => {
-		// This is just a placeholder for potential future logic
-		return () => {
-			// Cleanup logic if needed
-		};
-	});
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-
-<div
-	class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-	on:click|self={handleCancel}
->
-	<div class="card bg-base-100 w-11/12 max-w-4xl shadow-xl">
-		<div class="card-body p-4 sm:p-6">
+<dialog bind:this={dialog} class="modal" onclose={handleClose}>
+	<div class="modal-box w-11/12 max-w-4xl">
+		{#if note}
 			<h2 class="card-title mb-4">{note.title}</h2>
 
 			<div class="max-h-[60vh] overflow-y-auto">
 				<MilkdownEditor bind:value={content} />
 			</div>
 
-			<div class="card-actions mt-6 justify-end">
-				<button class="btn" on:click={handleCancel} disabled={saving}>Cancel</button>
-				<button class="btn btn-primary" on:click={handleSave} disabled={saving}>
+			<div class="modal-action mt-6">
+				<form method="dialog">
+					<button class="btn" disabled={saving}>Cancel</button>
+				</form>
+				<button class="btn btn-primary" onclick={handleSave} disabled={saving}>
 					{#if saving}
 						<span class="loading loading-spinner"></span>
 						Saving...
@@ -57,6 +53,9 @@
 					{/if}
 				</button>
 			</div>
-		</div>
+		{/if}
 	</div>
-</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>

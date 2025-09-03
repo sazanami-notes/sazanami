@@ -95,11 +95,18 @@
 <div
 	bind:this={element}
 	class="card bg-base-100 shadow-md transition-transform duration-200 ease-in-out"
-	on:touchstart={handleTouchStart}
-	on:touchmove={handleTouchMove}
-	on:touchend={handleTouchEnd}
+	ontouchstart={handleTouchStart}
+	ontouchmove={handleTouchMove}
+	ontouchend={handleTouchEnd}
 >
-	<div class="card-body p-4">
+	<div
+		class="card-body p-4"
+		onclick={handleEditClick}
+		onkeydown={(e) => e.key === 'Enter' && handleEditClick()}
+		role="button"
+		tabindex="0"
+		aria-label="ノートを編集"
+	>
 		{#if note.isPinned}
 			<div class="absolute top-2 right-2 text-primary">
 				<svg
@@ -115,25 +122,18 @@
 			</div>
 		{/if}
 
-		<div
-			class="prose max-w-none cursor-pointer text-base-content"
-			on:click={handleEditClick}
-			on:keydown={(e) => e.key === 'Enter' && handleEditClick()}
-			role="button"
-			tabindex="0"
-			aria-label="ノートを編集"
-		>
+		<div class="prose max-w-none text-base-content">
 			{@html marked(note.content || '')}
 		</div>
 
 		<div class="mt-4 flex items-center justify-between text-xs text-base-content/60">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
-				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={togglePin}>
+				<button class="btn btn-ghost btn-xs" onclick|stopPropagation={togglePin}>
 					{note.isPinned ? 'Unpin' : 'Pin'}
 				</button>
-				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={sendToBox}>Box</button>
-				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={sendToArchive}
+				<button class="btn btn-ghost btn-xs" onclick|stopPropagation={sendToBox}>Box</button>
+				<button class="btn btn-ghost btn-xs" onclick|stopPropagation={sendToArchive}
 					>Archive</button
 				>
 			</div>

@@ -83,7 +83,7 @@
 <div class="container mx-auto px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-3xl font-bold">ノート一覧</h1>
-		<button on:click={createNewNote} class="btn btn-primary"> 新規ノート作成 </button>
+		<button onclick={createNewNote} class="btn btn-primary"> 新規ノート作成 </button>
 	</div>
 
 	<div class="mb-6">
@@ -107,11 +107,9 @@
 	{/if}
 </div>
 
-{#if editingNote}
-	<EditNoteModal
-		note={editingNote}
-		on:save={handleSaveEdit}
-		on:cancel={handleCancelEdit}
-		saving={isSavingNote}
-	/>
-{/if}
+<EditNoteModal
+	note={editingNote}
+	on:save={handleSaveEdit}
+	on:cancel={handleCancelEdit}
+	saving={isSavingNote}
+/>

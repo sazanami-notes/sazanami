@@ -85,7 +85,7 @@
 				<MilkdownEditor bind:content={newPostContent} editable={true} placeholder="いまどうしてる？" />
 			</div>
 			<div class="card-actions mt-4 justify-end">
-				<button on:click={handleSubmitPost} class="btn btn-primary">ポスト</button>
+				<button onclick={handleSubmitPost} class="btn btn-primary">ポスト</button>
 			</div>
 		</div>
 	</div>
@@ -102,11 +102,9 @@
 	</div>
 </div>
 
-{#if editingNote}
-	<EditNoteModal
-		note={editingNote}
-		on:save={handleSaveEdit}
-		on:cancel={handleCancelEdit}
-		saving={isSavingNote}
-	/>
-{/if}
+<EditNoteModal
+	note={editingNote}
+	on:save={handleSaveEdit}
+	on:cancel={handleCancelEdit}
+	saving={isSavingNote}
+/>
