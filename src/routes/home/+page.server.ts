@@ -3,9 +3,9 @@ import { db } from '$lib/server/db';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
 import { and, eq, desc, sql } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
-import type { PageServerLoad } from './$types';
+import type { ServerLoad } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ request }) => {
+export const load: ServerLoad = async ({ request }) => {
 	const sessionData = await auth.api.getSession({
 		headers: request.headers
 	});
@@ -21,6 +21,10 @@ export const load: PageServerLoad = async ({ request }) => {
 			content: notes.content,
 			updatedAt: notes.updatedAt,
 			isPinned: notes.isPinned,
+			userId: notes.userId,
+			createdAt: notes.createdAt,
+			isPublic: notes.isPublic,
+			slug: notes.slug,
 			tags: sql<string>`GROUP_CONCAT(${tags.name})`.as('tags')
 		})
 		.from(notes)
@@ -33,6 +37,8 @@ export const load: PageServerLoad = async ({ request }) => {
 
 	const notesWithTags = notesResult.map((note) => ({
 		...note,
+		title: note.title ?? '',
+		content: note.content ?? '',
 		tags: note.tags ? note.tags.split(',') : []
 	}));
 

@@ -4,7 +4,7 @@ import { db } from '$lib/server/db';
 import { notes as notesSchema, user as userSchema } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import * as authModule from '$lib/server/auth';
-import type { RequestEvent } from '@sveltejs/kit';
+import type { RequestEvent, ServerLoadEvent } from '@sveltejs/kit';
 import type { User, Session } from 'better-auth';
 import { generateSlug } from '$lib/utils/slug';
 
@@ -81,6 +81,32 @@ const createMockFormRequestEvent = async (
 	} as RequestEvent;
 };
 
+const createMockLoadEvent = (
+	locals: RequestEvent['locals'],
+	params: Record<string, string> = {}
+): ServerLoadEvent => {
+	const url = new URL(`http://localhost/home`);
+	const request = new Request(url);
+
+	return {
+		request,
+		locals,
+		params,
+		url,
+		cookies: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), serialize: vi.fn(), getAll: vi.fn() },
+		fetch: vi.fn(),
+		getClientAddress: () => '127.0.0.1',
+		platform: undefined,
+		route: { id: '/home' },
+		setHeaders: vi.fn(),
+		isDataRequest: true,
+		isSubRequest: false,
+		parent: async () => ({}),
+		depends: vi.fn(),
+		untrack: vi.fn()
+	};
+};
+
 describe('Scenario 2: Note Management (CRUD)', () => {
 	let createdNoteId = '';
 	const noteData = {
@@ -91,7 +117,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	it('2.1: Creates a new note', async () => {
 		const { actions } = await import('../../src/routes/home/note/new/+page.server');
 		const event = await createMockFormRequestEvent(
-			{ user: mockSession.user, session: mockSession.session },
+			{ user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			{}, // No params needed for the new route
 			noteData
 		);
@@ -112,11 +138,11 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		await db.update(notesSchema).set({ status: 'box' }).where(eq(notesSchema.id, createdNoteId));
 
 		const { load } = await import('../../src/routes/home/box/+page.server');
-		const event = await createMockFormRequestEvent(
-			{ user: mockSession.user, session: mockSession.session },
-			{}, // No params needed
-			{}
-		);
+		const event = createMockLoadEvent({
+			user: mockSession.user,
+			session: mockSession.session,
+			auth: authModule.auth
+		});
 
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
 		const pageData = await load(event);
@@ -135,7 +161,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 			content: 'Content has been updated.'
 		};
 		const event = await createMockFormRequestEvent(
-			{ user: mockSession.user, session: mockSession.session },
+			{ user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			{ id: createdNoteId },
 			updatedNoteData
 		);
@@ -156,7 +182,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	it('2.4: Deletes the note', async () => {
 		const { DELETE } = await import('../../src/routes/api/notes/[id]/+server');
 		const event = {
-			locals: { user: mockSession.user, session: mockSession.session },
+			locals: { user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			params: { id: createdNoteId },
 			request: new Request(`http://localhost/api/notes/${createdNoteId}`, { method: 'DELETE' })
 		} as unknown as RequestEvent;
@@ -172,11 +198,11 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 
 		// Verify the note is gone from the list
 		const { load } = await import('../../src/routes/home/box/+page.server');
-		const listEvent = await createMockFormRequestEvent(
-			{ user: mockSession.user, session: mockSession.session },
-			{},
-			{}
-		);
+		const listEvent = createMockLoadEvent({
+			user: mockSession.user,
+			session: mockSession.session,
+			auth: authModule.auth
+		});
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
 		const pageData = await load(listEvent);
 		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
@@ -192,7 +218,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		// 1. Create the note
 		const createAction = await import('../../src/routes/home/note/new/+page.server');
 		const createEvent = await createMockFormRequestEvent(
-			{ user: mockSession.user, session: mockSession.session },
+			{ user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			{},
 			japaneseNoteData
 		);
@@ -212,14 +238,14 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		// 2. Load the page for the new note
 		const { load } = await import('../../src/routes/home/note/[id]/+page.server');
 		const loadEvent = {
-			locals: { user: mockSession.user, session: mockSession.session },
+			locals: { user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			params: { id: newNote.id },
 			fetch: vi.fn().mockResolvedValue(
 				new Response(JSON.stringify({ oneHopLinks: [], backlinks: [], twoHopLinks: [] }), {
 					status: 200
 				})
 			)
-		} as unknown as RequestEvent;
+		} as unknown as ServerLoadEvent;
 
 		const pageData = await load(loadEvent);
 
@@ -229,6 +255,42 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		expect(pageData.note.content).toBe(japaneseNoteData.content);
 
 		await db.delete(notesSchema).where(eq(notesSchema.id, pageData.note.id));
+	});
+
+	it('2.6: Verifies the home page load function returns inbox notes', async () => {
+		// 1. Get the load function
+		const { load } = await import('../../src/routes/home/+page.server');
+
+		// 2. Ensure a note with status 'inbox' exists
+		const inboxNoteTitle = 'This is an inbox note';
+		await db.insert(notesSchema).values({
+			id: ulid(),
+			userId: testUser.id,
+			title: inboxNoteTitle,
+			content: 'content',
+			slug: 'inbox-note',
+			status: 'inbox', // <-- Important
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+
+		// 3. Mock the event
+		const event = createMockLoadEvent({
+			user: mockSession.user,
+			session: mockSession.session,
+			auth: authModule.auth
+		});
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+
+		// 4. Call the load function
+		const pageData = await load(event);
+
+		// 5. Assert the results
+		expect(pageData.notes).toBeDefined();
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.title === inboxNoteTitle);
+		expect(foundNote).toBeDefined();
+		expect(foundNote?.title).toBe(inboxNoteTitle);
 	});
 });
 
@@ -270,7 +332,7 @@ describe('Scenario 3: Search and Wiki Link API', () => {
 		url.searchParams.set('title', 'Test Page');
 
 		const event = {
-			locals: { user: mockSession.user, session: mockSession.session },
+			locals: { user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			url: url,
 			request: new Request(url)
 		} as unknown as RequestEvent;
@@ -289,7 +351,7 @@ describe('Scenario 3: Search and Wiki Link API', () => {
 		url.searchParams.set('title', 'Non Existent Note');
 
 		const event = {
-			locals: { user: mockSession.user, session: mockSession.session },
+			locals: { user: mockSession.user, session: mockSession.session, auth: authModule.auth },
 			url: url,
 			request: new Request(url)
 		} as unknown as RequestEvent;
