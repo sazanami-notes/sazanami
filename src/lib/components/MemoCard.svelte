@@ -14,9 +14,7 @@
 		}
 	}
 
-	$: truncatedContent =
-		note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '');
-	$: renderedContent = marked(truncatedContent);
+	$: renderedContent = marked(note.content || '');
 </script>
 
 {#if linkToDetail}
