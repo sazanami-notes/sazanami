@@ -9,8 +9,8 @@
 
 	let content = data.note.content;
 
-	const handleContentChange = (value: string) => {
-		content = value;
+	const handleContentChange = (event: CustomEvent<{ markdown: string }>) => {
+		content = event.detail.markdown;
 	};
 </script>
 
@@ -27,7 +27,9 @@
 
 	<div class="mb-4">
 		<div class="h-96 w-full">
-			<MilkdownEditor {content} onChange={handleContentChange} />
+			{#key data.note.id}
+				<MilkdownEditor initialContent={content} on:change={handleContentChange} />
+			{/key}
 		</div>
 		<!-- Hidden textarea to maintain compatibility with the form -->
 		<textarea id="content" name="content" class="hidden">{content}</textarea>

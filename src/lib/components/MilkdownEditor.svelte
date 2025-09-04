@@ -1,19 +1,21 @@
 <script lang="ts">
+	import { onMount, createEventDispatcher } from 'svelte';
 	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
-	import { replaceAll } from '@milkdown/utils';
 	import { gfm } from '@milkdown/preset-gfm';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 	import { upload, uploadConfig } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
 
-	export let content = '';
+	export let initialContent = '';
 	export let editable = true;
 	export let showTitle = true;
 	export let title = '';
 
-	let dom: HTMLDivElement;
+	const dispatch = createEventDispatcher();
+
+	let editorRef: HTMLDivElement;
 	let editor: Editor | undefined;
 	let fallbackTextarea = false;
 
@@ -53,69 +55,56 @@
 		return nodes;
 	};
 
-	let internalUpdate = false;
+	onMount(() => {
+		const init = async () => {
+			try {
+				const newEditor = await Editor.make()
+					.config((ctx) => {
+						ctx.set(rootCtx, editorRef);
+						ctx.set(defaultValueCtx, initialContent);
+						ctx.update(editorViewOptionsCtx, (prev) => ({
+							...prev,
+							editable: () => editable
+						}));
+						// Add listener config
+						ctx.get(listenerCtx).markdownUpdated((_, markdown, prevMarkdown) => {
+							if (markdown !== prevMarkdown) {
+								dispatch('change', { markdown });
+							}
+						});
+						// Add upload plugin config
+						ctx.update(uploadConfig.key, (prev) => ({
+							...prev,
+							uploader: uploader
+						}));
+					})
+					.config(nord) // Correct way to apply a theme
+					.use(commonmark) // Use the commonmark preset
+					.use(gfm)
+					.use(listener) // Use the listener plugin
+					.use(upload) // Use the upload plugin
+					.create();
 
-	// Svelte Action to create and manage the editor instance
-	const initializeEditor = async (node: HTMLDivElement) => {
-		try {
-			const newEditor = await Editor.make()
-				.config((ctx) => {
-					ctx.set(rootCtx, node);
-					ctx.set(defaultValueCtx, content);
-					ctx.update(editorViewOptionsCtx, (prev) => ({
-						...prev,
-						editable: () => editable
-					}));
-					// Add listener config
-					ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
-						if (content !== markdown) {
-							internalUpdate = true;
-							content = markdown;
-						}
-					});
-					// Add upload plugin config
-					ctx.update(uploadConfig.key, (prev) => ({
-						...prev,
-						uploader: uploader
-					}));
-				})
-				.config(nord) // Correct way to apply a theme
-				.use(commonmark) // Use the commonmark preset
-				.use(gfm)
-				.use(listener) // Use the listener plugin
-				.use(upload) // Use the upload plugin
-				.create();
-
-			editor = newEditor;
-		} catch (e) {
-			console.error('Error creating Milkdown editor:', e);
-			fallbackTextarea = true;
-		}
-
-		return {
-			destroy: () => {
-				if (editor) {
-					editor.destroy();
-					editor = undefined;
-				}
+				editor = newEditor;
+			} catch (e) {
+				console.error('Error creating Milkdown editor:', e);
+				fallbackTextarea = true;
 			}
 		};
-	};
+		init();
 
-	// When content prop changes, update the editor
-	$: {
-		if (editor) {
-			if (internalUpdate) {
-				internalUpdate = false;
-			} else {
-				editor.action(replaceAll(content));
+		return () => {
+			if (editor) {
+				editor.destroy();
+				editor = undefined;
 			}
-		}
-	}
+		};
+	});
 
 	function handleTextareaInput(e: Event) {
 		const target = e.target as HTMLTextAreaElement;
-		content = target.value;
+		// We need to dispatch the change event here as well for the fallback
+		dispatch('change', { markdown: target.value });
 	}
 </script>
 
@@ -126,12 +115,12 @@
 	{#if fallbackTextarea}
 		<textarea
 			class="fallback-textarea"
-			value={content}
+			value={initialContent}
 			on:input={handleTextareaInput}
 			placeholder="Milkdown editor failed to load. Please use this basic textarea."
 		></textarea>
 	{:else}
-		<div use:initializeEditor class="milkdown-editor" bind:this={dom}></div>
+		<div bind:this={editorRef} class="milkdown-editor"></div>
 	{/if}
 </div>
 

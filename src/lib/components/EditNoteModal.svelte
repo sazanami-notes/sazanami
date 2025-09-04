@@ -25,6 +25,10 @@
 		}
 	});
 
+	function handleContentChange(event: CustomEvent<{ markdown: string }>) {
+		content = event.detail.markdown;
+	}
+
 	function handleSave() {
 		dispatch('save', { title, content });
 	}
@@ -47,7 +51,7 @@
 			/>
 
 			<div class="max-h-[60vh] overflow-y-auto">
-				<MilkdownEditor bind:content={content} />
+				<MilkdownEditor initialContent={content} on:change={handleContentChange} />
 			</div>
 
 			<div class="modal-action mt-6">
