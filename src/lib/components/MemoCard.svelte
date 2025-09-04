@@ -1,32 +1,52 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import type { Note } from '$lib/types';
 	import { marked } from 'marked';
 
 	export let note: Note;
-	let isHovered = false;
+	export let linkToDetail = false; // Default to false for modal behavior
+
+	const dispatch = createEventDispatcher<{ edit: Note }>();
+
+	function handleClick() {
+		if (!linkToDetail && note.id) {
+			dispatch('edit', note);
+		}
+	}
 
 	$: truncatedContent =
 		note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '');
 	$: renderedContent = marked(truncatedContent);
 </script>
 
-<div
-	class="card bg-base-100 rounded-box overflow-hidden shadow-md transition-shadow hover:shadow-lg"
-	class:cursor-pointer={note.id}
-	on:mouseenter={() => (isHovered = true)}
-	on:mouseleave={() => (isHovered = false)}
-	role="region"
-	aria-label="メモカード"
->
-	<a href={note.id ? `/home/note/${note.id}` : undefined} class="block p-6">
-		<h2 class="card-title mb-2 line-clamp-1 text-xl font-bold">{note.title}</h2>
-		<div class="text-base-content/70 mb-3 line-clamp-3 text-base">
-			{@html renderedContent}
-		</div>
+{#if linkToDetail}
+	<a
+		href={note.id ? `/home/note/${note.id}` : undefined}
+		class="card bg-base-100 rounded-box block p-4 shadow-md transition-shadow hover:shadow-lg"
+	>
+		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
+		<div class="text-base-content/70 mb-3 line-clamp-2 text-sm">{@html renderedContent}</div>
 		<div class="flex flex-wrap gap-1">
 			{#each note.tags as tag}
 				<span class="badge badge-sm badge-ghost">{tag}</span>
 			{/each}
 		</div>
 	</a>
-</div>
+{:else}
+	<div
+		class="card bg-base-100 rounded-box cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		onclick={handleClick}
+		role="button"
+		tabindex="0"
+		onkeydown={(e) => e.key === 'Enter' && handleClick()}
+		aria-label="メモを編集"
+	>
+		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
+		<div class="text-base-content/70 mb-3 line-clamp-2 text-sm">{@html renderedContent}</div>
+		<div class="flex flex-wrap gap-1">
+			{#each note.tags as tag}
+				<span class="badge badge-sm badge-ghost">{tag}</span>
+			{/each}
+		</div>
+	</div>
+{/if}

@@ -4,8 +4,24 @@
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 	import { marked } from 'marked';
+	import { createEventDispatcher } from 'svelte';
 
 	export let note: Note & { tags: string[] };
+
+	const dispatch = createEventDispatcher<{ edit: Note }>();
+
+	let interactionDebounce = false;
+	function handleInteraction() {
+		if (interactionDebounce) return;
+		interactionDebounce = true;
+
+		console.log('Edit event dispatched for note:', note);
+		dispatch('edit', note);
+
+		setTimeout(() => {
+			interactionDebounce = false;
+		}, 300);
+	}
 
 	let element: HTMLElement;
 	let touchStartX = 0;
@@ -29,7 +45,14 @@
 		if (!isSwiping) return;
 		const diff = touchCurrentX - touchStartX;
 
-		if (diff > swipeThreshold) {
+		// Reset style
+		element.style.transform = 'translateX(0)';
+		isSwiping = false;
+
+		if (Math.abs(diff) < 10) {
+			// It's a tap, not a swipe.
+			handleInteraction();
+		} else if (diff > swipeThreshold) {
 			// Right swipe
 			sendToBox();
 		} else if (diff < -swipeThreshold) {
@@ -37,9 +60,6 @@
 			sendToArchive();
 		}
 
-		// Reset style
-		element.style.transform = 'translateX(0)';
-		isSwiping = false;
 		touchStartX = 0;
 		touchCurrentX = 0;
 	}
@@ -87,10 +107,15 @@
 
 <div
 	bind:this={element}
-	class="card bg-base-100 shadow-md transition-transform duration-200 ease-in-out"
-	on:touchstart={handleTouchStart}
-	on:touchmove={handleTouchMove}
-	on:touchend={handleTouchEnd}
+	class="card cursor-pointer select-none bg-base-100 shadow-md transition-transform duration-200 ease-in-out"
+	ontouchstart={handleTouchStart}
+	ontouchmove={handleTouchMove}
+	ontouchend={handleTouchEnd}
+	onclick={handleInteraction}
+	onkeydown={(e) => e.key === 'Enter' && handleInteraction()}
+	role="button"
+	tabindex="0"
+	aria-label="ノートを編集"
 >
 	<div class="card-body p-4">
 		{#if note.isPinned}
@@ -115,13 +140,33 @@
 		<div class="mt-4 flex items-center justify-between text-xs text-base-content/60">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
-				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={togglePin}>
+				<button
+					class="btn btn-ghost btn-xs"
+					onclick={(e) => {
+						e.stopPropagation();
+						togglePin();
+					}}
+				>
 					{note.isPinned ? 'Unpin' : 'Pin'}
 				</button>
-				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={sendToBox}>Box</button>
-				<button class="btn btn-ghost btn-xs" on:click|stopPropagation={sendToArchive}
-					>Archive</button
+				<button
+					class="btn btn-ghost btn-xs"
+					onclick={(e) => {
+						e.stopPropagation();
+						sendToBox();
+					}}
 				>
+					Box
+				</button>
+				<button
+					class="btn btn-ghost btn-xs"
+					onclick={(e) => {
+						e.stopPropagation();
+						sendToArchive();
+					}}
+				>
+					Archive
+				</button>
 			</div>
 		</div>
 	</div>

@@ -13,7 +13,7 @@
 	 * Optimized for vertical displays.
 	 */
 
-	export let session: LayoutData['session'];
+	export let session: LayoutData['session'] | undefined;
 	export let user: LayoutData['user'];
 
 	// Placeholder click handlers for future functionality.

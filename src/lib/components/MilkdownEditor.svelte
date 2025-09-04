@@ -101,11 +101,6 @@
 		};
 	});
 
-	// This is no longer needed as we are not reacting to external content changes
-	// $: if (editor && content !== editor.action((ctx) => ctx.get(defaultValueCtx))) {
-	// 	editor.action(replaceAll(content));
-	// }
-
 	function handleTextareaInput(e: Event) {
 		const target = e.target as HTMLTextAreaElement;
 		// We need to dispatch the change event here as well for the fallback
