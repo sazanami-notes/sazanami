@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { Note } from '$lib/types';
+	import type { BoxNote } from '$lib/types';
 	import MilkdownEditor from './MilkdownEditor.svelte';
 
-	let { note, saving = false }: { note: Note | null; saving?: boolean } = $props();
+	let { note, saving = false }: { note: BoxNote | null; saving?: boolean } = $props();
 
 	const dispatch = createEventDispatcher<{ save: { title: string; content: string }; cancel: void }>();
 
@@ -14,7 +14,7 @@
 	$effect(() => {
 		if (note) {
 			title = note.title;
-			content = note.content;
+			content = note.content || '';
 			if (!dialog.open) {
 				dialog.showModal();
 			}

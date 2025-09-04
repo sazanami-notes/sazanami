@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db/connection';
 import { error, redirect } from '@sveltejs/kit';
-import { notes, timeline } from '$lib/server/db/schema';
-import { updateNoteLinks } from '$lib/server/db';
+import { box } from '$lib/server/db/schema';
+import { updateBoxLinks } from '$lib/server/db';
 import { generateSlug } from '$lib/utils/slug';
 import { ulid } from 'ulid';
 import type { Actions, PageServerLoad } from './$types';
@@ -23,7 +23,6 @@ export const actions: Actions = {
 			const formData = await request.formData();
 			const title = formData.get('title')?.toString() || 'Untitled Note';
 			const content = formData.get('content')?.toString() || '';
-			const isPublic = formData.get('isPublic') === 'on';
 
 			const noteId = ulid();
 			let slug = generateSlug(title);
@@ -34,28 +33,19 @@ export const actions: Actions = {
 
 			const now = new Date();
 
-			await db.insert(notes).values({
+			await db.insert(box).values({
 				id: noteId,
 				userId: locals.user.id,
 				title,
 				content,
 				slug,
 				createdAt: now,
-				updatedAt: now,
-				isPublic
+				updatedAt: now
 			});
 
-			// タイムラインイベントを記録
-			await db.insert(timeline).values({
-				userId: locals.user.id,
-				noteId: noteId,
-				type: 'note_created',
-				createdAt: now
-			});
+			await updateBoxLinks(noteId, content, locals.user.id);
 
-			await updateNoteLinks(noteId, content, locals.user.id);
-
-			throw redirect(303, `/home/note/${noteId}`);
+			throw redirect(303, `/home/box/${noteId}`);
 		} catch (err) {
 			if (err instanceof Error && 'status' in err && (err.status === 303 || err.status === 401)) {
 				throw err;

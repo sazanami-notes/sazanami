@@ -1,27 +1,11 @@
 <script lang="ts">
-	import type { Note } from '$lib/types';
+	import type { TimelinePost } from '$lib/types';
 	import { invalidateAll } from '$app/navigation';
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 	import { marked } from 'marked';
-	import { createEventDispatcher } from 'svelte';
 
-	export let note: Note & { tags: string[] };
-
-	const dispatch = createEventDispatcher<{ edit: Note }>();
-
-	let interactionDebounce = false;
-	function handleInteraction() {
-		if (interactionDebounce) return;
-		interactionDebounce = true;
-
-		console.log('Edit event dispatched for note:', note);
-		dispatch('edit', note);
-
-		setTimeout(() => {
-			interactionDebounce = false;
-		}, 300);
-	}
+	export let note: TimelinePost;
 
 	let element: HTMLElement;
 	let touchStartX = 0;
@@ -49,10 +33,7 @@
 		element.style.transform = 'translateX(0)';
 		isSwiping = false;
 
-		if (Math.abs(diff) < 10) {
-			// It's a tap, not a swipe.
-			handleInteraction();
-		} else if (diff > swipeThreshold) {
+		if (diff > swipeThreshold) {
 			// Right swipe
 			sendToBox();
 		} else if (diff < -swipeThreshold) {
@@ -111,11 +92,8 @@
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
-	onclick={handleInteraction}
-	onkeydown={(e) => e.key === 'Enter' && handleInteraction()}
 	role="button"
 	tabindex="0"
-	aria-label="ノートを編集"
 >
 	<div class="card-body p-4">
 		{#if note.isPinned}

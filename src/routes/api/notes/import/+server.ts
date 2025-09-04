@@ -1,8 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { createNote, updateNoteLinks } from '$lib/server/db';
+import { db, updateBoxLinks } from '$lib/server/db';
+import { box } from '$lib/server/db/schema';
 import { auth } from '$lib/server/auth';
 import path from 'path';
+import { generateSlug } from '$lib/utils/slug';
+import { ulid } from 'ulid';
 
 export const POST: RequestHandler = async ({ request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
@@ -30,14 +33,20 @@ export const POST: RequestHandler = async ({ request }) => {
 			try {
 				const title = path.basename(file.name, path.extname(file.name));
 				const content = await file.text();
+				const slug = generateSlug(title);
+				const noteId = ulid();
 
-				const newNote = await createNote({
+				await db.insert(box).values({
+					id: noteId,
 					userId,
 					title,
-					content
+					slug,
+					content,
+					createdAt: new Date(),
+					updatedAt: new Date()
 				});
 
-				await updateNoteLinks(newNote.id, content, userId);
+				await updateBoxLinks(noteId, content, userId);
 
 				importedCount++;
 			} catch (e) {

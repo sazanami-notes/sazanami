@@ -1,55 +1,45 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { notes, timeline } from '$lib/server/db/schema';
+import { timeline } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 
 export const POST: RequestHandler = async ({ request, params }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
-	if (!session) {
+	if (!session?.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 
-	const noteId = params.id;
-	if (!noteId) {
-		return json({ message: 'Note ID is required' }, { status: 400 });
+	const timelinePostId = params.id;
+	if (!timelinePostId) {
+		return json({ message: 'Post ID is required' }, { status: 400 });
 	}
 
 	try {
-		// First, get the current state of the note
-		const noteArray = await db
-			.select({ isPinned: notes.isPinned })
-			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+		const postArray = await db
+			.select({ isPinned: timeline.isPinned })
+			.from(timeline)
+			.where(and(eq(timeline.id, timelinePostId), eq(timeline.userId, session.user.id)))
 			.limit(1);
 
-		if (noteArray.length === 0) {
+		if (postArray.length === 0) {
 			return json(
-				{ message: 'Note not found or you do not have permission to edit it' },
+				{ message: 'Post not found or you do not have permission to edit it' },
 				{ status: 404 }
 			);
 		}
-		const currentNote = noteArray[0];
-		const newPinnedState = !currentNote.isPinned;
+		const currentPost = postArray[0];
+		const newPinnedState = !currentPost.isPinned;
 		const now = new Date();
 
-		// Update the note with the new pinned state
 		await db
-			.update(notes)
+			.update(timeline)
 			.set({
 				isPinned: newPinnedState,
 				updatedAt: now
 			})
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
-
-		// タイムラインイベントを記録
-		await db.insert(timeline).values({
-			userId: session.session.userId,
-			noteId: noteId,
-			type: newPinnedState ? 'note_pinned' : 'note_unpinned',
-			createdAt: now
-		});
+			.where(and(eq(timeline.id, timelinePostId), eq(timeline.userId, session.user.id)));
 
 		return json({ success: true, isPinned: newPinnedState });
 	} catch (error) {

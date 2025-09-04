@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
-	import { page } from '$app/stores';
 	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
 	import { enhance } from '$app/forms';
 
@@ -46,7 +45,6 @@
 			oneHopLinks={data.links.oneHopLinks}
 			backlinks={data.links.backlinks}
 			twoHopLinks={data.links.twoHopLinks}
-			username={$page.params.username}
 		/>
 	</div>
 {/if}

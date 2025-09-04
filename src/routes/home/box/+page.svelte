@@ -2,21 +2,21 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
-	import type { Note } from '$lib/types';
+	import type { BoxNote } from '$lib/types';
 	import MemoCard from '$lib/components/MemoCard.svelte';
 	import TagFilter from '$lib/components/TagFilter.svelte';
 	import EditNoteModal from '$lib/components/EditNoteModal.svelte';
 
 	let selectedTags: string[] = [];
-	let allTags: string[] = [];
-	let filteredNotes: Note[] = [];
+	let allTags: string[] = get(page).data.allTags || [];
+	let filteredNotes: BoxNote[] = [];
 
-	let editingNote: Note | null = null;
+	let editingNote: BoxNote | null = null;
 	let isSavingNote = false;
 
 	$: {
-		const notesStore = (get(page).data.notes || []) as Note[];
-		const filtered = notesStore.filter((note: Note) => {
+		const notesStore = (get(page).data.notes || []) as BoxNote[];
+		const filtered = notesStore.filter((note: BoxNote) => {
 			const matchesTags =
 				selectedTags.length === 0 || selectedTags.every((tag) => note.tags?.includes(tag));
 			return matchesTags;
@@ -25,14 +25,14 @@
 	}
 
 	function createNewNote() {
-		goto('/home/note/new');
+		goto('/home/box/new');
 	}
 
 	function handleTagSelect(event: CustomEvent<string[]>) {
 		selectedTags = event.detail;
 	}
 
-	function handleEdit(event: CustomEvent<Note>) {
+	function handleEdit(event: CustomEvent<BoxNote>) {
 		editingNote = event.detail;
 	}
 
@@ -40,17 +40,19 @@
 		editingNote = null;
 	}
 
-	async function handleSaveEdit(event: CustomEvent<string>) {
+	async function handleSaveEdit(event: CustomEvent<{ title: string; content: string }>) {
 		if (!editingNote) return;
 
 		isSavingNote = true;
 		try {
-			const content = event.detail;
-			const response = await fetch(`/api/notes/${editingNote.id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ content })
-			});
+			const { title, content } = event.detail;
+			const response = await fetch(`/api/notes/${editingNote.id}`,
+				{
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title, content })
+				}
+			);
 
 			if (response.ok) {
 				editingNote = null;

@@ -1,15 +1,15 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { db, updateNoteLinks } from '$lib/server/db';
-import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
+import { db, updateBoxLinks } from '$lib/server/db';
+import { box, tags, boxTags } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { auth } from '$lib/server/auth';
-import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
+import { generateSlug } from '$lib/utils/slug';
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
-	if (!session) {
+	if (!session?.user) {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
@@ -17,29 +17,28 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		return new Response('Note ID is required', { status: 400 });
 	}
 
-	const noteId = params.id; // 型を固定するためにローカル変数に代入
+	const boxId = params.id;
 
 	try {
 		const note = await db
 			.select()
-			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+			.from(box)
+			.where(and(eq(box.id, boxId), eq(box.userId, session.user.id)))
 			.limit(1);
 
 		if (note.length === 0) {
 			return new Response('Note not found', { status: 404 });
 		}
 
-		// タグを取得
-		const noteTagsList = await db
+		const boxTagsList = await db
 			.select({ name: tags.name })
-			.from(noteTags)
-			.leftJoin(tags, eq(noteTags.tagId, tags.id))
-			.where(eq(noteTags.noteId, noteId));
+			.from(boxTags)
+			.leftJoin(tags, eq(boxTags.tagId, tags.id))
+			.where(eq(boxTags.boxId, boxId));
 
 		const noteWithTags = {
 			...note[0],
-			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
+			tags: boxTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
 		return json(noteWithTags);
@@ -51,7 +50,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 
 export const PUT: RequestHandler = async ({ params, request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
-	if (!session) {
+	if (!session?.user) {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
@@ -59,24 +58,23 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		return new Response('Note ID is required', { status: 400 });
 	}
 
-	const noteId = params.id; // 型を固定するためにローカル変数に代入
+	const boxId = params.id;
 
 	try {
 		const body = await request.json();
 		if (typeof body !== 'object' || body === null) {
 			return new Response('Invalid request body', { status: 400 });
 		}
-		const {
-			title,
-			content,
-			tags: tagNames
-		} = body as { title?: string; content?: string; tags?: string[] };
+		const { title, content, tags: tagNames } = body as {
+			title?: string;
+			content?: string;
+			tags?: string[];
+		};
 
-		// ノートが存在するか確認
 		const existingNote = await db
 			.select()
-			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+			.from(box)
+			.where(and(eq(box.id, boxId), eq(box.userId, session.user.id)))
 			.limit(1);
 
 		if (existingNote.length === 0) {
@@ -85,88 +83,38 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		const now = new Date();
 		const updatedTitle = title !== undefined ? title : existingNote[0].title;
-		const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
+		const updatedSlug = generateSlug(updatedTitle);
 
 		const updatedFields: Record<string, unknown> = {
 			updatedAt: now,
 			slug: updatedSlug
 		};
-		const metadata: {
-			changes: Record<string, unknown>;
-		} = {
-			changes: {}
-		};
 
-		if (title !== undefined && title !== existingNote[0].title) {
+		if (title !== undefined) {
 			updatedFields.title = title;
-			metadata.changes.title = { before: existingNote[0].title, after: title };
 		}
-		if (content !== undefined && content !== existingNote[0].content) {
+		if (content !== undefined) {
 			updatedFields.content = content;
-			metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		// ノートを更新
 		await db
-			.update(notes)
+			.update(box)
 			.set(updatedFields)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+			.where(and(eq(box.id, boxId), eq(box.userId, session.user.id)));
 
-		// タイムラインイベントを記録
-		if (Object.keys(metadata.changes).length > 0) {
-			await db.insert(timeline).values({
-				userId: session.session.userId,
-				noteId: noteId,
-				type: 'note_updated',
-				createdAt: now,
-				metadata: JSON.stringify(metadata)
-			});
-		}
-
-		// タグの変更を検知してタイムラインに記録
 		if (tagNames && Array.isArray(tagNames)) {
-			const oldTagsResult = await db
-				.select({ name: tags.name })
-				.from(noteTags)
-				.leftJoin(tags, eq(noteTags.tagId, tags.id))
-				.where(eq(noteTags.noteId, noteId));
-			const oldTagNames = new Set(oldTagsResult.map((t) => t.name).filter(Boolean) as string[]);
-			const newTagNames = new Set(tagNames.map((t) => t.trim()).filter(Boolean));
+			await db.delete(boxTags).where(eq(boxTags.boxId, boxId));
 
-			const addedTags = [...newTagNames].filter((t) => !oldTagNames.has(t));
-			const removedTags = [...oldTagNames].filter((t) => !newTagNames.has(t));
-
-			if (addedTags.length > 0 || removedTags.length > 0) {
-				await db.insert(timeline).values({
-					userId: session.session.userId,
-					noteId: noteId,
-					type: 'note_tags_updated',
-					createdAt: now,
-					metadata: JSON.stringify({
-						added: addedTags,
-						removed: removedTags
-					})
-				});
-			}
-		}
-
-		// 既存のタグをクリア
-		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
-
-		// 新しいタグを設定
-		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
 			for (const tagName of tagNames) {
 				if (!tagName || !tagName.trim()) continue;
 
 				const trimmedTagName = tagName.trim();
 
-				// タグが存在するか確認
 				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
 
 				let tagId: string;
 
 				if (existingTag.length === 0) {
-					// 新規タグを作成
 					tagId = ulid();
 					await db.insert(tags).values({
 						id: tagId,
@@ -177,34 +125,31 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 					tagId = existingTag[0].id;
 				}
 
-				// ノートとタグの関連付け
-				await db.insert(noteTags).values({
-					noteId,
+				await db.insert(boxTags).values({
+					boxId,
 					tagId
 				});
 			}
 		}
 
-		// After updating the note, update its links
 		const finalContent = content !== undefined ? content : existingNote[0].content;
-		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
+		await updateBoxLinks(boxId, finalContent || '', session.user.id);
 
 		const updatedNote = await db
 			.select()
-			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+			.from(box)
+			.where(and(eq(box.id, boxId), eq(box.userId, session.user.id)))
 			.limit(1);
 
-		// タグを取得
-		const noteTagsList = await db
+		const boxTagsList = await db
 			.select({ name: tags.name })
-			.from(noteTags)
-			.leftJoin(tags, eq(noteTags.tagId, tags.id))
-			.where(eq(noteTags.noteId, noteId));
+			.from(boxTags)
+			.leftJoin(tags, eq(boxTags.tagId, tags.id))
+			.where(eq(boxTags.boxId, boxId));
 
 		const noteWithTags = {
 			...updatedNote[0],
-			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
+			tags: boxTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
 		return json(noteWithTags);
@@ -216,7 +161,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 export const DELETE: RequestHandler = async ({ params, request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
-	if (!session) {
+	if (!session?.user) {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
@@ -224,36 +169,22 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 		return new Response('Note ID is required', { status: 400 });
 	}
 
-	const noteId = params.id; // 型を固定するためにローカル変数に代入
+	const boxId = params.id;
 
 	try {
-		// ノートが存在するか確認
 		const existingNote = await db
 			.select()
-			.from(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)))
+			.from(box)
+			.where(and(eq(box.id, boxId), eq(box.userId, session.user.id)))
 			.limit(1);
 
 		if (existingNote.length === 0) {
 			return new Response('Note not found', { status: 404 });
 		}
 
-		// 関連するタグの関連付けを削除
-		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
+		await db.delete(boxTags).where(eq(boxTags.boxId, boxId));
 
-		// タイムラインイベントを記録 (ノート削除前に)
-		await db.insert(timeline).values({
-			userId: session.session.userId,
-			noteId: noteId,
-			type: 'note_deleted',
-			createdAt: new Date(),
-			metadata: JSON.stringify({ title: existingNote[0].title })
-		});
-
-		// ノートを削除
-		await db
-			.delete(notes)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+		await db.delete(box).where(and(eq(box.id, boxId), eq(box.userId, session.user.id)));
 
 		return new Response(null, { status: 204 });
 	} catch (error) {

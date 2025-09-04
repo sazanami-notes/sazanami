@@ -8,7 +8,6 @@
 	export let oneHopLinks: Link[] = [];
 	export let backlinks: Link[] = [];
 	export let twoHopLinks: Link[] = [];
-	export let username: string;
 </script>
 
 <div class="link-explorer mt-8 border-t pt-4">
@@ -24,7 +23,7 @@
 			<ul class="list-inside list-disc space-y-1">
 				{#each oneHopLinks as link (link.id)}
 					<li>
-						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
+						<a href="/home/box/{link.id}" class="text-blue-600 hover:underline">
 							{link.title}
 						</a>
 					</li>
@@ -39,7 +38,7 @@
 			<ul class="list-inside list-disc space-y-1">
 				{#each backlinks as link (link.id)}
 					<li>
-						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
+						<a href="/home/box/{link.id}" class="text-blue-600 hover:underline">
 							{link.title}
 						</a>
 					</li>
@@ -54,7 +53,7 @@
 			<ul class="list-inside list-disc space-y-1">
 				{#each twoHopLinks as link (link.id)}
 					<li>
-						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
+						<a href="/home/box/{link.id}" class="text-blue-600 hover:underline">
 							{link.title}
 						</a>
 					</li>
