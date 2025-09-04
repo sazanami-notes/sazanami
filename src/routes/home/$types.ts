@@ -1,23 +1,11 @@
-import type { PageServerLoad as SvelteKitPageServerLoad } from '@sveltejs/kit';
-import type { User, Session } from 'lucia-auth';
+import type { User, Session, Note as GlobalNote } from '$lib/types';
 
-// From the load function in +page.server.ts
-export type TimelineEvent = {
-    id: string;
-    type: string;
-    createdAt: Date;
-    metadata: string | null;
-    note: {
-        id: string | null;
-        title: string | null;
-        slug: string | null;
-    } | null;
+export type Note = GlobalNote & {
+	isPinned: boolean | null;
 };
 
 export type PageData = {
-    timelineEvents: TimelineEvent[];
-    user: User;
+	notes: Note[];
+	user: User;
 	session: Session;
 };
-
-export type PageServerLoad = SvelteKitPageServerLoad<PageData>;
