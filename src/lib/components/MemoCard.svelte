@@ -23,7 +23,7 @@
 		class="card min-h-48 bg-base-100 rounded-box block p-4 shadow-md transition-shadow hover:shadow-lg"
 	>
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
-		<div class="text-base-content/70 mb-3 line-clamp-4 text-sm">{@html renderedContent}</div>
+		<div class="prose text-base-content/70 mb-3 line-clamp-4 text-sm">{@html renderedContent}</div>
 		<div class="flex flex-wrap gap-1">
 			{#each note.tags as tag}
 				<span class="badge badge-sm badge-ghost">{tag}</span>
@@ -40,7 +40,7 @@
 		aria-label="メモを編集"
 	>
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
-		<div class="text-base-content/70 mb-3 line-clamp-4 text-sm">{@html renderedContent}</div>
+		<div class="prose text-base-content/70 mb-3 line-clamp-4 text-sm">{@html renderedContent}</div>
 		<div class="flex flex-wrap gap-1">
 			{#each note.tags as tag}
 				<span class="badge badge-sm badge-ghost">{tag}</span>
