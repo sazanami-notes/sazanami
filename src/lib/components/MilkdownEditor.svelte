@@ -53,6 +53,8 @@
 		return nodes;
 	};
 
+	let internalUpdate = false;
+
 	// Svelte Action to create and manage the editor instance
 	const initializeEditor = async (node: HTMLDivElement) => {
 		try {
@@ -67,6 +69,7 @@
 					// Add listener config
 					ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
 						if (content !== markdown) {
+							internalUpdate = true;
 							content = markdown;
 						}
 					});
@@ -99,9 +102,15 @@
 		};
 	};
 
-	// When content prop changes from outside, update the editor
-	$: if (editor && content !== editor.action((ctx) => ctx.get(defaultValueCtx))) {
-		editor.action(replaceAll(content));
+	// When content prop changes, update the editor
+	$: {
+		if (editor) {
+			if (internalUpdate) {
+				internalUpdate = false;
+			} else {
+				editor.action(replaceAll(content));
+			}
+		}
 	}
 
 	function handleTextareaInput(e: Event) {

@@ -15,6 +15,7 @@
 		if (interactionDebounce) return;
 		interactionDebounce = true;
 
+		console.log('Edit event dispatched for note:', note);
 		dispatch('edit', note);
 
 		setTimeout(() => {

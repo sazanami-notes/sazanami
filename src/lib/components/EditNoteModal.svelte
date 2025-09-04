@@ -1,27 +1,32 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount, tick } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import type { Note } from '$lib/types';
 	import MilkdownEditor from './MilkdownEditor.svelte';
 
 	let { note, saving = false }: { note: Note | null; saving?: boolean } = $props();
 
-	const dispatch = createEventDispatcher<{ save: string; cancel: void }>();
+	const dispatch = createEventDispatcher<{ save: { title: string; content: string }; cancel: void }>();
 
 	let dialog: HTMLDialogElement;
-	let content = '';
+	let title = $state('');
+	let content = $state('');
 
 	$effect(() => {
 		if (note) {
+			title = note.title;
 			content = note.content;
-			dialog?.showModal();
+			if (!dialog.open) {
+				dialog.showModal();
+			}
 		} else {
-			// When the note is set to null (e.g., by parent), close the dialog
-			dialog?.close();
+			if (dialog?.open) {
+				dialog.close();
+			}
 		}
 	});
 
 	function handleSave() {
-		dispatch('save', content);
+		dispatch('save', { title, content });
 	}
 
 	function handleClose() {
@@ -34,10 +39,15 @@
 <dialog bind:this={dialog} class="modal" onclose={handleClose}>
 	<div class="modal-box w-11/12 max-w-4xl">
 		{#if note}
-			<h2 class="card-title mb-4">{note.title}</h2>
+			<input
+				type="text"
+				bind:value={title}
+				class="input input-bordered w-full mb-4 bg-base-200 text-lg font-bold"
+				placeholder="タイトル"
+			/>
 
 			<div class="max-h-[60vh] overflow-y-auto">
-				<MilkdownEditor bind:value={content} />
+				<MilkdownEditor bind:content={content} />
 			</div>
 
 			<div class="modal-action mt-6">
@@ -53,6 +63,9 @@
 					{/if}
 				</button>
 			</div>
+		{:else}
+			<!-- Note is null, showing placeholder -->
+			<p>Dialog is ready but no note is selected.</p>
 		{/if}
 	</div>
 	<form method="dialog" class="modal-backdrop">

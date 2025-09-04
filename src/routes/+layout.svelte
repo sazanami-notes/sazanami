@@ -96,9 +96,9 @@
 			</li>
 			<li>
 				{#if data.session}
-					<button class="btn btn-ghost" on:click={handleAuthClick}>Sign out</button>
+					<button class="btn btn-ghost" onclick={handleAuthClick}>Sign out</button>
 				{:else}
-					<button class="btn btn-ghost" on:click={handleAuthClick}>Sign in</button>
+					<button class="btn btn-ghost" onclick={handleAuthClick}>Sign in</button>
 				{/if}
 			</li>
 		</ul>

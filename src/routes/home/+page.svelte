@@ -8,9 +8,9 @@
 
 	let { data } = $props();
 
-	let newPostContent = '';
-	let editingNote: Note | null = null;
-	let isSavingNote = false;
+	let newPostContent = $state('');
+	let editingNote: Note | null = $state(null);
+	let isSavingNote = $state(false);
 
 	const notes = $derived(data.notes || []);
 
@@ -42,23 +42,25 @@
 	}
 
 	function handleEdit(event: CustomEvent<Note>) {
+		console.log('Edit event received:', event.detail);
 		editingNote = event.detail;
+		console.log('editingNote set to:', editingNote);
 	}
 
 	function handleCancelEdit() {
 		editingNote = null;
 	}
 
-	async function handleSaveEdit(event: CustomEvent<string>) {
+	async function handleSaveEdit(event: CustomEvent<{ title: string; content: string }>) {
 		if (!editingNote) return;
 
 		isSavingNote = true;
 		try {
-			const content = event.detail;
+			const { title, content } = event.detail;
 			const response = await fetch(`/api/notes/${editingNote.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ content })
+				body: JSON.stringify({ title, content })
 			});
 
 			if (response.ok) {
