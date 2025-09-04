@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
-import { notes, noteLinks, user as userSchema } from '$lib/server/db/schema';
+import { box, boxLinks, user as userSchema } from '$lib/server/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import * as authModule from '$lib/server/auth';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -16,7 +16,7 @@ const testUser = {
 };
 
 const mockSession = {
-	user: { ...testUser, emailVerified: true, createdAt: new Date(), updatedAt: new Date() } as User,
+	user: { ...testUser, id: testUser.id, emailVerified: true, createdAt: new Date(), updatedAt: new Date() } as User,
 	session: {
 		id: ulid(),
 		userId: testUser.id,
@@ -32,18 +32,18 @@ beforeAll(async () => {
 		id: testUser.id,
 		name: testUser.name,
 		email: testUser.email,
-		emailVerified: true
+		// emailVerified: true
 	});
 });
 
 afterAll(async () => {
-	await db.delete(noteLinks).where(sql`1=1`);
-	await db.delete(notes).where(eq(notes.userId, testUser.id));
+	await db.delete(boxLinks).where(sql`1=1`);
+	await db.delete(box).where(eq(box.userId, testUser.id));
 	await db.delete(userSchema).where(eq(userSchema.id, testUser.id));
 });
 
 describe('POST /api/notes/import', () => {
-	it('should import multiple markdown files, create notes, and parse links', async () => {
+	it('should import multiple markdown files, create box notes, and parse links', async () => {
 		// 1. Create mock files
 		const file1Content = 'This is the first file.';
 		const file1 = new File([file1Content], 'First File.md', { type: 'text/markdown' });
@@ -79,7 +79,7 @@ describe('POST /api/notes/import', () => {
 		expect(body.importedCount).toBe(2);
 
 		// 6. Verify notes in DB
-		const importedNotes = await db.select().from(notes).where(eq(notes.userId, testUser.id));
+		const importedNotes = await db.select().from(box).where(eq(box.userId, testUser.id));
 		expect(importedNotes).toHaveLength(2);
 
 		const note1 = importedNotes.find((n) => n.title === 'First File');
@@ -95,9 +95,9 @@ describe('POST /api/notes/import', () => {
 			throw new Error('Test notes were not created');
 		}
 
-		const links = await db.select().from(noteLinks).where(eq(noteLinks.sourceNoteId, note2.id));
+		const links = await db.select().from(boxLinks).where(eq(boxLinks.sourceBoxId, note2.id));
 
 		expect(links).toHaveLength(1);
-		expect(links[0].targetNoteId).toBe(note1.id);
+		expect(links[0].targetBoxId).toBe(note1.id);
 	});
 });

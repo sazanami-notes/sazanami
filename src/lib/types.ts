@@ -1,13 +1,22 @@
-export interface Note {
+export interface BoxNote {
 	id: string;
 	userId: string;
 	title: string;
+	slug: string;
+	content: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	tags?: string[];
+}
+
+export interface TimelinePost {
+	id: string;
+	userId: string;
 	content: string;
 	createdAt: Date;
 	updatedAt: Date;
-	isPublic: boolean;
-	tags: string[];
-	slug: string;
+	isPinned: boolean;
+	status: string;
 }
 
 export interface User {

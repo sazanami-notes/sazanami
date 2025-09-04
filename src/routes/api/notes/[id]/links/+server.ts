@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { notes, noteLinks } from '$lib/server/db/schema';
+import { box, boxLinks } from '$lib/server/db/schema';
 import { eq, and, not, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { auth } from '$lib/server/auth';
@@ -17,57 +17,57 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	if (!session?.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
-	const noteId = params.id;
+	const boxId = params.id;
 
 	try {
 		// 1. Get 1-hop links
-		const targetNote = alias(notes, 'targetNote');
+		const targetBox = alias(box, 'targetBox');
 		const oneHopLinksResult = await db
 			.select({
-				id: targetNote.id,
-				title: targetNote.title,
-				slug: targetNote.slug
+				id: targetBox.id,
+				title: targetBox.title,
+				slug: targetBox.slug
 			})
-			.from(noteLinks)
-			.innerJoin(targetNote, eq(noteLinks.targetNoteId, targetNote.id))
-			.where(eq(noteLinks.sourceNoteId, noteId));
+			.from(boxLinks)
+			.innerJoin(targetBox, eq(boxLinks.targetBoxId, targetBox.id))
+			.where(eq(boxLinks.sourceBoxId, boxId));
 
 		// 2. Get backlinks
-		const sourceNote = alias(notes, 'sourceNote');
+		const sourceBox = alias(box, 'sourceBox');
 		const backlinksResult = await db
 			.select({
-				id: sourceNote.id,
-				title: sourceNote.title,
-				slug: sourceNote.slug
+				id: sourceBox.id,
+				title: sourceBox.title,
+				slug: sourceBox.slug
 			})
-			.from(noteLinks)
-			.innerJoin(sourceNote, eq(noteLinks.sourceNoteId, sourceNote.id))
-			.where(eq(noteLinks.targetNoteId, noteId));
+			.from(boxLinks)
+			.innerJoin(sourceBox, eq(boxLinks.sourceBoxId, sourceBox.id))
+			.where(eq(boxLinks.targetBoxId, boxId));
 
 		// 3. Get 2-hop links
 		const oneHopLinkTargetIds = (
 			await db
-				.select({ id: noteLinks.targetNoteId })
-				.from(noteLinks)
-				.where(eq(noteLinks.sourceNoteId, noteId))
+				.select({ id: boxLinks.targetBoxId })
+				.from(boxLinks)
+				.where(eq(boxLinks.sourceBoxId, boxId))
 		).map((r) => r.id);
 
 		let twoHopLinksResult: Link[] = [];
 		if (oneHopLinkTargetIds.length > 0) {
-			const twoHopTargetNote = alias(notes, 'twoHopTargetNote');
+			const twoHopTargetBox = alias(box, 'twoHopTargetBox');
 			twoHopLinksResult = await db
 				.select({
-					id: twoHopTargetNote.id,
-					title: twoHopTargetNote.title,
-					slug: twoHopTargetNote.slug
+					id: twoHopTargetBox.id,
+					title: twoHopTargetBox.title,
+					slug: twoHopTargetBox.slug
 				})
-				.from(noteLinks)
-				.innerJoin(twoHopTargetNote, eq(noteLinks.targetNoteId, twoHopTargetNote.id))
+				.from(boxLinks)
+				.innerJoin(twoHopTargetBox, eq(boxLinks.targetBoxId, twoHopTargetBox.id))
 				.where(
 					and(
-						inArray(noteLinks.sourceNoteId, oneHopLinkTargetIds),
-						not(eq(noteLinks.targetNoteId, noteId)), // Exclude links back to the original note
-						not(inArray(noteLinks.targetNoteId, oneHopLinkTargetIds)) // Exclude direct 1-hop links
+						inArray(boxLinks.sourceBoxId, oneHopLinkTargetIds),
+						not(eq(boxLinks.targetBoxId, boxId)), // Exclude links back to the original note
+						not(inArray(boxLinks.targetBoxId, oneHopLinkTargetIds)) // Exclude direct 1-hop links
 					)
 				);
 		}
