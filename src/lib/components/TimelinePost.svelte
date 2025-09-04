@@ -106,7 +106,7 @@
 
 <div
 	bind:this={element}
-	class="card select-none bg-base-100 shadow-md transition-transform duration-200 ease-in-out"
+	class="card cursor-pointer select-none bg-base-100 shadow-md transition-transform duration-200 ease-in-out"
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
