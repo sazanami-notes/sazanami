@@ -12,11 +12,26 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true
 	},
+    socialProviders: {
+        google: { 
+            clientId: env.GOOGLE_CLIENT_ID as string,
+            clientSecret: env.GOOGLE_CLIENT_SECRET as string
+        },
+        apple: { 
+            clientId: env.APPLE_CLIENT_ID as string,
+            clientSecret: env.APPLE_CLIENT_SECRET as string,
+            // Optional
+            appBundleIdentifier: env.APPLE_APP_BUNDLE_IDENTIFIER as string,
+        },
+    },
+	trustedOrigins: ["https://appleid.apple.com"],
 	secret: env.BETTER_AUTH_SECRET,
 	cookie: {
 		path: '/'
 	},
-	plugins: [sveltekitCookies(async () => await getRequestEvent())],
+	plugins: [
+		sveltekitCookies(getRequestEvent),
+	],
 	database: drizzleAdapter(db, {
 		provider: 'sqlite',
 		schema: schema

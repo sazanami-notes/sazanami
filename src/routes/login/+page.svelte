@@ -67,6 +67,20 @@
 		}
 	}
 
+	const signInWithGoogle = async () => {
+		const data = await signIn.social({
+			provider: 'google',
+			callbackURL: '/home'
+		});
+	};
+
+	const signInWithApple = async () => {
+		const data = await signIn.social({
+			provider: 'apple',
+			callbackURL: '/home'
+		});
+	};
+
 	function changeMode(newMode: 'login' | 'register') {
 		mode = newMode;
 		error = null;
@@ -151,6 +165,16 @@
 						{/if}
 						{mode === 'login' ? 'ログイン' : '登録する'}
 					</button>
+				</div>
+				<div class="card-actions mt-6">
+					<button type="button" class="btn w-full" disabled={isLoading} on:click={signInWithGoogle}>
+						Continue with Google
+					</button>
+					<!--
+					<button type="button" class="btn w-full" disabled={isLoading} on:click={signInWithApple}>
+						Continue with Apple
+					</button>
+					-->
 				</div>
 			</form>
 
