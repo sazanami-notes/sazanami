@@ -2,6 +2,7 @@
 
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
+import { passkey } from "better-auth/plugins/passkey"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from '$env/dynamic/private';
 import { db } from './db/connection';
@@ -17,12 +18,6 @@ export const auth = betterAuth({
             clientId: env.GOOGLE_CLIENT_ID as string,
             clientSecret: env.GOOGLE_CLIENT_SECRET as string
         },
-        apple: { 
-            clientId: env.APPLE_CLIENT_ID as string,
-            clientSecret: env.APPLE_CLIENT_SECRET as string,
-            // Optional
-            appBundleIdentifier: env.APPLE_APP_BUNDLE_IDENTIFIER as string,
-        },
     },
 	trustedOrigins: ["https://appleid.apple.com"],
 	secret: env.BETTER_AUTH_SECRET,
@@ -31,6 +26,7 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		sveltekitCookies(getRequestEvent),
+		passkey(),
 	],
 	database: drizzleAdapter(db, {
 		provider: 'sqlite',

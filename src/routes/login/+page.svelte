@@ -67,6 +67,12 @@
 		}
 	}
 
+	function changeMode(newMode: 'login' | 'register') {
+		mode = newMode;
+		error = null;
+		message = null;
+	}
+
 	const signInWithGoogle = async () => {
 		const data = await signIn.social({
 			provider: 'google',
@@ -74,17 +80,29 @@
 		});
 	};
 
-	const signInWithApple = async () => {
-		const data = await signIn.social({
-			provider: 'apple',
-			callbackURL: '/home'
-		});
-	};
-
-	function changeMode(newMode: 'login' | 'register') {
-		mode = newMode;
+	async function signInWithPasskey() {
+		if (isLoading) return;
+		isLoading = true;
 		error = null;
 		message = null;
+
+		try {
+			const result = await signIn.passkey();
+			if (result && (result as any).error) {
+				const err = (result as any).error;
+				error =
+					typeof err === 'string' ? err : err?.message || 'パスキーによるログインに失敗しました。';
+			} else {
+				await invalidateAll();
+				await goto('/home');
+			}
+		} catch (e: unknown) {
+			console.error('Passkey login error:', e);
+			if (e instanceof Error) error = e.message;
+			else error = 'パスキーのログイン中にエラーが発生しました。';
+		} finally {
+			isLoading = false;
+		}
 	}
 </script>
 
@@ -170,11 +188,18 @@
 					<button type="button" class="btn w-full" disabled={isLoading} on:click={signInWithGoogle}>
 						Continue with Google
 					</button>
-					<!--
-					<button type="button" class="btn w-full" disabled={isLoading} on:click={signInWithApple}>
-						Continue with Apple
-					</button>
-					-->
+				</div>
+				<div class="card-actions mt-6">
+					{#if mode === 'login'}
+						<button
+							type="button"
+							class="btn w-full"
+							disabled={isLoading}
+							on:click={signInWithPasskey}
+						>
+							Sign in with Passkey
+						</button>
+					{/if}
 				</div>
 			</form>
 
