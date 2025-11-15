@@ -19,7 +19,6 @@ export const auth = betterAuth({
             clientSecret: env.GOOGLE_CLIENT_SECRET as string
         },
     },
-	trustedOrigins: ["https://appleid.apple.com"],
 	secret: env.BETTER_AUTH_SECRET,
 	cookie: {
 		path: '/'
