@@ -2,8 +2,9 @@
 
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
+import { magicLink } from "better-auth/plugins";
 import { passkey } from "better-auth/plugins/passkey"
-import { sendVerificationEmail } from './email';
+import { sendVerificationEmail, sendMagicLink } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from '$env/dynamic/private';
 import { db } from './db/connection';
@@ -16,7 +17,7 @@ export const auth = betterAuth({
 		requireEmailVerification: true,
 	},
 	emailVerification: {
-		sendVerificationEmail: async ( { user, url }: { user: any; url: string }) => {
+		sendVerificationEmail: async ({ user, url }) => {
 			try {
 				await sendVerificationEmail(user, url);
 			} catch (e) {
@@ -39,6 +40,15 @@ export const auth = betterAuth({
 	plugins: [
 		sveltekitCookies(getRequestEvent),
 		passkey(),
+		magicLink({
+			sendMagicLink: async ({ email, url }) => {
+				try {
+					await sendMagicLink({ email, url });
+				} catch (e) {
+					console.error('Failed to send magic link email:', e);
+				}
+			},
+		})
 	],
 	database: drizzleAdapter(db, {
 		provider: 'sqlite',

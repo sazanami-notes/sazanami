@@ -4,18 +4,14 @@ import { notes, noteTags, tags } from '$lib/server/db/schema';
 import { and, eq, desc, sql } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import type { ServerLoad } from '@sveltejs/kit';
-import { page } from "$app/state";
 
-export const load: ServerLoad = async ({ params, request }) => {
-	const queryParams = params.toString(); 
+export const load: ServerLoad = async ({ request, url }) => {
 	const sessionData = await auth.api.getSession({
 		headers: request.headers
 	});
 
 	if (!sessionData?.session) {
-		let redirectUrl = '/login';
-		if (queryParams) redirectUrl += `?${queryParams}`;
-		throw redirect(302, redirectUrl);
+		throw redirect(302, '/login');
 	}
 
 	const notesResult = await db

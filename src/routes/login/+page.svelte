@@ -17,7 +17,9 @@
 
 	onMount(() => {
 		if (queryParams.get('error') === 'invalid_token') {
-			error = '無効なトークンです。';
+			error = '無効なリンクです。';
+		} else if (queryParams.get('error') === 'INVALID_TOKEN') {
+			error = '無効なリンクです。';
 		}
 	});
 
@@ -85,11 +87,67 @@
 		message = null;
 	}
 
+	const signInWithMagicLink = async () => {
+		if (isLoading) return;
+
+		if (email === '') {
+			error = 'メールアドレスを入力してください。';
+			return;
+		}
+
+		if (mode === 'register' && name === '') {
+			error = 'ユーザーネームを入力してください。';
+			return;
+		}
+
+		isLoading = true;
+		error = null;
+		message = null;
+
+		try {
+			const { data, error: signInError } = await authClient.signIn.magicLink({
+				email,
+				name,
+				callbackURL: '/home',
+				errorCallbackURL: '/home'
+			});
+
+			if (signInError) {
+				console.error('Signin error:', signInError);
+				error = signInError.message || 'ログイン出来ませんでした。';
+			} else {
+				message = 'メールを送信しました。メールのリンクからログインしてください。';
+			}
+		} catch (e) {
+			console.error('Signin error', e);
+			error = '予期せぬエラーが発生しました。';
+		} finally {
+			isLoading = false;
+		}
+	};
+
 	const signInWithGoogle = async () => {
-		const data = await signIn.social({
-			provider: 'google',
-			callbackURL: '/home'
-		});
+		if (isLoading) return;
+		isLoading = true;
+		error = null;
+		message = null;
+
+		try {
+			const { data, error: signInError } = await signIn.social({
+				provider: 'google',
+				callbackURL: '/home'
+			});
+
+			if (signInError) {
+				console.error('Signin error:', signInError);
+				error = signInError.message || 'ログイン出来ませんでした。';
+			}
+		} catch (e) {
+			console.error('Signin error', e);
+			error = '予期せぬエラーが発生しました。';
+		} finally {
+			isLoading = false;
+		}
 	};
 
 	const signInWithPasskey = async () => {
@@ -110,8 +168,7 @@
 			}
 		} catch (e: unknown) {
 			console.error('Passkey login error:', e);
-			if (e instanceof Error) error = e.message;
-			else error = 'パスキーのログイン中にエラーが発生しました。';
+			error = '予期せぬエラーが発生しました。';
 		} finally {
 			isLoading = false;
 		}
@@ -140,6 +197,42 @@
 				<h2 class="card-title">
 					{mode === 'login' ? 'ログイン' : '新規登録'}
 				</h2>
+
+				{#if error}
+					<div role="alert" class="alert alert-error mt-4 mb-4">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6 shrink-0 stroke-current"
+							fill="none"
+							viewBox="0 0 24 24"
+							><path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M10 14l2-2m0 0l2-2m-2 2l-2 2m2-2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+							/></svg
+						>
+						<span>{error}</span>
+					</div>
+				{/if}
+
+				{#if message}
+					<div role="alert" class="alert alert-success mt-4 mb-4">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6 shrink-0 stroke-current"
+							fill="none"
+							viewBox="0 0 24 24"
+							><path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+							/></svg
+						>
+						<span>{message}</span>
+					</div>
+				{/if}
 
 				{#if mode === 'register'}
 					<div class="form-control">
@@ -197,59 +290,33 @@
 					</button>
 				</div>
 				<div class="card-actions mt-6">
+					<button
+						type="button"
+						class="btn w-full"
+						disabled={isLoading}
+						on:click={signInWithMagicLink}
+					>
+						{mode === 'login' ? 'メールを受け取ってログイン' : 'メールを受け取って登録'}
+					</button>
+				</div>
+				<div class="card-actions mt-6">
 					<button type="button" class="btn w-full" disabled={isLoading} on:click={signInWithGoogle}>
 						Continue with Google
 					</button>
 				</div>
-				<div class="card-actions mt-6">
-					{#if mode === 'login'}
+				{#if mode === 'login'}
+					<div class="card-actions mt-6">
 						<button
 							type="button"
 							class="btn w-full"
 							disabled={isLoading}
 							on:click={signInWithPasskey}
 						>
-							Sign in with Passkey
+							パスキーでログイン
 						</button>
-					{/if}
-				</div>
+					</div>
+				{/if}
 			</form>
-
-			{#if error}
-				<div role="alert" class="alert alert-error mt-4">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-6 w-6 shrink-0 stroke-current"
-						fill="none"
-						viewBox="0 0 24 24"
-						><path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M10 14l2-2m0 0l2-2m-2 2l-2 2m2-2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-						/></svg
-					>
-					<span>{error}</span>
-				</div>
-			{/if}
-
-			{#if message}
-				<div role="alert" class="alert alert-success mt-4">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-6 w-6 shrink-0 stroke-current"
-						fill="none"
-						viewBox="0 0 24 24"
-						><path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-						/></svg
-					>
-					<span>{message}</span>
-				</div>
-			{/if}
 		</div>
 	</div>
 </div>
