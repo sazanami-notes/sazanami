@@ -3,6 +3,7 @@
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
 import { passkey } from "better-auth/plugins/passkey"
+import { sendVerificationEmail } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from '$env/dynamic/private';
 import { db } from './db/connection';
@@ -11,7 +12,19 @@ import { getRequestEvent } from '$app/server';
 
 export const auth = betterAuth({
 	emailAndPassword: {
-		enabled: true
+		enabled: true,
+		requireEmailVerification: true,
+	},
+	emailVerification: {
+		sendVerificationEmail: async ( { user, url }: { user: any; url: string }) => {
+			try {
+				await sendVerificationEmail(user, url);
+			} catch (e) {
+				console.error('Failed to send verification email:', e);
+			}
+		},
+		sendOnSignIn: true,
+		autoSignInAfterVerification: true
 	},
     socialProviders: {
         google: { 

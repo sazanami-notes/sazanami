@@ -8,5 +8,5 @@ export const authClient = createAuthClient({
     ] 
 });
 
-export const { signIn, signUp, useSession, passkey } = authClient;
+export const { signIn, signUp, useSession, passkey, sendVerificationEmail } = authClient;
 

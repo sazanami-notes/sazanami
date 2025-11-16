@@ -1,7 +1,11 @@
 <script lang="ts">
-	import { signIn, signUp } from '$lib/auth-client';
+	import { signIn, signUp, authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+
+	const queryParams = page.url.searchParams;
 
 	let mode: 'login' | 'register' = 'login';
 	let name = '';
@@ -10,6 +14,12 @@
 	let error: string | null = null;
 	let message: string | null = null;
 	let isLoading = false;
+
+	onMount(() => {
+		if (queryParams.get('error') === 'invalid_token') {
+			error = '無効なトークンです。';
+		}
+	});
 
 	async function handleSubmit() {
 		if (isLoading) return;
@@ -22,7 +32,8 @@
 				console.log('Attempting login with email:', email);
 				const { data, error: apiError } = await signIn.email({
 					email,
-					password
+					password,
+					callbackURL: '/home'
 				});
 
 				if (apiError) {
@@ -39,19 +50,20 @@
 				}
 			} else {
 				console.log('Attempting registration with email:', email);
-				const { data, error: apiError } = await signUp.email({
+				const { data: signUpdata, error: signUpError } = await signUp.email({
 					name,
 					email,
-					password
+					password,
+					callbackURL: '/home'
 				});
 
-				if (apiError) {
-					console.error('Registration error:', apiError);
-					error = apiError.message || '登録に失敗しました。';
+				if (signUpError) {
+					console.error('Registration error:', signUpError);
+					error = signUpError.message || '登録に失敗しました。';
 				} else {
-					console.log('Registration successful:', data);
-					message = '登録が完了しました。ログインしてください。';
-					// Switch to login mode after successful registration
+					console.log('Registration successful:', signUpdata);
+					message =
+						'確認用メールを送信しました。メールのリンクをクリックし登録を完了してください。';
 					mode = 'login';
 				}
 			}
@@ -80,7 +92,7 @@
 		});
 	};
 
-	async function signInWithPasskey() {
+	const signInWithPasskey = async () => {
 		if (isLoading) return;
 		isLoading = true;
 		error = null;
@@ -103,7 +115,7 @@
 		} finally {
 			isLoading = false;
 		}
-	}
+	};
 </script>
 
 <div class="container" style="max-width: 400px; margin: 2rem auto;">
