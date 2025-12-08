@@ -1,9 +1,11 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
-@plugin "daisyui";
+@plugin "daisyui" {
+	themes: false;
+}
 
 @plugin "daisyui/theme" {
-	name: 'sazanami days';
+	name: 'sazanami-days';
 	default: true;
 	prefersdark: false;
 	color-scheme: 'light';
@@ -38,9 +40,9 @@
 }
 
 @plugin "daisyui/theme" {
-	name: 'sazanami night';
+	name: 'sazanami-night';
 	default: false;
-	prefersdark: true;
+	prefersdark: false;
 	color-scheme: 'dark';
 	--color-base-100: oklch(30% 0.056 229.695);
 	--color-base-200: oklch(39% 0.07 227.392);
