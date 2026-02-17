@@ -111,7 +111,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// [デバッグ用ログ] 受信したリクエストボディを確認
-		console.log('Received request to create note with body:', body);
+		console.log('Received request to create note');
 
 		if (typeof body !== 'object' || body === null) {
 			return json({ message: 'Invalid request body' }, { status: 400 });
