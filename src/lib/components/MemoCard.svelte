@@ -20,7 +20,7 @@
 {#if linkToDetail}
 	<a
 		href={note.id ? `/home/note/${note.id}` : undefined}
-		class="card bg-base-100 rounded-box block min-h-48 p-4 shadow-md transition-shadow hover:shadow-lg"
+		class="card min-h-48 bg-base-100 rounded-box block p-4 shadow-md transition-shadow hover:shadow-lg"
 	>
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
 		<div class="prose text-base-content/70 mb-3 line-clamp-4 text-sm">{@html renderedContent}</div>
@@ -32,7 +32,7 @@
 	</a>
 {:else}
 	<div
-		class="card bg-base-100 rounded-box min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		class="card min-h-48 bg-base-100 rounded-box cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
 		onclick={handleClick}
 		role="button"
 		tabindex="0"

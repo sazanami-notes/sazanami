@@ -63,7 +63,9 @@
 	<div class="drawer-content flex flex-col">
 		<Header session={data.session} user={data.user} />
 
-		<main class="rounded-box my-4 min-h-[80vh] w-full md:mx-auto md:my-10 md:w-2/3">
+		<main
+			class="rounded-box my-4 w-full md:mx-auto md:my-10 md:w-2/3 min-h-[80vh]"
+		>
 			{@render children()}
 		</main>
 	</div>

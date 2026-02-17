@@ -5,10 +5,7 @@
 
 	let { note, saving = false }: { note: Note | null; saving?: boolean } = $props();
 
-	const dispatch = createEventDispatcher<{
-		save: { title: string; content: string };
-		cancel: void;
-	}>();
+	const dispatch = createEventDispatcher<{ save: { title: string; content: string }; cancel: void }>();
 
 	let dialog: HTMLDialogElement;
 	let title = $state('');
@@ -49,7 +46,7 @@
 			<input
 				type="text"
 				bind:value={title}
-				class="input input-bordered bg-base-200 mb-4 w-full text-lg font-bold"
+				class="input input-bordered w-full mb-4 bg-base-200 text-lg font-bold"
 				placeholder="タイトル"
 			/>
 
