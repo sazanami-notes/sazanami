@@ -3,6 +3,7 @@
 	import { theme } from '$lib/stores/theme';
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
+	import Footer from '$lib/components/Footer.svelte';
 	import type { LayoutData } from './$types';
 	import { invalidateAll, goto } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
@@ -60,16 +61,26 @@
 
 <div class="drawer">
 	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
-	<div class="drawer-content flex flex-col">
-		<Header session={data.session} user={data.user} />
+	<div class="drawer-content flex flex-col items-center bg-base-300 min-h-screen">
+		<div class="w-full max-w-md bg-base-100 flex flex-col h-[100dvh] relative shadow-xl">
+			<Header user={data.user} />
 
-		<main
-			class="rounded-box my-4 w-full md:mx-auto md:my-10 md:w-2/3 min-h-[80vh]"
-		>
-			{@render children()}
-		</main>
+			<main class="flex-grow overflow-y-auto w-full relative">
+				{@render children()}
+			</main>
+
+			<Footer />
+
+			<a href="/home/note/new" class="btn btn-circle btn-primary btn-lg absolute bottom-20 right-4 shadow-lg z-20" aria-label="Create Note">
+				<!-- add -->
+				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+					<path d="M0 0h24v24H0V0z" fill="none"/>
+					<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+				</svg>
+			</a>
+		</div>
 	</div>
-	<div class="drawer-side z-10">
+	<div class="drawer-side z-30">
 		<label for="main-menu-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
 		<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 			{#if data.user}
