@@ -14,19 +14,9 @@
 		class={isActive('/home/box') ? 'active text-primary' : 'text-neutral-content'}
 		aria-label="Notes Box"
 	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="h-6 w-6"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-			/>
+		<!-- checklist -->
+		<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+			<path d="M220-320q25 0 42.5-17.5T280-380q0-25-17.5-42.5T220-440q-25 0-42.5 17.5T160-380q0 25 17.5 42.5T220-320Zm0-160q25 0 42.5-17.5T280-540q0-25-17.5-42.5T220-600q-25 0-42.5 17.5T160-540q0 25 17.5 42.5T220-480Zm0-160q25 0 42.5-17.5T280-700q0-25-17.5-42.5T220-760q-25 0-42.5 17.5T160-700q0 25 17.5 42.5T220-640Zm140 320h440v-80H360v80Zm0-160h440v-80H360v80Zm0-160h440v-80H360v80ZM220-200q25 0 42.5-17.5T280-260q0-25-17.5-42.5T220-320q-25 0-42.5 17.5T160-260q0 25 17.5 42.5T220-200Zm140 0h440v-80H360v80ZM160-120q-33 0-56.5-23.5T80-200v-560q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T880-760v560q0 33-23.5 56.5T800-120H160Zm0-80h640v-560H160v560Zm0 0v-560 560Z"/>
 		</svg>
 	</a>
 
@@ -36,19 +26,9 @@
 		class={isActive('/home') ? 'active text-primary' : 'text-neutral-content'}
 		aria-label="Timeline"
 	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="h-6 w-6"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-			/>
+		<!-- description -->
+		<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+			<path d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/>
 		</svg>
 	</a>
 
@@ -58,55 +38,25 @@
 		class={isActive('/home/archive') ? 'active text-primary' : 'text-neutral-content'}
 		aria-label="Archive"
 	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="h-6 w-6"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-			/>
+		<!-- grid_view -->
+		<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+			<path d="M160-160v-280h280v280H160Zm0-360v-280h280v280H160Zm360 360v-280h280v280H520Zm0-360v-280h280v280H520ZM240-240h120v-120H240v120Zm360 0h120v-120H600v120ZM240-600h120v-120H240v120Zm360 0h120v-120H600v120Z"/>
 		</svg>
 	</a>
 
 	<!-- Hashtag (Placeholder) -->
 	<button class="text-neutral-content" aria-label="Tags">
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="h-6 w-6"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-			/>
+		<!-- tag -->
+		<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+			<path d="m260-160-56-56 104-104H160v-80h228l80-80H160v-80h388l80-80h80v160h132v80H708l-80 80h132v80H548l-104 104 56 56-240-240Z"/>
 		</svg>
 	</button>
 
 	<!-- Bell (Placeholder) -->
 	<button class="text-neutral-content" aria-label="Notifications">
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="h-6 w-6"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-			/>
+		<!-- notifications -->
+		<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+			<path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z"/>
 		</svg>
 	</button>
 </div>

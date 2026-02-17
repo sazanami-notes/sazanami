@@ -72,8 +72,9 @@
 			<Footer />
 
 			<a href="/home/note/new" class="btn btn-circle btn-primary btn-lg absolute bottom-24 right-6 shadow-lg z-20" aria-label="Create Note">
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+				<!-- add -->
+				<svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32" fill="currentColor">
+					<path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/>
 				</svg>
 			</a>
 		</div>
