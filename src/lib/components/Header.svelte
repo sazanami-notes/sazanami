@@ -13,13 +13,14 @@
 	}
 </script>
 
-<div class="navbar bg-base-100 min-h-16 px-2 gap-2">
+<div class="navbar bg-base-100 min-h-16 px-2 gap-2 border-b border-base-200">
 	<!-- Left: Hamburger Menu -->
 	<div class="flex-none">
 		<label for="main-menu-drawer" class="btn btn-ghost btn-circle drawer-button" aria-label="Open menu">
 			<!-- menu -->
-			<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-				<path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/>
+			<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+				<path d="M0 0h24v24H0V0z" fill="none"/>
+				<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
 			</svg>
 		</label>
 	</div>
@@ -28,8 +29,9 @@
 	<div class="flex-1">
 		<label class="input flex items-center gap-2 w-full h-10 bg-base-200 border-none rounded-full px-4">
 			<!-- search -->
-			<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor" class="opacity-70">
-				<path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+			<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20" fill="currentColor" class="opacity-70">
+				<path d="M0 0h24v24H0V0z" fill="none"/>
+				<path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
 			</svg>
 			<input type="text" class="grow bg-transparent border-none focus:ring-0" placeholder="Search" bind:value={searchQuery} on:keydown={handleSearch} />
 		</label>
@@ -46,8 +48,9 @@
 		{:else}
 			<button class="btn btn-ghost btn-circle" aria-label="User profile">
 				<!-- account_circle -->
-				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-					<path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-32q0-34 17.5-62.5T224-306q54-27 109-40.5T480-360q61 0 116 13.5t109 40.5q32 17 49.5 45.5T772-192v32H160Zm80-80h480q0-10-4-19t-13-17q-54-27-107-39.5T480-328q-58 0-111 12.5T262-276q-9 8-13 17t-4 19Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z"/>
+				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+					<path d="M0 0h24v24H0V0z" fill="none"/>
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
 				</svg>
 			</button>
 		{/if}

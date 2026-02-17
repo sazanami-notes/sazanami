@@ -65,16 +65,17 @@
 		<div class="w-full max-w-md bg-base-100 flex flex-col h-[100dvh] relative shadow-xl">
 			<Header user={data.user} />
 
-			<main class="flex-grow overflow-y-auto w-full">
+			<main class="flex-grow overflow-y-auto w-full relative">
 				{@render children()}
 			</main>
 
 			<Footer />
 
-			<a href="/home/note/new" class="btn btn-circle btn-primary btn-lg absolute bottom-24 right-6 shadow-lg z-20" aria-label="Create Note">
+			<a href="/home/note/new" class="btn btn-circle btn-primary btn-lg absolute bottom-20 right-4 shadow-lg z-20" aria-label="Create Note">
 				<!-- add -->
-				<svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32" fill="currentColor">
-					<path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/>
+				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+					<path d="M0 0h24v24H0V0z" fill="none"/>
+					<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
 				</svg>
 			</a>
 		</div>
