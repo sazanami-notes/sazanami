@@ -3,15 +3,18 @@ import { env } from '$env/dynamic/private';
 
 const SMTP_USER = env.SMTP_USER;
 const SMTP_PASS = env.SMTP_PASS;
+const SMTP_HOST = env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = Number(env.SMTP_PORT) || 465;
+const SMTP_SECURE = env.SMTP_SECURE === undefined ? true : env.SMTP_SECURE === 'true';
 
 if (!SMTP_USER || !SMTP_PASS) {
-    console.warn('Gmail credentials not set (SMTP_USER / SMTP_PASS). Email sending will fail.');
+    console.warn('SMTP credentials not set (SMTP_USER / SMTP_PASS). Email sending will fail.');
 }
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
     auth: {
         user: SMTP_USER,
         pass: SMTP_PASS
