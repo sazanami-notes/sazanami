@@ -14,7 +14,7 @@ import { getRequestEvent } from '$app/server';
 export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: true,
+		requireEmailVerification: false,
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url }) => {
