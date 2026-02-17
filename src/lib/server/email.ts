@@ -1,11 +1,11 @@
 import nodemailer from 'nodemailer';
 import { env } from '$env/dynamic/private';
 
-const GMAIL_USER = env.GMAIL_USER;
-const GMAIL_PASS = env.GMAIL_PASS;
+const SMTP_USER = env.SMTP_USER;
+const SMTP_PASS = env.SMTP_PASS;
 
-if (!GMAIL_USER || !GMAIL_PASS) {
-    console.warn('Gmail credentials not set (GMAIL_USER / GMAIL_PASS). Email sending will fail.');
+if (!SMTP_USER || !SMTP_PASS) {
+    console.warn('Gmail credentials not set (SMTP_USER / SMTP_PASS). Email sending will fail.');
 }
 
 const transporter = nodemailer.createTransport({
@@ -13,13 +13,13 @@ const transporter = nodemailer.createTransport({
     port: 465,
     secure: true,
     auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_PASS
+        user: SMTP_USER,
+        pass: SMTP_PASS
     }
 });
 
 export async function sendEmail(to: string, subject: string, text: string, html: string) {
-    if (!GMAIL_USER || !GMAIL_PASS) {
+    if (!SMTP_USER || !SMTP_PASS) {
         console.log('================================================================');
         console.log('Email sending is disabled (no credentials). Logging email instead:');
         console.log(`To: ${to}`);
@@ -30,7 +30,7 @@ export async function sendEmail(to: string, subject: string, text: string, html:
     }
 
     const mailOptions = {
-        from: `"Sazanami" <${GMAIL_USER}>`,
+        from: `"Sazanami" <${SMTP_USER}>`,
         to,
         subject,
         text,
