@@ -6,11 +6,11 @@
 	const isActive = (path: string) => $page.url.pathname === path;
 </script>
 
-<div class="flex w-full justify-around items-center bg-base-100 border-t border-base-200 h-16 shrink-0 z-10">
+<div class="flex w-full justify-around items-center bg-secondary text-secondary-content h-16 shrink-0 z-10 shadow-lg">
 	<!-- Check / List (Notes Box) -->
 	<a
 		href="/home/box"
-		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 {isActive('/home/box') ? 'text-primary' : 'text-neutral-content'}"
+		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 {isActive('/home/box') ? 'text-primary-content bg-secondary-content/20 font-bold' : 'text-secondary-content opacity-70 hover:opacity-100'}"
 		aria-label="Notes Box"
 	>
 		<!-- checklist -->
@@ -23,7 +23,7 @@
 	<!-- Document (Timeline / Home) -->
 	<a
 		href="/home"
-		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 {isActive('/home') ? 'text-primary' : 'text-neutral-content'}"
+		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 {isActive('/home') ? 'text-primary-content bg-secondary-content/20 font-bold' : 'text-secondary-content opacity-70 hover:opacity-100'}"
 		aria-label="Timeline"
 	>
 		<!-- description -->
@@ -36,7 +36,7 @@
 	<!-- Grid (Archive) -->
 	<a
 		href="/home/archive"
-		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 {isActive('/home/archive') ? 'text-primary' : 'text-neutral-content'}"
+		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 {isActive('/home/archive') ? 'text-primary-content bg-secondary-content/20 font-bold' : 'text-secondary-content opacity-70 hover:opacity-100'}"
 		aria-label="Archive"
 	>
 		<!-- grid_view -->
@@ -48,7 +48,7 @@
 
 	<!-- Hashtag (Placeholder) -->
 	<button
-		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 text-neutral-content"
+		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 text-secondary-content opacity-70 hover:opacity-100"
 		aria-label="Tags"
 	>
 		<!-- tag -->
@@ -60,7 +60,7 @@
 
 	<!-- Bell (Placeholder) -->
 	<button
-		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 text-neutral-content"
+		class="flex flex-col items-center justify-center w-full h-full text-xs gap-1 text-secondary-content opacity-70 hover:opacity-100"
 		aria-label="Notifications"
 	>
 		<!-- notifications -->
