@@ -19,6 +19,16 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendEmail(to: string, subject: string, text: string, html: string) {
+    if (!GMAIL_USER || !GMAIL_PASS) {
+        console.log('================================================================');
+        console.log('Email sending is disabled (no credentials). Logging email instead:');
+        console.log(`To: ${to}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Text Body:\n${text}`);
+        console.log('================================================================');
+        return Promise.resolve({ messageId: 'mock-id' });
+    }
+
     const mailOptions = {
         from: `"Sazanami" <${GMAIL_USER}>`,
         to,
@@ -30,13 +40,13 @@ export async function sendEmail(to: string, subject: string, text: string, html:
     return info;
 }
 
-export async function sendVerificationEmail(user: {name: string; email: string}, url: string) {
+export async function sendVerificationEmail(user: { name: string; email: string }, url: string) {
     const username = user.name || '';
     const subject = '【Sazanami】メールアドレスの確認';
     const text = `こんにちは ${username}。\n`
-               + `メールアドレスを確認するには、以下のリンクをクリックしてください：\n`
-               + `${url}\n`
-               + `もしこの操作に心当たりがない場合は、このメールを無視してください。`;
+        + `メールアドレスを確認するには、以下のリンクをクリックしてください：\n`
+        + `${url}\n`
+        + `もしこの操作に心当たりがない場合は、このメールを無視してください。`;
 
     const html = `
         <p>こんにちは ${username}。</p>
@@ -49,11 +59,11 @@ export async function sendVerificationEmail(user: {name: string; email: string},
     return sendEmail(user.email, subject, text, html);
 }
 
-export async function sendMagicLink({email, url}: {email: string, url: string}) {
+export async function sendMagicLink({ email, url }: { email: string, url: string }) {
     const subject = '【Sazanami】ログインしてください';
     const text = `ログインするには、以下のリンクをクリックしてください：\n`
-               + `${url}\n`
-               + `もしこの操作に心当たりがない場合は、このメールを無視してください。`;
+        + `${url}\n`
+        + `もしこの操作に心当たりがない場合は、このメールを無視してください。`;
 
     const html = `
         <p>以下のボタンをクリックしてログインしてください。</p>

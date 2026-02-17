@@ -6,6 +6,8 @@ export interface Note {
 	createdAt: Date;
 	updatedAt: Date;
 	isPublic: boolean;
+	isPinned: boolean;
+	status: string; // 'inbox' | 'box' | 'archived' | 'trash'
 	tags: string[];
 	slug: string;
 }
@@ -13,7 +15,10 @@ export interface Note {
 export interface User {
 	id: string;
 	email: string;
-	username: string;
+	name: string;
+	username?: string; // Optional or deprecated in favor of name
+	image?: string | null;
+	emailVerified: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 }
