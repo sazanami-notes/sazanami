@@ -1,7 +1,17 @@
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
-import { user, session, account, verification, passkey, userRelations, sessionRelations, accountRelations, passkeyRelations } from './auth-schema';
+import {
+	user,
+	session,
+	account,
+	verification,
+	passkey,
+	userRelations,
+	sessionRelations,
+	accountRelations,
+	passkeyRelations
+} from './auth-schema';
 // generateSlug のインポートは不要なので削除
 
 // NOTES テーブル

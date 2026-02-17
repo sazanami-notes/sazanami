@@ -5,8 +5,6 @@
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import { isSearchVisible } from '$lib/stores/search';
 
-
-
 	/**
 	 * Header component for the Sazanami application.
 	 * Implements the top menu bar with navigation icons.
@@ -38,7 +36,7 @@
 	};
 </script>
 
-<nav class="navbar bg-base-100 shadow-md relative">
+<nav class="navbar bg-base-100 relative shadow-md">
 	<div class="navbar-start">
 		<label for="main-menu-drawer" class="btn btn-ghost btn-circle drawer-button">
 			<svg
@@ -130,6 +128,8 @@
 		padding: 1rem;
 		background-color: var(--fallback-b1, oklch(var(--b1) / 1));
 		z-index: 10;
-		box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+		box-shadow:
+			0 4px 6px -1px rgb(0 0 0 / 0.1),
+			0 2px 4px -2px rgb(0 0 0 / 0.1);
 	}
 </style>
