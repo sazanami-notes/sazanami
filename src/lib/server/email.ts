@@ -6,6 +6,7 @@ const SMTP_PASS = env.SMTP_PASS;
 const SMTP_HOST = env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = Number(env.SMTP_PORT) || 465;
 const SMTP_SECURE = env.SMTP_SECURE === undefined ? true : env.SMTP_SECURE === 'true';
+const SMTP_FROM = env.SMTP_FROM || SMTP_USER;
 
 if (!SMTP_USER || !SMTP_PASS) {
     console.warn('SMTP credentials not set (SMTP_USER / SMTP_PASS). Email sending will fail.');
@@ -33,7 +34,7 @@ export async function sendEmail(to: string, subject: string, text: string, html:
     }
 
     const mailOptions = {
-        from: `"Sazanami" <${SMTP_USER}>`,
+        from: `"Sazanami" <${SMTP_FROM}>`,
         to,
         subject,
         text,
