@@ -63,9 +63,7 @@
 	<div class="drawer-content flex flex-col">
 		<Header session={data.session} user={data.user} />
 
-		<main
-			class="rounded-box my-4 w-full md:mx-auto md:my-10 md:w-2/3 min-h-[80vh]"
-		>
+		<main class="rounded-box my-4 min-h-[80vh] w-full md:mx-auto md:my-10 md:w-2/3">
 			{@render children()}
 		</main>
 	</div>
@@ -74,7 +72,7 @@
 		<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 			{#if data.user}
 				<li><a href="/home">タイムライン</a></li>
-                        <li><a href="/timeline">タイムライン(Mock)</a></li>
+				<li><a href="/timeline">タイムライン(Mock)</a></li>
 				<li><a href="/home/box">ノート一覧</a></li>
 				<li><a href="/home/archive">アーカイブ</a></li>
 				<li><a href="/home/trash">ゴミ箱</a></li>

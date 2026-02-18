@@ -192,11 +192,14 @@
 				{#if googleLinked}
 					<form method="POST" action="?/unlinkAccount">
 						<input type="hidden" name="providerId" value="google" />
-						<button class="btn btn-sm btn-error btn-outline" onclick={(e) => {
-                            if (!confirm('Google連携を解除しますか？')) {
-                                e.preventDefault();
-                            }
-                        }}>解除</button>
+						<button
+							class="btn btn-sm btn-error btn-outline"
+							onclick={(e) => {
+								if (!confirm('Google連携を解除しますか？')) {
+									e.preventDefault();
+								}
+							}}>解除</button
+						>
 					</form>
 				{:else}
 					<button class="btn btn-sm btn-primary" onclick={linkGoogle} disabled={isLinkingGoogle}>
