@@ -6,10 +6,10 @@ const SMTP_PASS = env.SMTP_PASS;
 const SMTP_HOST = env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = Number(env.SMTP_PORT) || 465;
 const SMTP_SECURE = env.SMTP_SECURE === undefined ? true : env.SMTP_SECURE === 'true';
-const SMTP_FROM = env.SMTP_FROM || SMTP_USER;
+const SMTP_FROM = env.SMTP_FROM;
 
-if (!SMTP_USER || !SMTP_PASS) {
-    console.warn('SMTP credentials not set (SMTP_USER / SMTP_PASS). Email sending will fail.');
+if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    console.warn('SMTP credentials not set (SMTP_USER / SMTP_PASS / SMTP_FROM). Email sending will fail.');
 }
 
 const transporter = nodemailer.createTransport({
