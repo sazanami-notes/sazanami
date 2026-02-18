@@ -51,7 +51,7 @@
 			/>
 
 			<div class="max-h-[60vh] overflow-y-auto">
-				<MilkdownEditor initialContent={content} on:change={handleContentChange} />
+				<MilkdownEditor content={content} on:change={handleContentChange} />
 			</div>
 
 			<div class="modal-action mt-6">

@@ -28,7 +28,7 @@
 	<div class="mb-4">
 		<div class="h-96 w-full">
 			{#key data.note.id}
-				<MilkdownEditor initialContent={content} on:change={handleContentChange} />
+				<MilkdownEditor content={content} on:change={handleContentChange} />
 			{/key}
 		</div>
 		<!-- Hidden textarea to maintain compatibility with the form -->

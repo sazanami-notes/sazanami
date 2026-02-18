@@ -1,23 +1,35 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx } from '@milkdown/core';
+	import { Editor, rootCtx, defaultValueCtx, editorViewOptionsCtx, editorViewCtx, parserCtx } from '@milkdown/core';
 	import { nord } from '@milkdown/theme-nord';
 	import { commonmark } from '@milkdown/preset-commonmark';
 	import { gfm } from '@milkdown/preset-gfm';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
-	import { upload, uploadConfig } from '@milkdown/kit/plugin/upload';
+	import { upload, uploadConfig, type Uploader } from '@milkdown/kit/plugin/upload';
 	import type { Node } from '@milkdown/prose/model';
 
-	export let initialContent = '';
-	export let editable = true;
-	export let showTitle = true;
-	export let title = '';
+	let {
+		content = $bindable(''),
+		editable = true,
+		showTitle = true,
+		title = '',
+		placeholder = '',
+		onChange
+	}: {
+		content?: string | null;
+		editable?: boolean;
+		showTitle?: boolean;
+		title?: string;
+		placeholder?: string;
+		onChange?: (markdown: string) => void;
+	} = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let editorRef: HTMLDivElement;
-	let editor: Editor | undefined;
-	let fallbackTextarea = false;
+	let editorRef: HTMLDivElement | undefined = $state();
+	let editor: Editor | undefined = $state();
+	let fallbackTextarea = $state(false);
+	let lastKnownContent = content || '';
 
 	const uploader: Uploader = async (files, schema) => {
 		const images: File[] = [];
@@ -60,8 +72,10 @@
 			try {
 				const newEditor = await Editor.make()
 					.config((ctx) => {
-						ctx.set(rootCtx, editorRef);
-						ctx.set(defaultValueCtx, initialContent);
+                        if (editorRef) {
+						    ctx.set(rootCtx, editorRef);
+                        }
+						ctx.set(defaultValueCtx, content || '');
 						ctx.update(editorViewOptionsCtx, (prev) => ({
 							...prev,
 							editable: () => editable
@@ -69,6 +83,9 @@
 						// Add listener config
 						ctx.get(listenerCtx).markdownUpdated((_, markdown, prevMarkdown) => {
 							if (markdown !== prevMarkdown) {
+								lastKnownContent = markdown;
+								content = markdown;
+								if (onChange) onChange(markdown);
 								dispatch('change', { markdown });
 							}
 						});
@@ -101,9 +118,26 @@
 		};
 	});
 
+	$effect(() => {
+        const currentContent = content || '';
+		if (editor && currentContent !== lastKnownContent) {
+			lastKnownContent = currentContent;
+			editor.action((ctx) => {
+				const view = ctx.get(editorViewCtx);
+				const parser = ctx.get(parserCtx);
+				const doc = parser(currentContent);
+				if (!doc) return;
+				const state = view.state;
+				view.dispatch(state.tr.replaceWith(0, state.doc.content.size, doc));
+			});
+		}
+	});
+
 	function handleTextareaInput(e: Event) {
 		const target = e.target as HTMLTextAreaElement;
-		// We need to dispatch the change event here as well for the fallback
+		lastKnownContent = target.value;
+		content = target.value;
+		if (onChange) onChange(target.value);
 		dispatch('change', { markdown: target.value });
 	}
 </script>
@@ -115,8 +149,8 @@
 	{#if fallbackTextarea}
 		<textarea
 			class="fallback-textarea"
-			value={initialContent}
-			on:input={handleTextareaInput}
+			value={content || ''}
+			oninput={handleTextareaInput}
 			placeholder="Milkdown editor failed to load. Please use this basic textarea."
 		></textarea>
 	{:else}

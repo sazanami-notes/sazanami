@@ -1,0 +1,578 @@
+
+> sazanami@0.0.3 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /app
+Getting Svelte diagnostics...
+
+/app/src/hooks.server.ts:15:4
+Error: No overload matches this call.
+  Overload 1 of 2, '(context: { headers: Headers; query?: { disableCookieCache?: boolean | undefined; disableRefresh?: boolean | undefined; } | undefined; asResponse?: boolean | undefined; returnHeaders?: false | undefined; }): Promise<...>', gave the following error.
+    Object literal may only specify known properties, and 'cookies' does not exist in type '{ headers: Headers; query?: { disableCookieCache?: boolean | undefined; disableRefresh?: boolean | undefined; } | undefined; asResponse?: boolean | undefined; returnHeaders?: false | undefined; }'.
+  Overload 2 of 2, '(inputCtx_0: { body?: undefined; } & { method?: "GET" | undefined; } & { query?: { disableCookieCache?: unknown; disableRefresh?: unknown; } | undefined; } & { params?: Record<string, any> | undefined; } & { ...; } & { ...; } & { ...; } & { ...; }): Promise<...>', gave the following error.
+    Object literal may only specify known properties, and 'cookies' does not exist in type '{ body?: undefined; } & { method?: "GET" | undefined; } & { query?: { disableCookieCache?: unknown; disableRefresh?: unknown; } | undefined; } & { params?: Record<string, any> | undefined; } & { request?: Request | undefined; } & { ...; } & { ...; } & { ...; }'.
+			headers: event.request.headers,
+			cookies: event.cookies
+		});
+
+/app/src/hooks.server.ts:25:3
+Error: Type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; }; } | null' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; } | null'.
+  Type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; }; }' is missing the following properties from type '{ id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }': id, createdAt, updatedAt, userId, and 2 more.
+		// Add session to locals for easy access in routes
+		event.locals.session = session;
+		event.locals.user = session?.user;
+
+/app/src/hooks.server.ts:26:3
+Error: Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; } | undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } | null'.
+  Type 'undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } | null'.
+		event.locals.session = session;
+		event.locals.user = session?.user;
+	} catch (error) {
+
+/app/src/routes/api/notes/[id]/status/+server.ts:57:14
+Error: Property 'rowCount' does not exist on type 'ResultSet'.
+
+		if (result.rowCount > 0) {
+			// タイムラインイベントを記録
+
+/app/src/routes/api/notes/import/+server.ts:34:38
+Error: Argument of type '{ userId: string; title: string; content: string; }' is not assignable to parameter of type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">'.
+  Type '{ userId: string; title: string; content: string; }' is missing the following properties from type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">': isPublic, isPinned, status, tags
+
+				const newNote = await createNote({
+					userId,
+					title,
+					content
+				});
+
+/app/src/routes/settings/account/+page.server.ts:53:15
+Error: 'e.body' is possibly 'undefined'.
+				return fail(e.statusCode, {
+					message: e.body.message
+				});
+
+/app/src/lib/components/LinkExplorer.svelte:11:13
+Warn: Component has unused export property 'username'. If it is for external reference only, please consider using `export const username`
+https://svelte.dev/e/export_let_unused (svelte)
+	export let twoHopLinks: Link[] = [];
+	export let username: string;
+</script>
+
+/app/src/routes/home/box/+page.svelte:96:11
+Error: Argument of type '(event: CustomEvent<string>) => Promise<void>' is not assignable to parameter of type '(e: CustomEvent<{ title: string; content: string; }>) => void'.
+  Types of parameters 'event' and 'e' are incompatible.
+    Type 'CustomEvent<{ title: string; content: string; }>' is not assignable to type 'CustomEvent<string>'.
+      Type '{ title: string; content: string; }' is not assignable to type 'string'. (ts)
+	note={editingNote}
+	on:save={handleSaveEdit}
+	on:cancel={handleCancelEdit}
+
+/app/src/routes/home/note/[id]/+page.svelte:49:27
+Error: Property 'username' does not exist on type '{ id?: string | undefined; }'. (ts)
+			twoHopLinks={data.links.twoHopLinks}
+			username={$page.params.username}
+		/>
+
+/app/src/routes/login/+page.svelte:44:22
+Error: Property 'twoFactorRedirect' does not exist on type '{ redirect: boolean; token: string; url: string | undefined; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; }'. (ts)
+					error = apiError.message || 'ログインに失敗しました。';
+				} else if (data?.twoFactorRedirect) {
+					console.log('2FA required, redirecting to two-factor page');
+
+/app/src/routes/login/+page.svelte:147:21
+Error: Property 'twoFactorRedirect' does not exist on type 'NonNullable<{ redirect: boolean; token: string; url: undefined; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; } | { ...; }>'.
+  Property 'twoFactorRedirect' does not exist on type '{ redirect: boolean; token: string; url: undefined; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; }'. (ts)
+				error = signInError.message || 'ログイン出来ませんでした。';
+			} else if (data?.twoFactorRedirect) {
+				await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
+
+/app/src/routes/login/two-factor/+page.svelte:105:7
+Warn: Avoid using autofocus
+https://svelte.dev/e/a11y_autofocus (svelte)
+						maxlength={mode === 'totp' ? 6 : undefined}
+						autofocus
+						autocomplete="one-time-code"
+
+/app/src/routes/settings/account/+page.svelte:154:5
+Error: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'. (ts)
+			} else if (res.error) {
+				twoFactorError = res.error.message;
+			}
+
+/app/tests/integration/attachments-api.test.ts:82:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+
+/app/tests/integration/attachments-api.test.ts:85:31
+Error: Argument of type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' is not assignable to parameter of type 'RequestEvent<RouteParams, "/api/attachments">'.
+  Type '"/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | "/api/notes/[id]/pin" | ... 14 more ... | null' is not assignable to type '"/api/attachments"'.
+    Type 'null' is not assignable to type '"/api/attachments"'.
+		// 4. Call the endpoint handler
+		const response = await POST(event);
+		const body = await response.json();
+
+/app/tests/integration/attachments-api.test.ts:119:31
+Error: Argument of type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' is not assignable to parameter of type 'RequestEvent<RouteParams, "/api/attachments">'.
+  Type '"/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | "/api/notes/[id]/pin" | ... 14 more ... | null' is not assignable to type '"/api/attachments"'.
+    Type 'null' is not assignable to type '"/api/attachments"'.
+
+		const response = await POST(event);
+		expect(response.status).toBe(401);
+
+/app/tests/integration/import-api.test.ts:70:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+
+/app/tests/integration/import-api.test.ts:73:31
+Error: Argument of type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' is not assignable to parameter of type 'RequestEvent<RouteParams, "/api/notes/import">'.
+  Type '"/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | "/api/notes/[id]/pin" | ... 14 more ... | null' is not assignable to type '"/api/notes/import"'.
+    Type 'null' is not assignable to type '"/api/notes/import"'.
+		// 4. Call the endpoint handler
+		const response = await POST(event);
+		const body = await response.json();
+
+/app/tests/integration/main-scenarios.test.ts:68:9
+Error: Conversion of type '{ request: Request; locals: App.Locals; params: Record<string, string>; url: URL; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<...>; serialize: Mock<...>; getAll: Mock<...>; }; ... 6 more ...; isSubRequest: false; }' to type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ request: Request; locals: Locals; params: Record<string, string>; url: URL; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<...>; serialize: Mock<...>; getAll: Mock<...>; }; ... 6 more ...; isSubRequest: false; }' is missing the following properties from type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>': tracing, isRemoteRequest
+
+	return {
+		request,
+		locals,
+		params,
+		url: new URL(request.url),
+		cookies: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), serialize: vi.fn(), getAll: vi.fn() },
+		fetch: vi.fn(),
+		getClientAddress: () => '127.0.0.1',
+		platform: { env: { DB: {} as any } },
+		route: { id: null },
+		setHeaders: vi.fn(),
+		isDataRequest: false,
+		isSubRequest: false
+	} as RequestEvent;
+};
+
+/app/tests/integration/main-scenarios.test.ts:91:2
+Error: Type '{ request: Request; locals: Locals; params: Record<string, string>; url: URL; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<...>; serialize: Mock<...>; getAll: Mock<...>; }; ... 9 more ...; untrack: Mock<...>; }' is missing the following properties from type 'ServerLoadEvent<{ id?: string | undefined; }, Record<string, any>, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | ... 16 more ... | null>': tracing, isRemoteRequest
+
+	return {
+		request,
+
+/app/tests/integration/main-scenarios.test.ts:125:32
+Error: Argument of type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' is not assignable to parameter of type 'RequestEvent<RouteParams, "/home/note/new">'.
+  Type '"/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | "/api/notes/[id]/pin" | ... 14 more ... | null' is not assignable to type '"/home/note/new"'.
+    Type 'null' is not assignable to type '"/home/note/new"'.
+
+		await expect(actions.default(event)).rejects.toThrow();
+
+/app/tests/integration/main-scenarios.test.ts:147:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const pageData = await load(event);
+
+/app/tests/integration/main-scenarios.test.ts:148:31
+Error: Argument of type 'ServerLoadEvent<{ id?: string | undefined; }, Record<string, any>, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | ... 16 more ... | null>' is not assignable to parameter of type 'ServerLoadEvent<RouteParams, { session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | ... 1 more ... | undefined; } | null; user: { ...; } | null; }, "/home/box">'.
+  Type 'Record<string, any>' is missing the following properties from type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; } | null; user: { ...; } | null; }': session, user
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const pageData = await load(event);
+
+/app/tests/integration/main-scenarios.test.ts:150:19
+Error: Property 'notes' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'notes' does not exist on type 'void'.
+
+		expect(pageData.notes).toBeDefined();
+		expect(pageData.notes.length).toBeGreaterThan(0);
+
+/app/tests/integration/main-scenarios.test.ts:151:19
+Error: Property 'notes' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'notes' does not exist on type 'void'.
+		expect(pageData.notes).toBeDefined();
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
+
+/app/tests/integration/main-scenarios.test.ts:152:30
+Error: Property 'notes' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'notes' does not exist on type 'void'.
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
+		expect(foundNote).toBeDefined();
+
+/app/tests/integration/main-scenarios.test.ts:152:42
+Error: Parameter 'n' implicitly has an 'any' type.
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
+		expect(foundNote).toBeDefined();
+
+/app/tests/integration/main-scenarios.test.ts:169:32
+Error: Argument of type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' is not assignable to parameter of type 'RequestEvent<RouteParams, "/home/note/[id]">'.
+  Type '{ id?: string | undefined; }' is not assignable to type 'RouteParams'.
+    Types of property 'id' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+
+		await expect(actions.default(event)).rejects.toThrow();
+
+/app/tests/integration/main-scenarios.test.ts:206:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+		});
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const pageData = await load(listEvent);
+
+/app/tests/integration/main-scenarios.test.ts:207:31
+Error: Argument of type 'ServerLoadEvent<{ id?: string | undefined; }, Record<string, any>, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | ... 16 more ... | null>' is not assignable to parameter of type 'ServerLoadEvent<RouteParams, { session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | ... 1 more ... | undefined; } | null; user: { ...; } | null; }, "/home/box">'.
+  Type 'Record<string, any>' is missing the following properties from type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; } | null; user: { ...; } | null; }': session, user
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const pageData = await load(listEvent);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
+
+/app/tests/integration/main-scenarios.test.ts:208:30
+Error: Property 'notes' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'notes' does not exist on type 'void'.
+		const pageData = await load(listEvent);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
+		expect(foundNote).toBeUndefined();
+
+/app/tests/integration/main-scenarios.test.ts:208:42
+Error: Parameter 'n' implicitly has an 'any' type.
+		const pageData = await load(listEvent);
+		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
+		expect(foundNote).toBeUndefined();
+
+/app/tests/integration/main-scenarios.test.ts:225:45
+Error: Argument of type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' is not assignable to parameter of type 'RequestEvent<RouteParams, "/home/note/new">'.
+  Type '"/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | "/api/notes/[id]/pin" | ... 14 more ... | null' is not assignable to type '"/home/note/new"'.
+    Type 'null' is not assignable to type '"/home/note/new"'.
+		);
+		await expect(createAction.actions.default(createEvent)).rejects.toThrow();
+
+/app/tests/integration/main-scenarios.test.ts:250:31
+Error: Argument of type 'ServerLoadEvent<{ id?: string | undefined; }, Record<string, any>, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | ... 16 more ... | null>' is not assignable to parameter of type 'ServerLoadEvent<RouteParams, { session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | ... 1 more ... | undefined; } | null; user: { ...; } | null; }, "/home/note/[id]">'.
+  Type '{ id?: string | undefined; }' is not assignable to type 'RouteParams'.
+    Types of property 'id' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+
+		const pageData = await load(loadEvent);
+
+/app/tests/integration/main-scenarios.test.ts:253:19
+Error: Property 'note' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'note' does not exist on type 'void'.
+		// 3. Assert correct data was loaded
+		expect(pageData.note).toBeDefined();
+		expect(pageData.note.title).toBe(japaneseNoteData.title);
+
+/app/tests/integration/main-scenarios.test.ts:254:19
+Error: Property 'note' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'note' does not exist on type 'void'.
+		expect(pageData.note).toBeDefined();
+		expect(pageData.note.title).toBe(japaneseNoteData.title);
+		expect(pageData.note.content).toBe(japaneseNoteData.content);
+
+/app/tests/integration/main-scenarios.test.ts:255:19
+Error: Property 'note' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'note' does not exist on type 'void'.
+		expect(pageData.note.title).toBe(japaneseNoteData.title);
+		expect(pageData.note.content).toBe(japaneseNoteData.content);
+
+/app/tests/integration/main-scenarios.test.ts:257:66
+Error: Property 'note' does not exist on type 'void | (Omit<PageData, RequiredKeys<T>> & Partial<Pick<PageData, never>> & Record<string, any>)'.
+  Property 'note' does not exist on type 'void'.
+
+		await db.delete(notesSchema).where(eq(notesSchema.id, pageData.note.id));
+	});
+
+/app/tests/integration/main-scenarios.test.ts:283:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+		});
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+
+/app/tests/integration/main-scenarios.test.ts:289:19
+Error: Property 'notes' does not exist on type 'void | Record<string, any>'.
+  Property 'notes' does not exist on type 'void'.
+		// 5. Assert the results
+		expect(pageData.notes).toBeDefined();
+		expect(pageData.notes.length).toBeGreaterThan(0);
+
+/app/tests/integration/main-scenarios.test.ts:290:19
+Error: Property 'notes' does not exist on type 'void | Record<string, any>'.
+  Property 'notes' does not exist on type 'void'.
+		expect(pageData.notes).toBeDefined();
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.title === inboxNoteTitle);
+
+/app/tests/integration/main-scenarios.test.ts:291:30
+Error: Property 'notes' does not exist on type 'void | Record<string, any>'.
+  Property 'notes' does not exist on type 'void'.
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.title === inboxNoteTitle);
+		expect(foundNote).toBeDefined();
+
+/app/tests/integration/main-scenarios.test.ts:291:42
+Error: Parameter 'n' implicitly has an 'any' type.
+		expect(pageData.notes.length).toBeGreaterThan(0);
+		const foundNote = pageData.notes.find((n) => n.title === inboxNoteTitle);
+		expect(foundNote).toBeDefined();
+
+/app/tests/integration/main-scenarios.test.ts:339:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+		} as unknown as RequestEvent;
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+
+/app/tests/integration/main-scenarios.test.ts:358:65
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+		} as unknown as RequestEvent;
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+
+/app/tests/integration/note-links-db.test.ts:28:33
+Error: Argument of type '{ userId: string; title: string; content: string; }' is not assignable to parameter of type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">'.
+  Type '{ userId: string; title: string; content: string; }' is missing the following properties from type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">': isPublic, isPinned, status, tags
+	// Pre-create target notes
+	const noteA = await createNote({
+		userId: testUser.id,
+		title: 'Target A',
+		content: '...'
+	});
+	const noteB = await createNote({
+
+/app/tests/integration/note-links-db.test.ts:33:33
+Error: Argument of type '{ userId: string; title: string; content: string; }' is not assignable to parameter of type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">'.
+  Type '{ userId: string; title: string; content: string; }' is missing the following properties from type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">': isPublic, isPinned, status, tags
+	});
+	const noteB = await createNote({
+		userId: testUser.id,
+		title: 'Target B',
+		content: '...'
+	});
+	noteIds['Target A'] = noteA.id;
+
+/app/tests/integration/note-links-db.test.ts:50:39
+Error: Argument of type '{ userId: string; title: string; content: string; }' is not assignable to parameter of type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">'.
+  Type '{ userId: string; title: string; content: string; }' is missing the following properties from type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">': isPublic, isPinned, status, tags
+	it('should create a link when a new note with a wiki link is created', async () => {
+		const sourceNote = await createNote({
+			userId: testUser.id,
+			title: 'Source Note 1',
+			content: 'This links to [[Target A]].'
+		});
+		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
+
+/app/tests/integration/note-links-db.test.ts:68:39
+Error: Argument of type '{ userId: string; title: string; content: string; }' is not assignable to parameter of type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">'.
+  Type '{ userId: string; title: string; content: string; }' is missing the following properties from type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">': isPublic, isPinned, status, tags
+		// First, create a note with a link to A
+		const sourceNote = await createNote({
+			userId: testUser.id,
+			title: 'Source Note 2',
+			content: 'Initial link to [[Target A]].'
+		});
+		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
+
+/app/tests/integration/note-links-db.test.ts:91:39
+Error: Argument of type '{ userId: string; title: string; content: string; }' is not assignable to parameter of type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">'.
+  Type '{ userId: string; title: string; content: string; }' is missing the following properties from type 'Omit<Note, "id" | "createdAt" | "updatedAt" | "slug">': isPublic, isPinned, status, tags
+		// First, create a note with a link
+		const sourceNote = await createNote({
+			userId: testUser.id,
+			title: 'Source Note 3',
+			content: 'This will have its link removed. [[Target A]]'
+		});
+		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
+
+/app/tests/integration/notes-api.test.ts:47:9
+Error: Conversion of type '{ request: Request; url: URL; params: Record<string, string>; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<Procedure>; serialize: Mock<...>; getAll: Mock<...>; }; ... 7 more ...; isSubRequest: false; }' to type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ request: Request; url: URL; params: Record<string, string>; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<Procedure>; serialize: Mock<...>; getAll: Mock<...>; }; ... 7 more ...; isSubRequest: false; }' is missing the following properties from type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>': tracing, isRemoteRequest
+
+	return {
+		request: request,
+		url: new URL(request.url),
+		params: params || {},
+		cookies: {
+			get: vi.fn(),
+			set: vi.fn(),
+			delete: vi.fn(),
+			serialize: vi.fn(),
+			getAll: vi.fn()
+		},
+		fetch: vi.fn(),
+		getClientAddress: vi.fn(() => '127.0.0.1'),
+		locals: {
+			user: session ? session.user : null,
+			session: session ? session.session : null,
+			auth: authModule.auth.api
+		},
+		platform: { env: { DB: {} as any } }, // DB プロパティを追加
+		route: {
+			id: '/api/notes'
+		},
+		setHeaders: vi.fn(),
+		isDataRequest: false,
+		isSubRequest: false
+	} as RequestEvent;
+};
+
+/app/tests/integration/notes-api.test.ts:126:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return 400 if invalid JSON format', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const request = new Request('http://localhost/api/notes', {
+
+/app/tests/integration/notes-api.test.ts:133:18
+Error: Conversion of type '{ request: Request; url: URL; params: {}; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<Procedure>; serialize: Mock<...>; getAll: Mock<...>; }; ... 7 more ...; isSubRequest: false; }' to type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ request: Request; url: URL; params: {}; cookies: { get: Mock<Procedure>; set: Mock<Procedure>; delete: Mock<Procedure>; serialize: Mock<...>; getAll: Mock<...>; }; ... 7 more ...; isSubRequest: false; }' is missing the following properties from type 'RequestEvent<{ id?: string | undefined; }, "/" | "/api" | "/api/attachments" | "/api/notes" | "/api/notes/import" | "/api/notes/resolve-link" | "/api/notes/[id]" | "/api/notes/[id]/links" | ... 15 more ... | null>': tracing, isRemoteRequest
+		// RequestEventのモックを適切に作成
+		const params = {
+			request,
+			url: new URL(request.url),
+			params: {},
+			cookies: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), serialize: vi.fn(), getAll: vi.fn() },
+			fetch: vi.fn(),
+			getClientAddress: vi.fn(() => '127.0.0.1'),
+			locals: {
+				user: mockSession.user,
+				session: mockSession.session,
+				auth: authModule.auth.api
+			},
+			platform: { env: { DB: {} as any } }, // DB プロパティを追加
+			route: { id: '/api/notes' },
+			setHeaders: vi.fn(),
+			isDataRequest: false,
+			isSubRequest: false
+		} as RequestEvent;
+		const response = await createNote(params);
+
+/app/tests/integration/notes-api.test.ts:158:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should create a note and save the correct slug', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const noteTitle = 'My New Test Note';
+
+/app/tests/integration/notes-api.test.ts:183:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should create a note with japanese title and save the correct slug', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const noteTitle = '日本語の新しいノート';
+
+/app/tests/integration/notes-api.test.ts:263:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return 400 if note ID is missing in params', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+
+/app/tests/integration/notes-api.test.ts:277:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return 404 if note not found', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const nonExistentId = ulid();
+
+/app/tests/integration/notes-api.test.ts:293:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should update a note and re-generate the correct slug', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const updatedTitle = 'My Updated Test Note';
+
+/app/tests/integration/notes-api.test.ts:319:69
+Error: Argument of type '{ user: User; session: Session; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should update a note with japanese title and re-generate the correct slug', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		const updatedTitle = '日本語の更新されたノート';
+
+/app/tests/integration/resolve-link.test.ts:163:69
+Error: Argument of type '{ user: { id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; session: { id: string; userId: string; expiresAt: Date; createdAt: Date; updatedAt: Date; token: string; }; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return 400 if title query parameter is missing', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+
+/app/tests/integration/resolve-link.test.ts:177:69
+Error: Argument of type '{ user: { id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; session: { id: string; userId: string; expiresAt: Date; createdAt: Date; updatedAt: Date; token: string; }; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return correct note for an existing title', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+
+/app/tests/integration/resolve-link.test.ts:192:69
+Error: Argument of type '{ user: { id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; session: { id: string; userId: string; expiresAt: Date; createdAt: Date; updatedAt: Date; token: string; }; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return 404 if note not found', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+
+/app/tests/integration/resolve-link.test.ts:206:69
+Error: Argument of type '{ user: { id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; session: { id: string; userId: string; expiresAt: Date; createdAt: Date; updatedAt: Date; token: string; }; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should return the latest updated note for duplicate titles', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+
+/app/tests/integration/resolve-link.test.ts:220:69
+Error: Argument of type '{ user: { id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; session: { id: string; userId: string; expiresAt: Date; createdAt: Date; updatedAt: Date; token: string; }; }' is not assignable to parameter of type '{ session: { id: string; createdAt: Date; updatedAt: Date; userId: string; expiresAt: Date; token: string; ipAddress?: string | null | undefined; userAgent?: string | null | undefined; }; user: { ...; } & { ...; }; }'.
+  Types of property 'user' are incompatible.
+    Type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; } & { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; twoFactorEnabled: boolean | ... 1 more ... | undefined; }'.
+      Property 'twoFactorEnabled' is missing in type '{ id: string; email: string; name: string; emailVerified: boolean; createdAt: Date; updatedAt: Date; }' but required in type '{ id: string; createdAt: Date; updatedAt: Date; email: string; emailVerified: boolean; name: string; image?: string | null | undefined; twoFactorEnabled: boolean | null | undefined; }'.
+	it('should handle Japanese titles correctly', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+
+/app/tests/integration/signup.test.ts:58:16
+Error: Property 'data' does not exist on type 'NonNullable<{ token: null; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; } | { token: string; user: { ...; }; }>'.
+  Property 'data' does not exist on type '{ token: null; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; }'.
+		expect(data).toBeDefined();
+		expect(data?.data.user.email).toBe(newUser.email);
+		expect(data?.data.user.name).toBe(newUser.name);
+
+/app/tests/integration/signup.test.ts:59:16
+Error: Property 'data' does not exist on type 'NonNullable<{ token: null; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; } | { token: string; user: { ...; }; }>'.
+  Property 'data' does not exist on type '{ token: null; user: { id: string; email: string; name: string; image: string | null | undefined; emailVerified: boolean; createdAt: Date; updatedAt: Date; }; }'.
+		expect(data?.data.user.email).toBe(newUser.email);
+		expect(data?.data.user.name).toBe(newUser.name);
+
+====================================
+svelte-check found 64 errors and 2 warnings in 17 files
