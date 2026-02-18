@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { Note } from '$lib/types';
-	import MilkdownEditor from './MilkdownEditor.svelte';
+	import TiptapEditor from './TiptapEditor.svelte';
 
 	let { note, saving = false }: { note: Note | null; saving?: boolean } = $props();
 
-	const dispatch = createEventDispatcher<{ save: { title: string; content: string }; cancel: void }>();
+	const dispatch = createEventDispatcher<{
+		save: { title: string; content: string };
+		cancel: void;
+	}>();
 
 	let dialog: HTMLDialogElement;
 	let title = $state('');
@@ -46,12 +49,12 @@
 			<input
 				type="text"
 				bind:value={title}
-				class="input input-bordered w-full mb-4 bg-base-200 text-lg font-bold"
+				class="input input-bordered bg-base-200 mb-4 w-full text-lg font-bold"
 				placeholder="タイトル"
 			/>
 
-			<div class="max-h-[60vh] overflow-y-auto">
-				<MilkdownEditor initialContent={content} on:change={handleContentChange} />
+			<div class="max-h-[60vh] min-h-[300px] overflow-y-auto">
+				<TiptapEditor {content} on:change={handleContentChange} />
 			</div>
 
 			<div class="modal-action mt-6">
