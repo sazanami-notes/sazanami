@@ -74,6 +74,7 @@
 		<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 			{#if data.user}
 				<li><a href="/home">タイムライン</a></li>
+                        <li><a href="/timeline">タイムライン(Mock)</a></li>
 				<li><a href="/home/box">ノート一覧</a></li>
 				<li><a href="/home/archive">アーカイブ</a></li>
 				<li><a href="/home/trash">ゴミ箱</a></li>
