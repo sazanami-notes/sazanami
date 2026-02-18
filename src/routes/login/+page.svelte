@@ -43,7 +43,9 @@
 					error = apiError.message || 'ログインに失敗しました。';
 				} else if (data?.twoFactorRedirect) {
 					console.log('2FA required, redirecting to two-factor page');
-					await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
+					await goto(
+						'/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : '')
+					);
 				} else {
 					console.log('Login successful:', data);
 					// ユーザー名を取得してリダイレクト
@@ -145,7 +147,9 @@
 				console.error('Signin error:', signInError);
 				error = signInError.message || 'ログイン出来ませんでした。';
 			} else if (data?.twoFactorRedirect) {
-				await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
+				await goto(
+					'/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : '')
+				);
 			}
 		} catch (e) {
 			console.error('Signin error', e);
@@ -169,7 +173,9 @@
 						? signInError
 						: signInError?.message || 'パスキーによるログインに失敗しました。';
 			} else if (data?.twoFactorRedirect) {
-				await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
+				await goto(
+					'/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : '')
+				);
 			} else {
 				await invalidateAll();
 				await goto('/home');

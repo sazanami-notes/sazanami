@@ -9,7 +9,6 @@ import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーテ�
 
 export const GET: RequestHandler = async ({ url, request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
-	console.log('Session in GET:', session);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
