@@ -2,7 +2,7 @@
 
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
-import { magicLink } from "better-auth/plugins";
+import { magicLink, twoFactor } from "better-auth/plugins";
 import { passkey } from "better-auth/plugins/passkey"
 import { sendVerificationEmail, sendMagicLink } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -14,7 +14,7 @@ import { getRequestEvent } from '$app/server';
 export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: true,
+		requireEmailVerification: false,
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url }) => {
@@ -40,6 +40,9 @@ export const auth = betterAuth({
 	plugins: [
 		sveltekitCookies(getRequestEvent),
 		passkey(),
+		twoFactor({
+			issuer: "Sazanami"
+		}),
 		magicLink({
 			sendMagicLink: async ({ email, url }) => {
 				try {

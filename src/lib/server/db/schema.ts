@@ -1,7 +1,7 @@
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
-import { user, session, account, verification, passkey, userRelations, sessionRelations, accountRelations, passkeyRelations } from './auth-schema';
+import { user, session, account, verification, passkey, twoFactor, userRelations, sessionRelations, accountRelations, passkeyRelations, twoFactorRelations } from './auth-schema';
 // generateSlug のインポートは不要なので削除
 
 // NOTES テーブル
@@ -107,4 +107,4 @@ export const timeline = sqliteTable('timeline', {
 });
 
 // インポートした認証関連テーブルを再度エクスポート
-export { user, session, account, verification, passkey };
+export { user, session, account, verification, passkey, twoFactor };

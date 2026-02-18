@@ -3,12 +3,13 @@ import type { LayoutServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 
 export const load: LayoutServerLoad = async ({ request, url }) => {
-	const queryParams = url.searchParams.toString(); 
+	const queryParams = url.searchParams.toString();
 	const sessionData = await auth.api.getSession({
 		headers: request.headers
 	});
 
-	if (!sessionData?.session && url.pathname !== '/login' && url.pathname !== '/') {
+	const allowedPaths = ['/login', '/login/two-factor', '/'];
+	if (!sessionData?.session && !allowedPaths.includes(url.pathname)) {
 		let redirectUrl = '/login';
 		if (queryParams) redirectUrl += `?${queryParams}`;
 		throw redirect(302, redirectUrl);
