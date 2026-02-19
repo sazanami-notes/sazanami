@@ -62,7 +62,7 @@ const createMockRequestHandlerParams = async (
 			session: session ? session.session : null,
 			auth: authModule.auth.api
 		},
-		platform: { env: { DB: {} as any } }, // DB プロパティを追加
+		platform: {},
 		route: {
 			id: '/api/notes'
 		},
@@ -142,7 +142,7 @@ describe('POST /api/notes', () => {
 				session: mockSession.session,
 				auth: authModule.auth.api
 			},
-			platform: { env: { DB: {} as any } }, // DB プロパティを追加
+			platform: {},
 			route: { id: '/api/notes' },
 			setHeaders: vi.fn(),
 			isDataRequest: false,

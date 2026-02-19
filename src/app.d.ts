@@ -8,11 +8,7 @@ declare global {
 			session: import('better-auth').Session | null;
 			auth: ReturnType<typeof import('$lib/server/auth').createAuth>['api'];
 		}
-		interface Platform {
-			env: {
-				DB: D1Database;
-			};
-		}
+		interface Platform {}
 	}
 }
 
