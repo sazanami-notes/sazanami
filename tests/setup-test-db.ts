@@ -18,7 +18,8 @@ export async function createTables() {
       email_verified INTEGER DEFAULT 0 NOT NULL,
       image TEXT,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      two_factor_enabled INTEGER DEFAULT 0
     );
   `);
 	await client.execute(`

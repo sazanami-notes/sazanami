@@ -61,21 +61,31 @@
 
 <div class="drawer">
 	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
-	<div class="drawer-content flex flex-col items-center bg-base-300 min-h-screen">
-		<div class="w-full max-w-md bg-base-100 flex flex-col h-[100dvh] relative shadow-xl">
+	<div class="drawer-content bg-base-300 flex min-h-screen flex-col items-center">
+		<div class="bg-base-100 relative flex h-[100dvh] w-full max-w-md flex-col shadow-xl">
 			<Header user={data.user} />
 
-			<main class="flex-grow overflow-y-auto w-full relative">
+			<main class="relative w-full flex-grow overflow-y-auto">
 				{@render children()}
 			</main>
 
 			<Footer />
 
-			<a href="/home/note/new" class="btn btn-circle btn-primary btn-lg absolute bottom-20 right-4 shadow-lg z-20" aria-label="Create Note">
+			<a
+				href="/home/note/new"
+				class="btn btn-circle btn-primary btn-lg absolute right-4 bottom-20 z-20 shadow-lg"
+				aria-label="Create Note"
+			>
 				<!-- add -->
-				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
-					<path d="M0 0h24v24H0V0z" fill="none"/>
-					<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					height="24"
+					viewBox="0 0 24 24"
+					width="24"
+					fill="currentColor"
+				>
+					<path d="M0 0h24v24H0V0z" fill="none" />
+					<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
 				</svg>
 			</a>
 		</div>

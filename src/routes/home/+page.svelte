@@ -84,7 +84,11 @@
 	<div class="mx-auto mb-8 max-w-2xl">
 		<div class="card bg-base-200 p-4">
 			<div class="max-h-48 overflow-y-auto">
-				<MilkdownEditor bind:content={newPostContent} editable={true} placeholder="いまどうしてる？" />
+				<MilkdownEditor
+					bind:content={newPostContent}
+					editable={true}
+					placeholder="いまどうしてる？"
+				/>
 			</div>
 			<div class="card-actions mt-4 justify-end">
 				<button onclick={handleSubmitPost} class="btn btn-primary">ポスト</button>
@@ -98,7 +102,9 @@
 			{#each notes as note (note.id)}
 				<TimelinePost {note} on:edit={handleEdit} />
 			{:else}
-				<p class="text-center text-base-content text-opacity-60">タイムラインにはまだ何もありません。</p>
+				<p class="text-center text-base-content text-opacity-60">
+					タイムラインにはまだ何もありません。
+				</p>
 			{/each}
 		</div>
 	</div>

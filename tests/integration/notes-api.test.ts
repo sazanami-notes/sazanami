@@ -340,3 +340,107 @@ describe('PUT /api/notes/{id}', () => {
 		expect(fetchedNote?.slug).toBe(generateSlug(updatedTitle));
 	});
 });
+
+describe('GET /api/notes', () => {
+	let testUserId: string;
+	const noteIds: string[] = [];
+
+	beforeAll(async () => {
+		testUserId = ulid();
+		mockSession.user.id = testUserId;
+		mockSession.session.userId = testUserId;
+
+		await db
+			.insert(user)
+			.values({
+				id: testUserId,
+				email: 'get-test@example.com',
+				name: 'Get Test User',
+				emailVerified: false,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			})
+			.onConflictDoNothing();
+
+		// Create some test notes
+		const noteData = [
+			{ title: 'Apple Note', content: 'Content about apple' },
+			{ title: 'Banana Note', content: 'Content about banana' },
+			{ title: 'Cherry Note', content: 'Content about cherry' },
+			{ title: 'Date Note', content: 'Content about date' },
+			{ title: 'Eggplant Note', content: 'Content about eggplant' }
+		];
+
+		for (const data of noteData) {
+			const id = ulid();
+			noteIds.push(id);
+			await db.insert(notes).values({
+				id,
+				userId: testUserId,
+				title: data.title,
+				content: data.content,
+				slug: generateSlug(data.title),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				isPublic: false
+			});
+		}
+	});
+
+	afterAll(async () => {
+		await db.delete(notes).where(eq(notes.userId, testUserId));
+		await db.delete(user).where(eq(user.id, testUserId));
+	});
+
+	it('should return 401 if unauthorized', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(null);
+		const params = await createMockRequestHandlerParams('http://localhost/api/notes', 'GET', null);
+		const response = await getNotes(params);
+		expect(response.status).toBe(401);
+	});
+
+	it('should return all notes for the user', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes',
+			'GET',
+			mockSession
+		);
+		const response = await getNotes(params);
+		expect(response.status).toBe(200);
+		const body = await response.json();
+		expect(body.notes).toHaveLength(5);
+		expect(body.pagination.total).toBe(5);
+	});
+
+	it('should filter notes by search query', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes?search=apple',
+			'GET',
+			mockSession
+		);
+		const response = await getNotes(params);
+		expect(response.status).toBe(200);
+		const body = await response.json();
+		expect(body.notes).toHaveLength(1);
+		expect(body.notes[0].title).toBe('Apple Note');
+	});
+
+	it('should return paginated notes', async () => {
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes?page=1&limit=2',
+			'GET',
+			mockSession
+		);
+		const response = await getNotes(params);
+		expect(response.status).toBe(200);
+		const body = await response.json();
+		expect(body.notes).toHaveLength(2);
+		expect(body.pagination.page).toBe(1);
+		expect(body.pagination.limit).toBe(2);
+		expect(body.pagination.total).toBe(5);
+		expect(body.pagination.totalPages).toBe(3);
+	});
+});
