@@ -15,7 +15,7 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
 - **Authentication**: Better Auth
 - **Editor**: Tiptap (Markdownサポート拡張)
 - **Testing**: Vitest, Svelte Testing Library
-- **Package Manager**: npm (または bun)
+- **Package Manager**: npm
 
 ## 3. ディレクトリ構造と責務
 標準的なSvelteKitの構造に加え、以下のルールに従ってファイルを配置・更新してください。
@@ -48,6 +48,7 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
 ### スタイリング (Tailwind CSS + DaisyUI)
 - カスタムCSSを書く前に、Tailwind CSSのユーティリティクラスで実現できないか検討してください。
 - コンポーネントのUIには DaisyUI のコンポーネントクラス（例: `btn`, `card`, `input`, `modal` など）を活用して一貫性を保ってください。
+- DaisyUI のカラーコードを使ってカラーを実装してください。
 
 ### 認証 (Better Auth)
 - 認証が必要なルート・APIでは、サーバーサイドでセッションを検証してください。
