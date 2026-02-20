@@ -1,5 +1,5 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
+
 import { db, updateNoteLinks } from '$lib/server/db';
 import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
 import { eq, or, like, desc, sql, and } from 'drizzle-orm';

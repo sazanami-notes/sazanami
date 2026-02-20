@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { signIn, signUp, authClient } from '$lib/auth-client';
-	import { goto } from '$app/navigation';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 
