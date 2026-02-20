@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { setupTestDB, teardownTestDB } from '../test-utils';
 import { GET } from '../../src/routes/api/notes/resolve-link/+server';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';

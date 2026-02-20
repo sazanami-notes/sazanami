@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,22 +20,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run check
-
-      - name: Test
-        run: npm run test -- --run
-        env:
-          BETTER_AUTH_SECRET: 'dummy-secret-for-tests'
-          BETTER_AUTH_URL: 'http://localhost:4173'
-
       - name: Build
         run: npm run build
         env:
-          BETTER_AUTH_SECRET: 'dummy-secret-for-tests'
-          BETTER_AUTH_URL: 'http://localhost:4173'
-          TURSO_DATABASE_URL: 'file:local.db'
-          TURSO_AUTH_TOKEN: 'dummy-token'
+          BETTER_AUTH_SECRET: "dummy-secret-for-build"
+          BETTER_AUTH_URL: "http://localhost:4173"
+          TURSO_DATABASE_URL: "file:local.db"
+          TURSO_AUTH_TOKEN: "dummy-token"

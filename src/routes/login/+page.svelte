@@ -43,9 +43,7 @@
 					error = apiError.message || 'ログインに失敗しました。';
 				} else if (data?.twoFactorRedirect) {
 					console.log('2FA required, redirecting to two-factor page');
-					await goto(
-						'/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : '')
-					);
+					await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
 				} else {
 					console.log('Login successful:', data);
 					// ユーザー名を取得してリダイレクト
@@ -110,7 +108,7 @@
 		message = null;
 
 		try {
-			const { data: _data, error: signInError } = await authClient.signIn.magicLink({
+			const { data, error: signInError } = await authClient.signIn.magicLink({
 				email,
 				name,
 				callbackURL: '/home',
@@ -138,7 +136,7 @@
 		message = null;
 
 		try {
-			const { data: _data, error: signInError } = await signIn.social({
+			const { data, error: signInError } = await signIn.social({
 				provider: 'google',
 				callbackURL: '/home'
 			});
@@ -147,9 +145,7 @@
 				console.error('Signin error:', signInError);
 				error = signInError.message || 'ログイン出来ませんでした。';
 			} else if (data?.twoFactorRedirect) {
-				await goto(
-					'/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : '')
-				);
+				await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
 			}
 		} catch (e) {
 			console.error('Signin error', e);
@@ -166,16 +162,14 @@
 		message = null;
 
 		try {
-			const { data: _data, error: signInError } = (await signIn.passkey()) as any;
+			const { data, error: signInError } = (await signIn.passkey()) as any;
 			if (signInError) {
 				error =
 					typeof signInError === 'string'
 						? signInError
 						: signInError?.message || 'パスキーによるログインに失敗しました。';
 			} else if (data?.twoFactorRedirect) {
-				await goto(
-					'/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : '')
-				);
+				await goto('/login/two-factor' + (queryParams.toString() ? '?' + queryParams.toString() : ''));
 			} else {
 				await invalidateAll();
 				await goto('/home');

@@ -2,8 +2,8 @@
 
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
-import { magicLink, twoFactor } from 'better-auth/plugins';
-import { passkey } from 'better-auth/plugins/passkey';
+import { magicLink, twoFactor } from "better-auth/plugins";
+import { passkey } from "better-auth/plugins/passkey"
 import { sendVerificationEmail, sendMagicLink } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from '$env/dynamic/private';
@@ -14,7 +14,7 @@ import { getRequestEvent } from '$app/server';
 export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: false
+		requireEmailVerification: false,
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url }) => {
@@ -27,12 +27,12 @@ export const auth = betterAuth({
 		sendOnSignIn: true,
 		autoSignInAfterVerification: true
 	},
-	socialProviders: {
-		google: {
-			clientId: env.GOOGLE_CLIENT_ID as string,
-			clientSecret: env.GOOGLE_CLIENT_SECRET as string
-		}
-	},
+    socialProviders: {
+        google: {
+            clientId: env.GOOGLE_CLIENT_ID as string,
+            clientSecret: env.GOOGLE_CLIENT_SECRET as string
+        },
+    },
 	secret: env.BETTER_AUTH_SECRET,
 	cookie: {
 		path: '/'
@@ -41,7 +41,7 @@ export const auth = betterAuth({
 		sveltekitCookies(getRequestEvent),
 		passkey(),
 		twoFactor({
-			issuer: 'Sazanami'
+			issuer: "Sazanami"
 		}),
 		magicLink({
 			sendMagicLink: async ({ email, url }) => {
@@ -50,7 +50,7 @@ export const auth = betterAuth({
 				} catch (e) {
 					console.error('Failed to send magic link email:', e);
 				}
-			}
+			},
 		})
 	],
 	database: drizzleAdapter(db, {

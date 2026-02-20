@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { notes, noteLinks, user as userSchema } from '$lib/server/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import * as authModule from '$lib/server/auth';
 import type { RequestEvent } from '@sveltejs/kit';
 import type { User, Session } from 'better-auth';

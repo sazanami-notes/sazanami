@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
 
@@ -50,7 +51,7 @@
 
 					// Otherwise redirect to user's page
 					window.location.href = `/${userData.name}`;
-				} catch {
+				} catch (jsonError) {
 					console.log('Response was not JSON, redirecting to user page');
 					window.location.href = `/${userData.name}`;
 				}
