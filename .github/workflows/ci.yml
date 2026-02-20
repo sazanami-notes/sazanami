@@ -12,29 +12,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Lint
-        run: bun run lint
+        run: npm run lint
 
       - name: Type check
-        run: bun run check
+        run: npm run check
 
       - name: Test
-        run: bun run test --run
+        run: npm run test -- --run
         env:
-          BETTER_AUTH_SECRET: "dummy-secret-for-tests"
-          BETTER_AUTH_URL: "http://localhost:4173"
+          BETTER_AUTH_SECRET: 'dummy-secret-for-tests'
+          BETTER_AUTH_URL: 'http://localhost:4173'
 
       - name: Build
-        run: bun run build
+        run: npm run build
         env:
-          BETTER_AUTH_SECRET: "dummy-secret-for-tests"
-          BETTER_AUTH_URL: "http://localhost:4173"
-          TURSO_DATABASE_URL: "file:local.db"
-          TURSO_AUTH_TOKEN: "dummy-token"
+          BETTER_AUTH_SECRET: 'dummy-secret-for-tests'
+          BETTER_AUTH_URL: 'http://localhost:4173'
+          TURSO_DATABASE_URL: 'file:local.db'
+          TURSO_AUTH_TOKEN: 'dummy-token'
