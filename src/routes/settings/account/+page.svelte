@@ -429,7 +429,7 @@
 			<p class="text-muted text-sm">登録済みのパスキーはありません。</p>
 		{:else}
 			<ul class="mt-2 space-y-2">
-				{#each passkeys as pk}
+				{#each passkeys as pk (pk.id)}
 					<li class="rounded border p-3">
 						<div class="flex items-start justify-between">
 							<div>

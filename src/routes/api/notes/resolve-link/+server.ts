@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes } from '$lib/server/db/schema';
-import { eq, and, like, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import { generateSlug } from '$lib/utils/slug';
 

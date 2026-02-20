@@ -35,7 +35,7 @@
 		<p class="text-sm text-gray-500">利用可能なタグがありません</p>
 	{:else}
 		<div class="flex flex-wrap gap-2">
-			{#each allTags as tag}
+			{#each allTags as tag (tag)}
 				<button
 					on:click={() => toggleTag(tag)}
 					class="rounded-full px-3 py-1 text-sm transition-colors

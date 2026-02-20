@@ -1,11 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { setupTestDB, teardownTestDB } from '../test-utils';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { notes, user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import * as authModule from '$lib/server/auth';
-import { generateSlug } from '$lib/utils/slug';
 
 // モック用の認証セッション
 const mockSession = {

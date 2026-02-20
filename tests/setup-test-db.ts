@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 import * as schema from '$lib/server/db/schema';
-import { sql } from 'drizzle-orm';
+import {} from 'drizzle-orm';
 
 // Create a client for the in-memory database
 const client = createClient({ url: 'file::memory:' });

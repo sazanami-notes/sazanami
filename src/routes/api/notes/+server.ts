@@ -123,6 +123,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			tags: tagNames
 		} = body as { id?: string; title?: string; content?: string; tags?: string[] };
 
+		if (!title && !content) {
+			return json({ message: "Title or content is required" }, { status: 400 });
+		}
+
 		// IDのバリデーション
 		let noteId: string;
 		if (id) {

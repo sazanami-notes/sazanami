@@ -6,7 +6,7 @@
 	import type { Note } from '$lib/types';
 	import EditNoteModal from '$lib/components/EditNoteModal.svelte';
 
-	let { data } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let newPostContent = $state('');
 	let editingNote: Note | null = $state(null);

@@ -2,9 +2,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { notes as notesSchema, user as userSchema, noteLinks } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createNote, updateNote, updateNoteLinks } from '$lib/server/db'; // Using db functions directly
-import { generateSlug } from '$lib/utils/slug';
 
 // Test User
 const testUser = {
@@ -13,7 +12,7 @@ const testUser = {
 	email: 'notelinkdb@example.com'
 };
 
-let noteIds: Record<string, string> = {};
+const noteIds: Record<string, string> = {};
 
 beforeAll(async () => {
 	// Create user

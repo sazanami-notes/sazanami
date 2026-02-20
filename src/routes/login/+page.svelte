@@ -110,7 +110,7 @@
 		message = null;
 
 		try {
-			const { data, error: signInError } = await authClient.signIn.magicLink({
+			const { data: _data, error: signInError } = await authClient.signIn.magicLink({
 				email,
 				name,
 				callbackURL: '/home',
@@ -138,7 +138,7 @@
 		message = null;
 
 		try {
-			const { data, error: signInError } = await signIn.social({
+			const { data: _data, error: signInError } = await signIn.social({
 				provider: 'google',
 				callbackURL: '/home'
 			});
@@ -166,7 +166,7 @@
 		message = null;
 
 		try {
-			const { data, error: signInError } = (await signIn.passkey()) as any;
+			const { data: _data, error: signInError } = (await signIn.passkey()) as any;
 			if (signInError) {
 				error =
 					typeof signInError === 'string'

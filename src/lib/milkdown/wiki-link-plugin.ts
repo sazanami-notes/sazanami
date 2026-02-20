@@ -1,13 +1,7 @@
 import { $node } from '@milkdown/utils';
 import type { Node as ProseMirrorNode, NodeType } from '@milkdown/prose/model';
 import wikiLinkPlugin from 'remark-wiki-link';
-import type {
-	NodeParserSpec,
-	ParserState,
-	NodeSerializerSpec,
-	SerializerState,
-	MarkdownNode
-} from '@milkdown/transformer';
+import type { ParserState, SerializerState, MarkdownNode } from '@milkdown/transformer';
 
 // WikiLinkノードを定義します。
 // このノードは、[[リンクテキスト]]のような内部リンクを表します。
