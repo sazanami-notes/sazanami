@@ -2,7 +2,7 @@
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
 	import { page } from '$app/stores';
-	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
+	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 	import { enhance } from '$app/forms';
 
 	export let data: PageData;
@@ -26,9 +26,9 @@
 	</div>
 
 	<div class="mb-4">
-		<div class="h-96 w-full">
+		<div class="min-h-[400px] w-full">
 			{#key data.note.id}
-				<MilkdownEditor initialContent={content} on:change={handleContentChange} />
+				<TiptapEditor content={content ?? ''} on:change={handleContentChange} />
 			{/key}
 		</div>
 		<!-- Hidden textarea to maintain compatibility with the form -->
@@ -46,7 +46,6 @@
 			oneHopLinks={data.links.oneHopLinks}
 			backlinks={data.links.backlinks}
 			twoHopLinks={data.links.twoHopLinks}
-			username={$page.params.username}
 		/>
 	</div>
 {/if}

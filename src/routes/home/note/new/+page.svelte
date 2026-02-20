@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
-	import MilkdownEditor from '$lib/components/MilkdownEditor.svelte';
+	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 
 	// Use page store instead of data prop
 	const userData = $page.data.user;
@@ -11,7 +11,7 @@
 	let isPublic = false;
 
 	const handleContentChange = (value: string) => {
-		console.log('Content changed:', value.substring(0, 50) + '...');
+		// console.log('Content changed:', value.substring(0, 50) + '...');
 		content = value;
 	};
 
@@ -20,7 +20,7 @@
 		const form = event.target as HTMLFormElement;
 		const formData = new FormData(form);
 
-		// Replace the content from the textarea with our Milkdown content
+		// Replace the content from the textarea with our Tiptap content
 		formData.set('content', content);
 		formData.set('isPublic', isPublic ? 'on' : 'off');
 
@@ -70,36 +70,53 @@
 	};
 </script>
 
-<div class="mx-auto max-w-2xl p-4">
-	<h1 class="mb-4 text-2xl font-bold">New Note</h1>
-	<form method="post" on:submit|preventDefault={handleSubmit}>
-		<div class="mb-4">
-			<label for="title" class="mb-1 block text-sm font-medium">Title</label>
+<div class="mx-auto max-w-4xl p-6">
+	<h1 class="mb-6 text-3xl font-bold text-gray-800">New Note</h1>
+	<form method="post" on:submit|preventDefault={handleSubmit} class="space-y-6">
+		<div>
+			<label for="title" class="mb-2 block text-sm font-semibold text-gray-700">Title</label>
 			<input
 				type="text"
 				id="title"
 				name="title"
 				bind:value={title}
-				placeholder="Title"
-				class="focus:ring-primary focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none"
+				placeholder="Enter note title..."
+				class="focus:border-primary focus:ring-primary block w-full rounded-md border-gray-300 px-4 py-2 shadow-sm sm:text-lg"
 				required
 			/>
 		</div>
 
-		<div class="mb-4">
-			<label for="content" class="mb-1 block text-sm font-medium">Content</label>
-			<div class="h-96 w-full">
-				<MilkdownEditor {content} onChange={handleContentChange} />
+		<div>
+			<label for="content" class="mb-2 block text-sm font-semibold text-gray-700">Content</label>
+			<div class="min-h-[400px] w-full">
+				<TiptapEditor
+					{content}
+					on:change={(e) => handleContentChange(e.detail.markdown)}
+					placeholder="Start writing your note here..."
+				/>
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
 			<textarea id="content" name="content" class="hidden">{content}</textarea>
 		</div>
 
-		<div class="mb-4 flex items-center">
-			<input type="checkbox" bind:checked={isPublic} id="isPublic" name="isPublic" class="mr-2" />
-			<label for="isPublic">Public</label>
+		<div class="flex items-center">
+			<input
+				type="checkbox"
+				bind:checked={isPublic}
+				id="isPublic"
+				name="isPublic"
+				class="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+			/>
+			<label for="isPublic" class="ml-2 block text-sm text-gray-900">Make this note public</label>
 		</div>
 
-		<button type="submit" class="btn btn-primary">Create Note</button>
+		<div class="flex justify-end pt-4">
+			<button
+				type="submit"
+				class="bg-primary hover:bg-primary-focus focus-visible:outline-primary rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+			>
+				Create Note
+			</button>
+		</div>
 	</form>
 </div>

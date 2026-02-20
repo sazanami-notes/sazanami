@@ -8,7 +8,6 @@
 	export let oneHopLinks: Link[] = [];
 	export let backlinks: Link[] = [];
 	export let twoHopLinks: Link[] = [];
-	export let username: string;
 </script>
 
 <div class="link-explorer mt-8 border-t pt-4">

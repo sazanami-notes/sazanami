@@ -40,12 +40,12 @@
 		editingNote = null;
 	}
 
-	async function handleSaveEdit(event: CustomEvent<string>) {
+	async function handleSaveEdit(event: CustomEvent<{ title: string; content: string }>) {
 		if (!editingNote) return;
 
 		isSavingNote = true;
 		try {
-			const content = event.detail;
+			const { content } = event.detail;
 			const response = await fetch(`/api/notes/${editingNote.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
