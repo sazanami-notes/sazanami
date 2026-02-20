@@ -1,9 +1,8 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, type ServerLoad } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
 import { and, eq, desc, sql } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
-import type { ServerLoad } from '@sveltejs/kit';
 
 export const load: ServerLoad = async ({ request, url }) => {
 	const sessionData = await auth.api.getSession({

@@ -2,8 +2,8 @@ import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/connection';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
+
 import { auth } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ request, params }) => {
