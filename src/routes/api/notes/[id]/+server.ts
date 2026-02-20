@@ -13,11 +13,10 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
-	if (!params.id) {
+	const noteId = params.id;
+	if (!noteId) {
 		return new Response('Note ID is required', { status: 400 });
 	}
-
-	const noteId = params.id; // 型を固定するためにローカル変数に代入
 
 	try {
 		const note = await db
@@ -55,11 +54,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
-	if (!params.id) {
+	const noteId = params.id;
+	if (!noteId) {
 		return new Response('Note ID is required', { status: 400 });
 	}
-
-	const noteId = params.id; // 型を固定するためにローカル変数に代入
 
 	try {
 		const body = await request.json();
@@ -220,11 +218,10 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
-	if (!params.id) {
+	const noteId = params.id;
+	if (!noteId) {
 		return new Response('Note ID is required', { status: 400 });
 	}
-
-	const noteId = params.id; // 型を固定するためにローカル変数に代入
 
 	try {
 		// ノートが存在するか確認
