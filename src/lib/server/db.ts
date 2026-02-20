@@ -18,8 +18,7 @@ export const getUserByName = async (username: string) => {
 	return result[0] || null;
 };
 
-export const getNoteByTitle = async (userId: string, username: string, title: string) => {
-	// The username parameter is unused, but kept for consistency with the original function signature.
+export const getNoteByTitle = async (userId: string, title: string) => {
 	const result = await db
 		.select()
 		.from(notes)
@@ -39,8 +38,7 @@ export const getNoteById = async (userId: string, id: string) => {
 	return result[0] || null;
 };
 
-export const getNoteBySlug = async (userId: string, username: string, slug: string) => {
-	// The username parameter is unused, but kept for consistency with the original function signature.
+export const getNoteBySlug = async (userId: string, slug: string) => {
 	const result = await db
 		.select()
 		.from(notes)
