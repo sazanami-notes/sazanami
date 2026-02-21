@@ -1,5 +1,6 @@
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
 import { ulid } from 'ulid';
+import { sql } from 'drizzle-orm';
 // auth-schema.tsから必要なテーブル定義をインポート
 import {
 	user,
@@ -138,4 +139,5 @@ export const userSettings = sqliteTable('user_settings', {
 	bio: text('bio'),
 	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
 		.notNull()
+		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 });

@@ -1,0 +1,30 @@
+name: Database Migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'drizzle/**'
+      - 'src/lib/server/db/schema.ts'
+
+jobs:
+  db-migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Database Migration
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: npm run db:migrate

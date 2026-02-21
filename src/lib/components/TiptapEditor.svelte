@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { Editor } from '@tiptap/core';
 	import StarterKit from '@tiptap/starter-kit';
-	import { Markdown } from '@tiptap/markdown';
 	import Placeholder from '@tiptap/extension-placeholder';
 	import Link from '@tiptap/extension-link';
 	import Image from '@tiptap/extension-image';
@@ -11,14 +10,20 @@
 	import { TableCell } from '@tiptap/extension-table-cell';
 	import { TableHeader } from '@tiptap/extension-table-header';
 
-	export let content = '';
-	export let editable = true;
-	export let placeholder = 'Write something...';
-
-	const dispatch = createEventDispatcher();
+	let {
+		content = $bindable(''),
+		editable = true,
+		placeholder = 'Write something...',
+		onchange
+	} = $props<{
+		content?: string;
+		editable?: boolean;
+		placeholder?: string;
+		onchange?: (event: CustomEvent<{ markdown: string }>) => void;
+	}>();
 
 	let element: HTMLElement;
-	let editor: Editor;
+	let editor: Editor | null = $state(null);
 
 	onMount(() => {
 		editor = new Editor({
@@ -26,7 +31,6 @@
 			editable,
 			extensions: [
 				StarterKit,
-				Markdown,
 				Placeholder.configure({
 					placeholder: placeholder
 				}),
@@ -42,17 +46,18 @@
 				TableCell
 			],
 			content: content,
-			contentType: 'markdown',
 			editorProps: {
 				attributes: {
 					class:
 						'prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl focus:outline-none max-w-none min-h-[300px] p-4'
 				}
 			},
-			onUpdate: ({ editor }) => {
-				// @ts-ignore
-				const markdown = editor.storage.markdown.getMarkdown();
-				dispatch('change', { markdown });
+			onUpdate: ({ editor: e }) => {
+				const html = e.getHTML();
+				content = html;
+				if (onchange) {
+					onchange(new CustomEvent('change', { detail: { markdown: html } }));
+				}
 			}
 		});
 	});
@@ -63,9 +68,26 @@
 		}
 	});
 
-	$: if (editor && editable !== editor.isEditable) {
-		editor.setEditable(editable);
-	}
+	$effect(() => {
+		if (editor && editable !== editor.isEditable) {
+			editor.setEditable(editable);
+		}
+	});
+
+	let isUpdatingInternal = false;
+
+	$effect(() => {
+		if (editor && content !== undefined) {
+			const currentContent = editor.getHTML();
+			if (content !== currentContent && !isUpdatingInternal) {
+				isUpdatingInternal = true;
+				editor.commands.setContent(content);
+				setTimeout(() => {
+					isUpdatingInternal = false;
+				}, 0);
+			}
+		}
+	});
 </script>
 
 <div
