@@ -85,10 +85,9 @@
 		<div class="card bg-base-200 p-4">
 			<div class="max-h-48 overflow-y-auto">
 				<TiptapEditor
-					content={newPostContent}
+					bind:content={newPostContent}
 					editable={true}
 					placeholder="いまどうしてる？"
-					on:change={(e) => (newPostContent = e.detail.markdown)}
 				/>
 			</div>
 			<div class="card-actions mt-4 justify-end">
@@ -99,6 +98,7 @@
 
 	<!-- Timeline Feed -->
 	<div class="mx-auto max-w-2xl">
+		<h1 class="mb-4 text-2xl font-bold">タイムライン</h1>
 		<div class="flex flex-col space-y-4">
 			{#each notes as note (note.id)}
 				<TimelinePost {note} on:edit={handleEdit} />

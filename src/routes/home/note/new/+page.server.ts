@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/connection';
-import { error, redirect } from '@sveltejs/kit';
+import { error, redirect, isRedirect } from '@sveltejs/kit';
 import { notes, timeline } from '$lib/server/db/schema';
 import { updateNoteLinks } from '$lib/server/db';
 import { generateSlug } from '$lib/utils/slug';
@@ -21,9 +21,17 @@ export const actions: Actions = {
 
 		try {
 			const formData = await request.formData();
-			const title = formData.get('title')?.toString() || 'Untitled Note';
+			let title = formData.get('title')?.toString();
 			const content = formData.get('content')?.toString() || '';
 			const isPublic = formData.get('isPublic') === 'on';
+
+			if (title === undefined || title.trim() === '') {
+				const firstLine = content.split('\n')[0] || '';
+				const plainTextFirstLine = firstLine.replace(/<[^>]*>/g, '').trim();
+				title = plainTextFirstLine.substring(0, 50) || 'Untitled Note';
+			} else {
+				title = title.trim() || 'Untitled Note';
+			}
 
 			const noteId = ulid();
 			let slug = generateSlug(title);
@@ -45,7 +53,6 @@ export const actions: Actions = {
 				isPublic
 			});
 
-			// タイムラインイベントを記録
 			await db.insert(timeline).values({
 				userId: locals.user.id,
 				noteId: noteId,
@@ -57,7 +64,10 @@ export const actions: Actions = {
 
 			throw redirect(303, `/home/note/${noteId}`);
 		} catch (err) {
-			if (err instanceof Error && 'status' in err && (err.status === 303 || err.status === 401)) {
+			if (isRedirect(err)) {
+				throw err;
+			}
+			if (err instanceof Error && 'status' in err && err.status === 401) {
 				throw err;
 			}
 			console.error('Error creating note:', err);

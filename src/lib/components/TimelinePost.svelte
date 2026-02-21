@@ -107,7 +107,7 @@
 
 <div
 	bind:this={element}
-	class="card cursor-pointer select-none bg-base-100 shadow-md transition-transform duration-200 ease-in-out"
+	class="card bg-base-100 cursor-pointer shadow-md transition-transform duration-200 ease-in-out select-none"
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
@@ -119,7 +119,7 @@
 >
 	<div class="card-body p-4">
 		{#if note.isPinned}
-			<div class="absolute top-2 right-2 text-primary">
+			<div class="text-primary absolute top-2 right-2">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-5 w-5"
@@ -133,11 +133,11 @@
 			</div>
 		{/if}
 
-		<div class="prose max-w-none text-base-content">
-			{@html marked(note.content || '')}
+		<div class="prose text-base-content max-w-none">
+			{@html marked.parse(note.content || '', { breaks: true })}
 		</div>
 
-		<div class="mt-4 flex items-center justify-between text-xs text-base-content/60">
+		<div class="text-base-content/60 mt-4 flex items-center justify-between text-xs">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
 				<button
