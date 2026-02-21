@@ -15,7 +15,8 @@ const mockSession = {
 		id: 'testUser1',
 		email: 'test@example.com',
 		name: 'Test User',
-		emailVerified: false, twoFactorEnabled: false, // 追加
+		emailVerified: false,
+		twoFactorEnabled: false, // 追加
 		createdAt: new Date(), // 追加
 		updatedAt: new Date() // 追加
 	},
@@ -77,7 +78,8 @@ describe('GET /api/notes/resolve-link', () => {
 				id: testUserId,
 				email: 'test@example.com',
 				name: 'Test User',
-				emailVerified: false, twoFactorEnabled: false,
+				emailVerified: false,
+				twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})

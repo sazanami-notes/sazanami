@@ -17,5 +17,8 @@ export const {
 	updateUser,
 	linkSocial,
 	listAccounts,
-	unlinkAccount
+	unlinkAccount,
+	forgetPassword,
+	resetPassword,
+	changePassword
 } = authClient;

@@ -1,20 +1,20 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1771439986004,
-      "tag": "0000_dashing_yellow_claw",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1771660611377,
-      "tag": "0001_tan_sentry",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "sqlite",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "6",
+			"when": 1771439986004,
+			"tag": "0000_dashing_yellow_claw",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1771660611377,
+			"tag": "0001_tan_sentry",
+			"breakpoints": true
+		}
+	]
 }

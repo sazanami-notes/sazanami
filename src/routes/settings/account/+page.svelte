@@ -139,7 +139,7 @@
 
 	async function getTotpUri() {
 		if (!passwordFor2FA) {
-			twoFactorError = "パスワードを入力してください。";
+			twoFactorError = 'パスワードを入力してください。';
 			return;
 		}
 		twoFactorError = null;
@@ -151,11 +151,11 @@
 				totpURI = res.data.totpURI;
 				backupCodes = res.data.backupCodes || [];
 			} else if (res.error) {
-				twoFactorError = res.error.message;
+				twoFactorError = res.error.message || null;
 			}
 		} catch (e) {
-			console.error("Failed to enable 2FA:", e);
-			twoFactorError = "2要素認証の開始に失敗しました。";
+			console.error('Failed to enable 2FA:', e);
+			twoFactorError = '2要素認証の開始に失敗しました。';
 		}
 	}
 
@@ -168,39 +168,39 @@
 				code: verificationCode
 			});
 			if (res.data) {
-				twoFactorMessage = "2要素認証が有効になりました！";
+				twoFactorMessage = '2要素認証が有効になりました！';
 				isEnabling2FA = false;
 				passwordFor2FA = '';
 				verificationCode = '';
 				totpURI = null;
 				await invalidateAll();
 			} else if (res.error) {
-				twoFactorError = res.error.message || "認証コードが正しくありません。";
+				twoFactorError = res.error.message || '認証コードが正しくありません。';
 			}
-		} catch(e) {
-			console.error("Verification failed:", e);
-			twoFactorError = "認証に失敗しました。";
+		} catch (e) {
+			console.error('Verification failed:', e);
+			twoFactorError = '認証に失敗しました。';
 		} finally {
 			isVerifying2FA = false;
 		}
 	}
 
 	async function disable2FA() {
-		if (!confirm("2要素認証を無効にしますか？これによりセキュリティレベルが低下します。")) return;
-		const password = prompt("2要素認証を無効にするにはパスワードを入力してください");
+		if (!confirm('2要素認証を無効にしますか？これによりセキュリティレベルが低下します。')) return;
+		const password = prompt('2要素認証を無効にするにはパスワードを入力してください');
 		if (!password) return;
 
 		try {
 			const res = await twoFactor.disable({ password });
 			if (res.data) {
-				twoFactorMessage = "2要素認証を無効にしました。";
+				twoFactorMessage = '2要素認証を無効にしました。';
 				await invalidateAll();
 			} else {
-				twoFactorError = res.error?.message || "無効化に失敗しました。";
+				twoFactorError = res.error?.message || '無効化に失敗しました。';
 			}
 		} catch (e) {
-			console.error("Error disabling 2FA:", e);
-			twoFactorError = "エラーが発生しました。";
+			console.error('Error disabling 2FA:', e);
+			twoFactorError = 'エラーが発生しました。';
 		}
 	}
 
@@ -273,11 +273,14 @@
 				{#if googleLinked}
 					<form method="POST" action="?/unlinkAccount">
 						<input type="hidden" name="providerId" value="google" />
-						<button class="btn btn-sm btn-error btn-outline" onclick={(e) => {
-                            if (!confirm('Google連携を解除しますか？')) {
-                                e.preventDefault();
-                            }
-                        }}>解除</button>
+						<button
+							class="btn btn-sm btn-error btn-outline"
+							onclick={(e) => {
+								if (!confirm('Google連携を解除しますか？')) {
+									e.preventDefault();
+								}
+							}}>解除</button
+						>
 					</form>
 				{:else}
 					<button class="btn btn-sm btn-primary" onclick={linkGoogle} disabled={isLinkingGoogle}>
@@ -291,7 +294,9 @@
 
 <div class="mt-8">
 	<h2 class="text-xl font-semibold">2要素認証 (TOTP)</h2>
-	<p class="mt-2 text-sm text-gray-600">Google Authenticatorなどのアプリを使用して、ログイン時にワンタイムパスワードを要求します。</p>
+	<p class="mt-2 text-sm text-gray-600">
+		Google Authenticatorなどのアプリを使用して、ログイン時にワンタイムパスワードを要求します。
+	</p>
 
 	{#if twoFactorMessage}
 		<div class="alert alert-success mt-4">
@@ -311,81 +316,89 @@
 				<span class="badge badge-success p-3">有効</span>
 				<button class="btn btn-error btn-outline btn-sm" onclick={disable2FA}>無効にする</button>
 			</div>
+		{:else if !isEnabling2FA}
+			<button class="btn btn-primary" onclick={startEnable2FA}>2要素認証を設定する</button>
 		{:else}
-			{#if !isEnabling2FA}
-				<button class="btn btn-primary" onclick={startEnable2FA}>2要素認証を設定する</button>
-			{:else}
-				<div class="card bg-base-100 border p-4 shadow-sm">
-					<h3 class="font-bold text-lg">2要素認証の設定</h3>
+			<div class="card bg-base-100 border p-4 shadow-sm">
+				<h3 class="text-lg font-bold">2要素認証の設定</h3>
 
-					{#if !totpURI}
-						<div class="mt-4">
-							<p class="mb-2">設定を開始するには現在のパスワードを入力してください。</p>
+				{#if !totpURI}
+					<div class="mt-4">
+						<p class="mb-2">設定を開始するには現在のパスワードを入力してください。</p>
+						<div class="flex gap-2">
+							<input
+								type="password"
+								placeholder="パスワード"
+								class="input input-bordered w-full max-w-xs"
+								bind:value={passwordFor2FA}
+							/>
+							<button class="btn btn-primary" onclick={getTotpUri}>次へ</button>
+							<button class="btn btn-ghost" onclick={() => (isEnabling2FA = false)}
+								>キャンセル</button
+							>
+						</div>
+					</div>
+				{:else}
+					<div class="mt-4 space-y-4">
+						<div class="flex flex-col items-center gap-4">
+							<p>以下のQRコードを認証アプリでスキャンしてください。</p>
+							<div class="rounded bg-white p-2">
+								<QrCode value={totpURI} />
+							</div>
+						</div>
+
+						<div class="divider"></div>
+
+						<div>
+							<p class="mb-2 font-bold">認証コードの確認</p>
+							<p class="mb-2 text-sm">アプリに表示された6桁のコードを入力してください。</p>
 							<div class="flex gap-2">
 								<input
-									type="password"
-									placeholder="パスワード"
-									class="input input-bordered w-full max-w-xs"
-									bind:value={passwordFor2FA}
+									type="text"
+									placeholder="123456"
+									class="input input-bordered w-32"
+									bind:value={verificationCode}
 								/>
-								<button class="btn btn-primary" onclick={getTotpUri}>次へ</button>
-								<button class="btn btn-ghost" onclick={() => isEnabling2FA = false}>キャンセル</button>
+								<button class="btn btn-success" onclick={verifyAndEnable} disabled={isVerifying2FA}>
+									{isVerifying2FA ? '確認中...' : '有効にする'}
+								</button>
 							</div>
 						</div>
-					{:else}
-						<div class="mt-4 space-y-4">
-							<div class="flex flex-col items-center gap-4">
-								<p>以下のQRコードを認証アプリでスキャンしてください。</p>
-								<div class="bg-white p-2 rounded">
-									<QrCode value={totpURI} />
+
+						{#if backupCodes.length > 0}
+							<div class="collapse-arrow border-base-300 bg-base-100 rounded-box collapse border">
+								<input type="checkbox" />
+								<div class="collapse-title text-sm font-medium">
+									バックアップコードを表示 (必ず保存してください)
+								</div>
+								<div class="collapse-content">
+									<pre class="bg-base-200 overflow-x-auto rounded p-2 text-xs">{backupCodes.join(
+											'\n'
+										)}</pre>
+									<p class="text-error mt-2 text-xs">
+										※このコードは一度しか表示されません。安全な場所に保管してください。
+									</p>
 								</div>
 							</div>
+						{/if}
 
-							<div class="divider"></div>
-
-							<div>
-								<p class="mb-2 font-bold">認証コードの確認</p>
-								<p class="mb-2 text-sm">アプリに表示された6桁のコードを入力してください。</p>
-								<div class="flex gap-2">
-									<input
-										type="text"
-										placeholder="123456"
-										class="input input-bordered w-32"
-										bind:value={verificationCode}
-									/>
-									<button class="btn btn-success" onclick={verifyAndEnable} disabled={isVerifying2FA}>
-										{isVerifying2FA ? '確認中...' : '有効にする'}
-									</button>
-								</div>
-							</div>
-
-							{#if backupCodes.length > 0}
-								<div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-									<input type="checkbox" />
-									<div class="collapse-title text-sm font-medium">
-										バックアップコードを表示 (必ず保存してください)
-									</div>
-									<div class="collapse-content">
-										<pre class="bg-base-200 p-2 rounded text-xs overflow-x-auto">{backupCodes.join('\n')}</pre>
-										<p class="text-xs mt-2 text-error">※このコードは一度しか表示されません。安全な場所に保管してください。</p>
-									</div>
-								</div>
-							{/if}
-
-							<div class="text-right">
-								<button class="btn btn-sm btn-ghost" onclick={() => isEnabling2FA = false}>キャンセル</button>
-							</div>
+						<div class="text-right">
+							<button class="btn btn-sm btn-ghost" onclick={() => (isEnabling2FA = false)}
+								>キャンセル</button
+							>
 						</div>
-					{/if}
-				</div>
-			{/if}
+					</div>
+				{/if}
+			</div>
 		{/if}
 	</div>
 </div>
 
 <div class="mt-8">
 	<h2 class="text-xl font-semibold">パスキー（Passkey）</h2>
-	<p class="mt-2 text-sm text-gray-600">パスキーを登録すると、次回以降パスキーでログインできます。</p>
+	<p class="mt-2 text-sm text-gray-600">
+		パスキーを登録すると、次回以降パスキーでログインできます。
+	</p>
 
 	{#if passkeyError}
 		<div class="alert alert-error mt-4">
@@ -444,44 +457,141 @@
 </div>
 
 <div class="mt-8">
-	<h2 class="text-xl font-semibold">パスワード変更</h2>
-	{#if data.form?.message}
-		<div class="alert alert-info mt-4">
-			<p>{data.form.message}</p>
-		</div>
-	{/if}
-	<form method="POST" action="?/changePassword" class="mt-2 space-y-4">
-		<div>
-			<label for="currentPassword" class="block text-sm font-medium">現在のパスワード</label>
-			<input
-				type="password"
-				id="currentPassword"
-				name="currentPassword"
-				class="input input-bordered mt-1 w-full"
-				required
-			/>
-		</div>
-		<div>
-			<label for="newPassword" class="block text-sm font-medium">新しいパスワード</label>
-			<input
-				type="password"
-				id="newPassword"
-				name="newPassword"
-				class="input input-bordered mt-1 w-full"
-				required
-			/>
-		</div>
-		<div>
-			<label for="confirmPassword" class="block text-sm font-medium">新しいパスワード（確認）</label
+	{#if data.hasPassword}
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-xl font-semibold">パスワード変更</h2>
+			<button
+				class="btn btn-sm btn-error btn-outline"
+				onclick={() =>
+					(document.getElementById('delete_password_modal') as HTMLDialogElement)?.showModal()}
 			>
-			<input
-				type="password"
-				id="confirmPassword"
-				name="confirmPassword"
-				class="input input-bordered mt-1 w-full"
-				required
-			/>
+				パスワードを削除
+			</button>
 		</div>
-		<button type="submit" class="btn btn-primary">パスワードを変更</button>
-	</form>
+
+		{#if data.form?.message}
+			<div role="alert" class="alert alert-info mt-4">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					class="h-6 w-6 shrink-0 stroke-current"
+					><path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+					></path></svg
+				>
+				<span>{data.form.message}</span>
+			</div>
+		{/if}
+
+		<form method="POST" action="?/changePassword" class="mt-2 space-y-4">
+			<div>
+				<label for="currentPassword" class="block text-sm font-medium">現在のパスワード</label>
+				<input
+					type="password"
+					id="currentPassword"
+					name="currentPassword"
+					class="input input-bordered mt-1 w-full"
+					required
+				/>
+			</div>
+			<div>
+				<label for="newPassword" class="block text-sm font-medium">新しいパスワード</label>
+				<input
+					type="password"
+					id="newPassword"
+					name="newPassword"
+					class="input input-bordered mt-1 w-full"
+					required
+				/>
+			</div>
+			<div>
+				<label for="confirmPassword" class="block text-sm font-medium"
+					>新しいパスワード（確認）</label
+				>
+				<input
+					type="password"
+					id="confirmPassword"
+					name="confirmPassword"
+					class="input input-bordered mt-1 w-full"
+					required
+				/>
+			</div>
+			<button type="submit" class="btn btn-primary">パスワードを変更</button>
+		</form>
+
+		<dialog id="delete_password_modal" class="modal">
+			<div class="modal-box">
+				<h3 class="text-lg font-bold">パスワードを削除しますか？</h3>
+				<p class="py-4">
+					パスワードを削除すると、次回からパスワードでのログインができなくなります。
+					<br />
+					Google連携、パスキー、またはメールリンク（Magic Link）でのログインが可能であることを確認してください。
+				</p>
+				<div class="modal-action">
+					<form method="POST" action="?/deletePassword">
+						<button class="btn btn-error">削除する</button>
+					</form>
+					<form method="dialog">
+						<button class="btn">キャンセル</button>
+					</form>
+				</div>
+			</div>
+			<form method="dialog" class="modal-backdrop">
+				<button>close</button>
+			</form>
+		</dialog>
+	{:else}
+		<h2 class="text-xl font-semibold">パスワード設定</h2>
+		<p class="mt-2 text-sm text-gray-600">
+			パスワードを設定すると、メールアドレスとパスワードでログインできるようになります。
+		</p>
+
+		{#if data.form?.message}
+			<div role="alert" class="alert alert-info mt-4">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					class="h-6 w-6 shrink-0 stroke-current"
+					><path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+					></path></svg
+				>
+				<span>{data.form.message}</span>
+			</div>
+		{/if}
+
+		<form method="POST" action="?/setPassword" class="mt-4 space-y-4">
+			<div>
+				<label for="newPassword" class="block text-sm font-medium">新しいパスワード</label>
+				<input
+					type="password"
+					id="newPassword"
+					name="newPassword"
+					class="input input-bordered mt-1 w-full"
+					required
+				/>
+			</div>
+			<div>
+				<label for="confirmPassword" class="block text-sm font-medium"
+					>新しいパスワード（確認）</label
+				>
+				<input
+					type="password"
+					id="confirmPassword"
+					name="confirmPassword"
+					class="input input-bordered mt-1 w-full"
+					required
+				/>
+			</div>
+			<button type="submit" class="btn btn-primary">パスワードを設定</button>
+		</form>
+	{/if}
 </div>

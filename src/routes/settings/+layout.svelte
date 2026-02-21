@@ -6,25 +6,25 @@
 	<div class="mb-6 flex space-x-2 border-b">
 		<a
 			href="/settings/account"
-			class="px-4 py-2 border-b-2 {$page.url.pathname.includes('/settings/account')
+			class="border-b-2 px-4 py-2 {$page.url.pathname.includes('/settings/account')
 				? 'border-primary font-bold'
-				: 'border-transparent hover:border-base-300'}"
+				: 'hover:border-base-300 border-transparent'}"
 		>
 			アカウント (Account)
 		</a>
 		<a
 			href="/settings/appearance"
-			class="px-4 py-2 border-b-2 {$page.url.pathname.includes('/settings/appearance')
+			class="border-b-2 px-4 py-2 {$page.url.pathname.includes('/settings/appearance')
 				? 'border-primary font-bold'
-				: 'border-transparent hover:border-base-300'}"
+				: 'hover:border-base-300 border-transparent'}"
 		>
 			外観 (Appearance)
 		</a>
 		<a
 			href="/settings/import"
-			class="px-4 py-2 border-b-2 {$page.url.pathname.includes('/settings/import')
+			class="border-b-2 px-4 py-2 {$page.url.pathname.includes('/settings/import')
 				? 'border-primary font-bold'
-				: 'border-transparent hover:border-base-300'}"
+				: 'hover:border-base-300 border-transparent'}"
 		>
 			インポート (Import)
 		</a>

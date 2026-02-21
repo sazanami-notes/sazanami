@@ -20,7 +20,8 @@ const mockSession = {
 		id: testUser.id,
 		email: testUser.email,
 		name: testUser.name,
-		emailVerified: true, twoFactorEnabled: false,
+		emailVerified: true,
+		twoFactorEnabled: false,
 		createdAt: new Date(),
 		updatedAt: new Date()
 	},

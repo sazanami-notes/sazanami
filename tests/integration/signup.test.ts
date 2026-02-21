@@ -7,7 +7,7 @@ import { ulid } from 'ulid';
 
 // Mock the whole auth-client module
 vi.mock('$lib/auth-client', async () => {
-	const actual = await vi.importActual('$lib/auth-client') as any;
+	const actual = (await vi.importActual('$lib/auth-client')) as any;
 	return {
 		...actual,
 		authClient: {
@@ -48,7 +48,8 @@ describe('Sign-up functionality', () => {
 				id,
 				name: data.name,
 				email: data.email,
-				emailVerified: false, twoFactorEnabled: false,
+				emailVerified: false,
+				twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			});

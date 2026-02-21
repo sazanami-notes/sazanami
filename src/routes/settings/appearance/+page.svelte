@@ -58,7 +58,7 @@
 	</div>
 
 	{#if theme === 'custom'}
-		<div class="rounded-lg border p-4 space-y-4">
+		<div class="space-y-4 rounded-lg border p-4">
 			<h2 class="text-lg font-semibold">カスタムカラー設定</h2>
 			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div class="form-control">
