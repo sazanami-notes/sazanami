@@ -141,14 +141,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		let noteTitle = title;
 		const noteContent = content || '';
 
-		// タイムラインからのポストの場合、タイトルを自動生成
-		if (title === undefined) {
+		// タイムラインや新規作成からのポストの場合、タイトルが未指定（undefined または空文字）であれば自動生成
+		if (title === undefined || title.trim() === '') {
 			const firstLine = noteContent.split('\n')[0] || '';
 			// 本文からHTMLタグを除去し、最初の50文字をタイトルとする
-			const plainTextFirstLine = firstLine.replace(/<[^>]*>/g, '');
+			const plainTextFirstLine = firstLine.replace(/<[^>]*>/g, '').trim();
 			noteTitle = plainTextFirstLine.substring(0, 50) || 'Untitled Note';
 		} else {
-			noteTitle = title || 'Untitled Note';
+			noteTitle = title.trim() || 'Untitled Note';
 		}
 
 		const noteSlug = generateSlug(noteTitle); // スラッグを生成

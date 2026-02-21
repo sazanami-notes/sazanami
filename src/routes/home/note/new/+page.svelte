@@ -6,16 +6,16 @@
 	// Use page store instead of data prop
 	const userData = $page.data.user;
 
-	let title = '';
-	let content = '';
-	let isPublic = false;
+	let title = $state('');
+	let content = $state('');
+	let isPublic = $state(false);
 
 	const handleContentChange = (value: string) => {
-		// console.log('Content changed:', value.substring(0, 50) + '...');
 		content = value;
 	};
 
 	const handleSubmit = async (event: SubmitEvent) => {
+		event.preventDefault();
 		console.log('Form submitted');
 		const form = event.target as HTMLFormElement;
 		const formData = new FormData(form);
@@ -72,7 +72,7 @@
 
 <div class="mx-auto max-w-4xl p-6">
 	<h1 class="mb-6 text-3xl font-bold text-gray-800">New Note</h1>
-	<form method="post" on:submit|preventDefault={handleSubmit} class="space-y-6">
+	<form method="post" onsubmit={handleSubmit} class="space-y-6">
 		<div>
 			<label for="title" class="mb-2 block text-sm font-semibold text-gray-700">Title</label>
 			<input
@@ -82,18 +82,13 @@
 				bind:value={title}
 				placeholder="Enter note title..."
 				class="focus:border-primary focus:ring-primary block w-full rounded-md border-gray-300 px-4 py-2 shadow-sm sm:text-lg"
-				required
 			/>
 		</div>
 
 		<div>
 			<label for="content" class="mb-2 block text-sm font-semibold text-gray-700">Content</label>
 			<div class="min-h-[400px] w-full">
-				<TiptapEditor
-					{content}
-					on:change={(e) => handleContentChange(e.detail.markdown)}
-					placeholder="Start writing your note here..."
-				/>
+				<TiptapEditor bind:content placeholder="Start writing your note here..." />
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
 			<textarea id="content" name="content" class="hidden">{content}</textarea>

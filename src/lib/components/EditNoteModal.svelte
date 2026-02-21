@@ -54,7 +54,7 @@
 			/>
 
 			<div class="max-h-[60vh] min-h-[300px] overflow-y-auto">
-				<TiptapEditor {content} on:change={handleContentChange} />
+				<TiptapEditor bind:content />
 			</div>
 
 			<div class="modal-action mt-6">
