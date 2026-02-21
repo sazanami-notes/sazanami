@@ -12,6 +12,7 @@ import * as schema from './db/auth-schema';
 import { getRequestEvent } from '$app/server';
 
 export const auth = betterAuth({
+	appName: "Sazanami",
 	emailAndPassword: {
 		enabled: true,
 		requireEmailVerification: false
