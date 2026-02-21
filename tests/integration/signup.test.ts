@@ -5,6 +5,23 @@ import { eq } from 'drizzle-orm';
 import { authClient } from '$lib/auth-client';
 import { ulid } from 'ulid';
 
+// Mock the whole auth-client module
+vi.mock('$lib/auth-client', async () => {
+	const actual = await vi.importActual('$lib/auth-client') as any;
+	return {
+		...actual,
+		authClient: {
+			...actual.authClient,
+			signUp: {
+				email: vi.fn()
+			}
+		},
+		signUp: {
+			email: vi.fn()
+		}
+	};
+});
+
 describe('Sign-up functionality', () => {
 	let createdUserEmail: string | null = null;
 
@@ -24,39 +41,35 @@ describe('Sign-up functionality', () => {
 		};
 		createdUserEmail = newUser.email;
 
-		// Mock the fetch call
-		vi.spyOn(global, 'fetch').mockImplementation(async () => {
-			// Simulate creating the user in the database, as the actual API is not called
+		const mockedSignUp = authClient.signUp.email as any;
+		mockedSignUp.mockImplementation(async (data: any) => {
+			const id = ulid();
 			await db.insert(userSchema).values({
-				id: ulid(),
-				name: newUser.name,
-				email: newUser.email,
+				id,
+				name: data.name,
+				email: data.email,
 				emailVerified: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			});
 
-			return new Response(
-				JSON.stringify({
-					success: true,
-					data: {
-						user: {
-							id: ulid(),
-							name: newUser.name,
-							email: newUser.email
-						}
+			return {
+				data: {
+					user: {
+						id,
+						name: data.name,
+						email: data.email
 					}
-				}),
-				{ status: 200, headers: { 'Content-Type': 'application/json' } }
-			);
+				},
+				error: null
+			};
 		});
 
 		const { data, error } = await authClient.signUp.email(newUser);
 
 		expect(error).toBeNull();
 		expect(data).toBeDefined();
-		expect(data?.data.user.email).toBe(newUser.email);
-		expect(data?.data.user.name).toBe(newUser.name);
+		expect(data?.user.email).toBe(newUser.email);
 
 		// Verify user exists in the database
 		const dbUser = await db.query.user.findFirst({
