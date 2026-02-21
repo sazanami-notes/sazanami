@@ -3,7 +3,7 @@
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
 import { magicLink, twoFactor } from 'better-auth/plugins';
-import { passkey } from 'better-auth/plugins/passkey';
+import { passkey } from '@better-auth/passkey';
 import { sendVerificationEmail, sendMagicLink } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from '$env/dynamic/private';

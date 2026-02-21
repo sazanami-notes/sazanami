@@ -13,7 +13,7 @@ const mockSession = {
 		id: 'testUser1',
 		email: 'test@example.com',
 		name: 'Test User',
-		emailVerified: false,
+		emailVerified: false, twoFactorEnabled: false,
 		createdAt: new Date(),
 		updatedAt: new Date()
 	},
@@ -47,7 +47,7 @@ describe('Wiki Link Resolution', () => {
 				id: testUserId,
 				email: 'test@example.com',
 				name: 'Test User',
-				emailVerified: false,
+				emailVerified: false, twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})

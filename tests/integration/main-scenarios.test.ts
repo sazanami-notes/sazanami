@@ -20,10 +20,10 @@ const mockSession = {
 		id: testUser.id,
 		email: testUser.email,
 		name: testUser.name,
-		emailVerified: true,
+		emailVerified: true, twoFactorEnabled: false,
 		createdAt: new Date(),
 		updatedAt: new Date()
-	} as User,
+	},
 	session: {
 		id: ulid(),
 		userId: testUser.id,
@@ -31,7 +31,7 @@ const mockSession = {
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		token: 'dummy-token'
-	} as Session
+	}
 };
 
 beforeAll(async () => {
@@ -78,7 +78,7 @@ const createMockFormRequestEvent = async (
 		setHeaders: vi.fn(),
 		isDataRequest: false,
 		isSubRequest: false
-	} as RequestEvent;
+	} as unknown as RequestEvent;
 };
 
 const createMockLoadEvent = (
@@ -145,7 +145,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		});
 
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
-		const pageData = await load(event);
+		const pageData = (await load(event)) as any;
 
 		expect(pageData.notes).toBeDefined();
 		expect(pageData.notes.length).toBeGreaterThan(0);
@@ -204,7 +204,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 			auth: authModule.auth
 		});
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
-		const pageData = await load(listEvent);
+		const pageData = (await load(listEvent)) as any;
 		const foundNote = pageData.notes.find((n) => n.id === createdNoteId);
 		expect(foundNote).toBeUndefined();
 	});
@@ -247,7 +247,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 			)
 		} as unknown as ServerLoadEvent;
 
-		const pageData = await load(loadEvent);
+		const pageData = (await load(loadEvent)) as any;
 
 		// 3. Assert correct data was loaded
 		expect(pageData.note).toBeDefined();
@@ -283,7 +283,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
 
 		// 4. Call the load function
-		const pageData = await load(event);
+		const pageData = (await load(event)) as any;
 
 		// 5. Assert the results
 		expect(pageData.notes).toBeDefined();
