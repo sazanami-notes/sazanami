@@ -12,8 +12,15 @@
     {
       "idx": 1,
       "version": "6",
-      "when": 1771662888011,
-      "tag": "0001_fancy_kabuki",
+      "when": 1771660611377,
+      "tag": "0001_tan_sentry",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771671814227,
+      "tag": "0002_happy_devos",
       "breakpoints": true
     }
   ]

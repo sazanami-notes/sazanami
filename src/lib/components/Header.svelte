@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import type { LayoutData } from '../../routes/$types';
 
-	let { user, profile }: { user: LayoutData['user'], profile: LayoutData['profile'] } = $props();
+	let { user, settings }: { user: LayoutData['user'], settings: LayoutData['settings'] } = $props();
 
 	let searchQuery = $state('');
 
@@ -40,7 +40,7 @@
 	<!-- Right: User Avatar -->
 	<div class="flex-none">
 		{#if user}
-			<a href={profile?.username ? `/${profile.username}` : '/settings/profile'} class="btn btn-ghost btn-circle avatar p-0 overflow-hidden" aria-label="User profile">
+			<a href={settings?.username ? `/${settings.username}` : '/settings/profile'} class="btn btn-ghost btn-circle avatar p-0 overflow-hidden" aria-label="User profile">
 				{#if user.image}
 					<div class="w-9 rounded-full">
 						<img src={user.image} alt={user.name} />

@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { userProfiles } from '$lib/server/db/schema';
+import { userSettings } from '$lib/server/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 
 	return {
 		user: data.user,
-		profile: data.profile
+		settings: data.settings
 	};
 };
 
@@ -36,8 +36,8 @@ export const actions: Actions = {
 		try {
 			// Check if username is already taken by another user
 			if (username) {
-				const existingProfiles = await db.select().from(userProfiles)
-					.where(and(eq(userProfiles.username, username), ne(userProfiles.userId, locals.user.id)))
+				const existingProfiles = await db.select().from(userSettings)
+					.where(and(eq(userSettings.username, username), ne(userSettings.userId, locals.user.id)))
 					.limit(1);
 
 				if (existingProfiles.length > 0) {
@@ -45,17 +45,24 @@ export const actions: Actions = {
 				}
 			}
 
-			const existingProfile = await db.select().from(userProfiles)
-				.where(eq(userProfiles.userId, locals.user.id))
+			const existingSetting = await db.select().from(userSettings)
+				.where(eq(userSettings.userId, locals.user.id))
 				.limit(1);
 
-			if (existingProfile.length > 0) {
-				await db.update(userProfiles)
+			if (existingSetting.length > 0) {
+				await db.update(userSettings)
 					.set({ username, bio, updatedAt: new Date() })
-					.where(eq(userProfiles.userId, locals.user.id));
+					.where(eq(userSettings.userId, locals.user.id));
 			} else {
-				await db.insert(userProfiles)
-					.values({ userId: locals.user.id, username, bio, updatedAt: new Date() });
+				await db.insert(userSettings)
+					.values({
+						userId: locals.user.id,
+						username,
+						bio,
+						updatedAt: new Date(),
+						theme: 'system',
+						font: 'sans-serif'
+					});
 			}
 
 			return { success: true, message: 'プロフィールを更新しました。' };

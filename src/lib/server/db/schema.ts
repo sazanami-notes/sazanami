@@ -121,13 +121,21 @@ export const timeline = sqliteTable('timeline', {
 // インポートした認証関連テーブルを再度エクスポート
 export { user, session, account, verification, passkey, twoFactor };
 
-// USER_PROFILES テーブル
-export const userProfiles = sqliteTable('user_profiles', {
+// USER SETTINGS テーブル (外観設定、プロフィール設定など)
+export const userSettings = sqliteTable('user_settings', {
 	userId: text('user_id')
 		.notNull()
 		.primaryKey()
 		.references(() => user.id, { onDelete: 'cascade' }),
+	theme: text('theme').notNull().default('system'),
+	font: text('font').notNull().default('sans-serif'),
+	primaryColor: text('primary_color'),
+	secondaryColor: text('secondary_color'),
+	accentColor: text('accent_color'),
+	backgroundColor: text('background_color'),
+	textColor: text('text_color'),
 	username: text('username').unique(),
 	bio: text('bio'),
-	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		.notNull()
 });

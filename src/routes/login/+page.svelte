@@ -7,13 +7,13 @@
 
 	const queryParams = page.url.searchParams;
 
-	let mode: 'login' | 'register' = 'login';
-	let name = '';
-	let email = '';
-	let password = '';
-	let error: string | null = null;
-	let message: string | null = null;
-	let isLoading = false;
+	let mode: 'login' | 'register' = $state(queryParams.get('mode') === 'register' ? 'register' : 'login');
+	let name = $state('');
+	let email = $state('');
+	let password = $state('');
+	let error: string | null = $state(null);
+	let message: string | null = $state(null);
+	let isLoading = $state(false);
 
 	onMount(() => {
 		if (queryParams.get('error') === 'invalid_token') {
@@ -23,7 +23,8 @@
 		}
 	});
 
-	async function handleSubmit() {
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
 		if (isLoading) return;
 		isLoading = true;
 		error = null;
@@ -189,19 +190,19 @@
 			role="tab"
 			class="tab"
 			class:tab-active={mode === 'login'}
-			on:click={() => changeMode('login')}>ログイン</button
+			onclick={() => changeMode('login')}>ログイン</button
 		>
 		<button
 			role="tab"
 			class="tab"
 			class:tab-active={mode === 'register'}
-			on:click={() => changeMode('register')}>新規登録</button
+			onclick={() => changeMode('register')}>新規登録</button
 		>
 	</div>
 
 	<div class="card bg-base-100 mt-4 shadow-xl">
 		<div class="card-body">
-			<form on:submit|preventDefault={handleSubmit}>
+			<form onsubmit={handleSubmit}>
 				<h2 class="card-title">
 					{mode === 'login' ? 'ログイン' : '新規登録'}
 				</h2>
@@ -302,13 +303,13 @@
 						type="button"
 						class="btn w-full"
 						disabled={isLoading}
-						on:click={signInWithMagicLink}
+						onclick={signInWithMagicLink}
 					>
 						{mode === 'login' ? 'メールを受け取ってログイン' : 'メールを受け取って登録'}
 					</button>
 				</div>
 				<div class="card-actions mt-6">
-					<button type="button" class="btn w-full" disabled={isLoading} on:click={signInWithGoogle}>
+					<button type="button" class="btn w-full" disabled={isLoading} onclick={signInWithGoogle}>
 						Continue with Google
 					</button>
 				</div>
@@ -318,7 +319,7 @@
 							type="button"
 							class="btn w-full"
 							disabled={isLoading}
-							on:click={signInWithPasskey}
+							onclick={signInWithPasskey}
 						>
 							パスキーでログイン
 						</button>

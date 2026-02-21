@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "7502f6ff-6dd2-487d-90a7-9afe020b9e1b",
-  "prevId": "e97b8c4f-ddae-4e74-9862-c297a39430d1",
+  "id": "2907deac-5552-4b7e-8a25-4af63ff0feae",
+  "prevId": "7502f6ff-6dd2-487d-90a7-9afe020b9e1b",
   "tables": {
     "account": {
       "name": "account",
@@ -971,9 +971,38 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "user_settings_username_unique": {
+          "name": "user_settings_username_unique",
+          "columns": [
+            "username"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "user_settings_user_id_user_id_fk": {
           "name": "user_settings_user_id_user_id_fk",

@@ -4,8 +4,8 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let username = $state(data.profile?.username || '');
-	let bio = $state(data.profile?.bio || '');
+	let username = $state(data.settings?.username || '');
+	let bio = $state(data.settings?.bio || '');
 	let isUpdating = $state(false);
 </script>
 
@@ -47,7 +47,7 @@
 				bind:value={username}
 				placeholder="username"
 				class="input input-bordered w-full"
-				pattern="^[a-zA-Z0-9_]{3,20}$"
+				pattern="^[a-zA-Z0-9_]{'{3,20}'}$"
 				title="3〜20文字の英数字とアンダースコアのみ使用できます。"
 			/>
 			<label class="label">

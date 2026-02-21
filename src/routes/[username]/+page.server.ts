@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { user as userTable, notes, userProfiles } from '$lib/server/db/schema';
+import { user as userTable, notes, userSettings } from '$lib/server/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -12,15 +12,15 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	const profiles = await db.select({
-		userId: userProfiles.userId,
-		username: userProfiles.username,
-		bio: userProfiles.bio,
+		userId: userSettings.userId,
+		username: userSettings.username,
+		bio: userSettings.bio,
 		name: userTable.name,
 		image: userTable.image
 	})
-	.from(userProfiles)
-	.innerJoin(userTable, eq(userProfiles.userId, userTable.id))
-	.where(eq(userProfiles.username, username))
+	.from(userSettings)
+	.innerJoin(userTable, eq(userSettings.userId, userTable.id))
+	.where(eq(userSettings.username, username))
 	.limit(1);
 
 	if (profiles.length === 0) {
