@@ -63,7 +63,7 @@
 	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
 	<div class="drawer-content flex flex-col items-center bg-base-300 min-h-screen">
 		<div class="w-full max-w-md bg-base-100 flex flex-col h-[100dvh] relative shadow-xl">
-			<Header user={data.user} />
+			<Header user={data.user} profile={data.profile} />
 
 			<main class="flex-grow overflow-y-auto w-full relative">
 				{@render children()}

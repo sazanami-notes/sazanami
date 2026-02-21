@@ -1,7 +1,6 @@
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 import * as schema from '$lib/server/db/schema';
-import { sql } from 'drizzle-orm';
 
 // Create a client for the in-memory database
 const client = createClient({ url: 'file::memory:' });
@@ -18,7 +17,17 @@ export async function createTables() {
       email_verified INTEGER DEFAULT 0 NOT NULL,
       image TEXT,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      two_factor_enabled INTEGER DEFAULT 0
+    );
+  `);
+	await client.execute(`
+    CREATE TABLE user_profiles (
+      user_id TEXT PRIMARY KEY NOT NULL,
+      username TEXT UNIQUE,
+      bio TEXT,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     );
   `);
 	await client.execute(`
@@ -106,5 +115,6 @@ export async function dropTables() {
 	await client.execute(`DROP TABLE IF EXISTS note_tags;`);
 	await client.execute(`DROP TABLE IF EXISTS tags;`);
 	await client.execute(`DROP TABLE IF EXISTS notes;`);
+	await client.execute(`DROP TABLE IF EXISTS user_profiles;`);
 	await client.execute(`DROP TABLE IF EXISTS user;`);
 }

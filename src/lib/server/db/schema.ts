@@ -120,3 +120,14 @@ export const timeline = sqliteTable('timeline', {
 
 // インポートした認証関連テーブルを再度エクスポート
 export { user, session, account, verification, passkey, twoFactor };
+
+// USER_PROFILES テーブル
+export const userProfiles = sqliteTable('user_profiles', {
+	userId: text('user_id')
+		.notNull()
+		.primaryKey()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	username: text('username').unique(),
+	bio: text('bio'),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
+});

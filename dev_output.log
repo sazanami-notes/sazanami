@@ -1,0 +1,59 @@
+
+> sazanami@0.0.3 dev
+> npm run dev:vite
+
+
+> sazanami@0.0.3 dev:vite
+> vite dev
+
+8:35:58 AM [vite] (client) Forced re-optimization of dependencies
+
+  VITE v7.3.1  ready in 2039 ms
+
+  ➜  Local:   http://localhost:12000/
+  ➜  Network: http://192.168.0.2:12000/
+SMTP credentials not set (SMTP_USER / SMTP_PASS / SMTP_FROM). Email sending will fail.
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[2m2026-02-21T08:37:53.673Z[0m [33mWARN[0m [1m[Better Auth]:[0m Social provider google is missing clientId or clientSecret
+Request: GET /login
+No session found
+/*! 🌼 daisyUI 5.5.19 */
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: GET /login
+No session found
+Request: POST /api/auth/sign-up/email
+No session found
+Request: GET /login
+No session found
+Request: POST /api/auth/sign-up/email
+No session found
+[2m2026-02-21T08:48:12.317Z[0m [34mINFO[0m [1m[Better Auth]:[0m Sign-up attempt for existing email: test@example.com
+Request: GET /login
+No session found
+Request: POST /api/auth/sign-up/email
+No session found
+Request: GET /login
+No session found
+Request: POST /api/auth/sign-up/email
+No session found
+Request: GET /login
+No session found
+8:53:30 AM [vite] (ssr) page reload src/lib/server/auth.ts
+8:53:58 AM [vite] (ssr) page reload src/lib/server/auth.ts
