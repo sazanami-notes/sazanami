@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
-import * as schema from '$lib/server/db/schema';
+import * as schema from '/server/db/schema';
 import { sql } from 'drizzle-orm';
 
 // Create a client for the in-memory database
@@ -95,6 +95,19 @@ export async function createTables() {
 			FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
 		);
 	`);
+	await client.execute(`
+		CREATE TABLE user_settings (
+			user_id TEXT PRIMARY KEY NOT NULL,
+			theme TEXT DEFAULT 'system' NOT NULL,
+			font TEXT DEFAULT 'sans-serif' NOT NULL,
+			primary_color TEXT,
+			secondary_color TEXT,
+			accent_color TEXT,
+			background_color TEXT,
+			text_color TEXT,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
 }
 
 // Function to drop tables for test cleanup
@@ -106,5 +119,6 @@ export async function dropTables() {
 	await client.execute(`DROP TABLE IF EXISTS note_tags;`);
 	await client.execute(`DROP TABLE IF EXISTS tags;`);
 	await client.execute(`DROP TABLE IF EXISTS notes;`);
+	await client.execute(`DROP TABLE IF EXISTS user_settings;`);
 	await client.execute(`DROP TABLE IF EXISTS user;`);
 }

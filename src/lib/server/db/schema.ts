@@ -120,3 +120,18 @@ export const timeline = sqliteTable('timeline', {
 
 // インポートした認証関連テーブルを再度エクスポート
 export { user, session, account, verification, passkey, twoFactor };
+
+// USER SETTINGS テーブル (外観設定など)
+export const userSettings = sqliteTable('user_settings', {
+	userId: text('user_id')
+		.notNull()
+		.primaryKey()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	theme: text('theme').notNull().default('system'),
+	font: text('font').notNull().default('sans-serif'),
+	primaryColor: text('primary_color'),
+	secondaryColor: text('secondary_color'),
+	accentColor: text('accent_color'),
+	backgroundColor: text('background_color'),
+	textColor: text('text_color')
+});
