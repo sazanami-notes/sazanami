@@ -20,3 +20,12 @@ beforeAll(async () => {
 afterAll(async () => {
 	await dropTables();
 });
+
+// Mock location for better-auth client in Node environment
+if (typeof window === 'undefined') {
+	(global as any).window = {
+		location: {
+			origin: 'http://localhost:12000'
+		}
+	};
+}

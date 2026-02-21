@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
-import * as schema from '/server/db/schema';
+import * as schema from '$lib/server/db/schema';
 import { sql } from 'drizzle-orm';
 
 // Create a client for the in-memory database
@@ -18,9 +18,76 @@ export async function createTables() {
       email_verified INTEGER DEFAULT 0 NOT NULL,
       image TEXT,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      two_factor_enabled INTEGER DEFAULT 0
     );
   `);
+	await client.execute(`
+		CREATE TABLE session (
+			id TEXT PRIMARY KEY NOT NULL,
+			expires_at INTEGER NOT NULL,
+			token TEXT NOT NULL UNIQUE,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			ip_address TEXT,
+			user_agent TEXT,
+			user_id TEXT NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
+	await client.execute(`
+		CREATE TABLE account (
+			id TEXT PRIMARY KEY NOT NULL,
+			account_id TEXT NOT NULL,
+			provider_id TEXT NOT NULL,
+			user_id TEXT NOT NULL,
+			access_token TEXT,
+			refresh_token TEXT,
+			id_token TEXT,
+			access_token_expires_at INTEGER,
+			refresh_token_expires_at INTEGER,
+			scope TEXT,
+			password TEXT,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
+	await client.execute(`
+		CREATE TABLE verification (
+			id TEXT PRIMARY KEY NOT NULL,
+			identifier TEXT NOT NULL,
+			value TEXT NOT NULL,
+			expires_at INTEGER NOT NULL,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+	`);
+	await client.execute(`
+		CREATE TABLE passkey (
+			id TEXT PRIMARY KEY NOT NULL,
+			name TEXT,
+			public_key TEXT NOT NULL,
+			user_id TEXT NOT NULL,
+			credential_id TEXT NOT NULL,
+			counter INTEGER NOT NULL,
+			device_type TEXT NOT NULL,
+			backed_up INTEGER NOT NULL,
+			transports TEXT,
+			created_at INTEGER,
+			aaguid TEXT,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
+	await client.execute(`
+		CREATE TABLE twoFactor (
+			id TEXT PRIMARY KEY NOT NULL,
+			secret TEXT NOT NULL,
+			backup_codes TEXT NOT NULL,
+			user_id TEXT NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
 	await client.execute(`
     CREATE TABLE notes (
       id TEXT PRIMARY KEY NOT NULL,
@@ -120,5 +187,10 @@ export async function dropTables() {
 	await client.execute(`DROP TABLE IF EXISTS tags;`);
 	await client.execute(`DROP TABLE IF EXISTS notes;`);
 	await client.execute(`DROP TABLE IF EXISTS user_settings;`);
+	await client.execute(`DROP TABLE IF EXISTS twoFactor;`);
+	await client.execute(`DROP TABLE IF EXISTS passkey;`);
+	await client.execute(`DROP TABLE IF EXISTS verification;`);
+	await client.execute(`DROP TABLE IF EXISTS account;`);
+	await client.execute(`DROP TABLE IF EXISTS session;`);
 	await client.execute(`DROP TABLE IF EXISTS user;`);
 }

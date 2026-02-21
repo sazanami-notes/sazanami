@@ -5,9 +5,12 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import type { LayoutData } from './$types';
 	import { invalidateAll, goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { authClient } from '$lib/auth-client';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
+
+	const isLandingPage = $derived(page.url.pathname === '/');
 
 	let drawerChecked = $state(false);
 	let waveSoundEnabled = $state(false);
@@ -98,13 +101,16 @@
 	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
 	<div class="drawer-content flex flex-col items-center bg-base-300 min-h-screen">
 		<div class="w-full max-w-md bg-base-100 flex flex-col h-[100dvh] relative shadow-xl">
-			<Header user={data.user} />
+			{#if !isLandingPage}
+				<Header user={data.user} />
+			{/if}
 
 			<main class="flex-grow overflow-y-auto w-full relative">
 				{@render children()}
 			</main>
 
-			<Footer />
+			{#if !isLandingPage}
+				<Footer />
 
 			<a href="/home/note/new" class="btn btn-circle btn-primary btn-lg absolute bottom-20 right-4 shadow-lg z-20" aria-label="Create Note">
 				<!-- add -->
@@ -113,8 +119,10 @@
 					<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
 				</svg>
 			</a>
+			{/if}
 		</div>
 	</div>
+	{#if !isLandingPage}
 	<div class="drawer-side z-30">
 		<label for="main-menu-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
 		<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
@@ -144,5 +152,6 @@
 			</li>
 		</ul>
 	</div>
+	{/if}
 </div>
 <audio bind:this={audioElement} src="/sazanami-loop.mp3" loop></audio>
