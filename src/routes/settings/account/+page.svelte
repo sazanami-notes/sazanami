@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
-	import type { Passkey } from 'better-auth/plugins/passkey';
+	import type { Passkey } from '@better-auth/passkey';
 	import { passkey, twoFactor, updateUser, linkSocial } from '$lib/auth-client';
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';

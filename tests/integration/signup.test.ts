@@ -48,7 +48,7 @@ describe('Sign-up functionality', () => {
 				id,
 				name: data.name,
 				email: data.email,
-				emailVerified: false,
+				emailVerified: false, twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			});

@@ -16,10 +16,10 @@ const mockSession = {
 		id: 'testUser1',
 		email: 'test@example.com',
 		name: 'Test User',
-		emailVerified: false,
+		emailVerified: false, twoFactorEnabled: false,
 		createdAt: new Date(),
 		updatedAt: new Date()
-	} as User,
+	},
 	session: {
 		id: ulid(),
 		userId: 'testUser1',
@@ -27,7 +27,7 @@ const mockSession = {
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		token: 'dummy-token'
-	} as Session
+	}
 };
 
 // RequestHandler のモックを作成するヘルパー関数
@@ -69,7 +69,7 @@ const createMockRequestHandlerParams = async (
 		setHeaders: vi.fn(),
 		isDataRequest: false,
 		isSubRequest: false
-	} as RequestEvent;
+	} as unknown as RequestEvent;
 };
 
 interface NoteResponse {
@@ -98,7 +98,7 @@ describe('POST /api/notes', () => {
 				id: testUserId,
 				email: 'test@example.com',
 				name: 'Test User',
-				emailVerified: false,
+				emailVerified: false, twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})
@@ -123,7 +123,7 @@ describe('POST /api/notes', () => {
 	});
 
 	it('should return 400 if invalid JSON format', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const request = new Request('http://localhost/api/notes', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -147,7 +147,7 @@ describe('POST /api/notes', () => {
 			setHeaders: vi.fn(),
 			isDataRequest: false,
 			isSubRequest: false
-		} as RequestEvent;
+		} as unknown as RequestEvent;
 		const response = await createNote(params);
 		expect(response.status).toBe(400);
 		const body: { message: string } = await response.json();
@@ -155,7 +155,7 @@ describe('POST /api/notes', () => {
 	});
 
 	it('should create a note and save the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const noteTitle = 'My New Test Note';
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes',
@@ -180,7 +180,7 @@ describe('POST /api/notes', () => {
 	});
 
 	it('should create a note with japanese title and save the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const noteTitle = '日本語の新しいノート';
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes',
@@ -220,7 +220,7 @@ describe('PUT /api/notes/{id}', () => {
 				id: testUserId,
 				email: 'test@example.com',
 				name: 'Test User',
-				emailVerified: false,
+				emailVerified: false, twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})
@@ -260,7 +260,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should return 400 if note ID is missing in params', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes/',
 			'PUT',
@@ -274,7 +274,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should return 404 if note not found', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const nonExistentId = ulid();
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${nonExistentId}`,
@@ -290,7 +290,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should update a note and re-generate the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const updatedTitle = 'My Updated Test Note';
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${existingNoteId}`,
@@ -316,7 +316,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should update a note with japanese title and re-generate the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 		const updatedTitle = '日本語の更新されたノート';
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${existingNoteId}`,

@@ -28,12 +28,20 @@ beforeAll(async () => {
 	const noteA = await createNote({
 		userId: testUser.id,
 		title: 'Target A',
-		content: '...'
+		content: '...',
+		isPublic: false,
+		isPinned: false,
+		status: 'inbox',
+		tags: []
 	});
 	const noteB = await createNote({
 		userId: testUser.id,
 		title: 'Target B',
-		content: '...'
+		content: '...',
+		isPublic: false,
+		isPinned: false,
+		status: 'inbox',
+		tags: []
 	});
 	noteIds['Target A'] = noteA.id;
 	noteIds['Target B'] = noteB.id;
@@ -50,7 +58,11 @@ describe('note_links table update logic', () => {
 		const sourceNote = await createNote({
 			userId: testUser.id,
 			title: 'Source Note 1',
-			content: 'This links to [[Target A]].'
+			content: 'This links to [[Target A]].',
+			isPublic: false,
+			isPinned: false,
+			status: 'inbox',
+			tags: []
 		});
 		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
 
@@ -68,7 +80,11 @@ describe('note_links table update logic', () => {
 		const sourceNote = await createNote({
 			userId: testUser.id,
 			title: 'Source Note 2',
-			content: 'Initial link to [[Target A]].'
+			content: 'Initial link to [[Target A]].',
+			isPublic: false,
+			isPinned: false,
+			status: 'inbox',
+			tags: []
 		});
 		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
 
@@ -91,7 +107,11 @@ describe('note_links table update logic', () => {
 		const sourceNote = await createNote({
 			userId: testUser.id,
 			title: 'Source Note 3',
-			content: 'This will have its link removed. [[Target A]]'
+			content: 'This will have its link removed. [[Target A]]',
+			isPublic: false,
+			isPinned: false,
+			status: 'inbox',
+			tags: []
 		});
 		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
 

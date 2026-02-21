@@ -16,7 +16,7 @@ const testUser = {
 };
 
 const mockSession = {
-	user: { ...testUser, emailVerified: true, createdAt: new Date(), updatedAt: new Date() } as User,
+	user: { ...testUser, emailVerified: true, twoFactorEnabled: false, createdAt: new Date(), updatedAt: new Date() } as User,
 	session: {
 		id: ulid(),
 		userId: testUser.id,

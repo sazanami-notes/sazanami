@@ -15,7 +15,7 @@ const mockSession = {
 		id: 'testUser1',
 		email: 'test@example.com',
 		name: 'Test User',
-		emailVerified: false, // 追加
+		emailVerified: false, twoFactorEnabled: false, // 追加
 		createdAt: new Date(), // 追加
 		updatedAt: new Date() // 追加
 	},
@@ -77,7 +77,7 @@ describe('GET /api/notes/resolve-link', () => {
 				id: testUserId,
 				email: 'test@example.com',
 				name: 'Test User',
-				emailVerified: false,
+				emailVerified: false, twoFactorEnabled: false,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			})
@@ -160,7 +160,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return 400 if title query parameter is missing', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link',
@@ -174,7 +174,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return correct note for an existing title', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=Existing Note',
@@ -189,7 +189,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return 404 if note not found', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=NonExistent Note',
@@ -203,7 +203,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return the latest updated note for duplicate titles', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=Test Note for Duplicates',
@@ -217,7 +217,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should handle Japanese titles correctly', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession);
+		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
 
 		const japaneseNoteId = ulid();
 		const japaneseTitle = '日本語のテストノート';
