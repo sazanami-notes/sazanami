@@ -79,15 +79,3 @@ npm run test:unit
 ```bash
 npm run test
 ```
-
-## 詳細ドキュメント
-
-より詳細な情報については、以下のドキュメントを参照してください。
-
-- **[プロジェクト概要](./.kilocode/rules/memory-bank/product.md)**
-- **[アーキテクチャ](./.kilocode/rules/memory-bank/architecture.md)**
-- **[開発セットアップ](./.kilocode/rules/memory-bank/setup.md)**
-- **[コーディング規約](./.kilocode/rules/memory-bank/tech.md)**
-- **[API仕様](./.kilocode/rules/memory-bank/api.md)**
-- **[テスト戦略](./.kilocode/rules/memory-bank/testing.md)**
-- **[デプロイ手順](./.kilocode/rules/memory-bank/deployment.md)**
