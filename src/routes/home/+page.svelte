@@ -8,38 +8,10 @@
 
 	let { data } = $props();
 
-	let newPostContent = $state('');
 	let editingNote: Note | null = $state(null);
 	let isSavingNote = $state(false);
 
 	const notes = $derived(data.notes || []);
-
-	async function handleSubmitPost() {
-		if (!newPostContent.trim()) {
-			return;
-		}
-
-		try {
-			const response = await fetch('/api/notes', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					content: newPostContent
-				})
-			});
-
-			if (response.ok) {
-				newPostContent = '';
-				await invalidateAll(); // データ再読み込み
-			} else {
-				console.error('Failed to submit post:', await response.text());
-			}
-		} catch (error) {
-			console.error('Error submitting post:', error);
-		}
-	}
 
 	function handleEdit(event: CustomEvent<Note>) {
 		console.log('Edit event received:', event.detail);
@@ -80,22 +52,6 @@
 </script>
 
 <div class="container mx-auto px-4 py-8">
-	<!-- Post Input Area -->
-	<div class="mx-auto mb-8 max-w-2xl">
-		<div class="card bg-base-200 p-4">
-			<div class="max-h-48 overflow-y-auto">
-				<TiptapEditor
-					bind:content={newPostContent}
-					editable={true}
-					placeholder="いまどうしてる？"
-				/>
-			</div>
-			<div class="card-actions mt-4 justify-end">
-				<button onclick={handleSubmitPost} class="btn btn-primary">ポスト</button>
-			</div>
-		</div>
-	</div>
-
 	<!-- Timeline Feed -->
 	<div class="mx-auto max-w-2xl">
 		<h1 class="mb-4 text-2xl font-bold">タイムライン</h1>
