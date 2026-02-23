@@ -1,8 +1,8 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "92446327-1452-4ca5-87e1-84690b80b93e",
-	"prevId": "7502f6ff-6dd2-487d-90a7-9afe020b9e1b",
+	"id": "f344a942-7df1-4906-9864-e9818d874941",
+	"prevId": "905385b7-4795-46af-b056-e0c02359453c",
 	"tables": {
 		"account": {
 			"name": "account",
@@ -509,7 +509,18 @@
 					"autoincrement": false
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"passkey_userId_idx": {
+					"name": "passkey_userId_idx",
+					"columns": ["user_id"],
+					"isUnique": false
+				},
+				"passkey_credentialID_idx": {
+					"name": "passkey_credentialID_idx",
+					"columns": ["credential_id"],
+					"isUnique": false
+				}
+			},
 			"foreignKeys": {
 				"passkey_user_id_user_id_fk": {
 					"name": "passkey_user_id_user_id_fk",
@@ -811,8 +822,8 @@
 			"uniqueConstraints": {},
 			"checkConstraints": {}
 		},
-		"twoFactor": {
-			"name": "twoFactor",
+		"two_factor": {
+			"name": "two_factor",
 			"columns": {
 				"id": {
 					"name": "id",
@@ -843,11 +854,22 @@
 					"autoincrement": false
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"twoFactor_secret_idx": {
+					"name": "twoFactor_secret_idx",
+					"columns": ["secret"],
+					"isUnique": false
+				},
+				"twoFactor_userId_idx": {
+					"name": "twoFactor_userId_idx",
+					"columns": ["user_id"],
+					"isUnique": false
+				}
+			},
 			"foreignKeys": {
-				"twoFactor_user_id_user_id_fk": {
-					"name": "twoFactor_user_id_user_id_fk",
-					"tableFrom": "twoFactor",
+				"two_factor_user_id_user_id_fk": {
+					"name": "two_factor_user_id_user_id_fk",
+					"tableFrom": "two_factor",
 					"tableTo": "user",
 					"columnsFrom": ["user_id"],
 					"columnsTo": ["id"],
@@ -921,12 +943,31 @@
 					"notNull": false,
 					"autoincrement": false,
 					"default": false
+				},
+				"username": {
+					"name": "username",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"display_username": {
+					"name": "display_username",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {
 				"user_email_unique": {
 					"name": "user_email_unique",
 					"columns": ["email"],
+					"isUnique": true
+				},
+				"user_username_unique": {
+					"name": "user_username_unique",
+					"columns": ["username"],
 					"isUnique": true
 				}
 			},
@@ -976,6 +1017,13 @@
 					"notNull": true,
 					"autoincrement": false,
 					"default": "'sans-serif'"
+				},
+				"bio": {
+					"name": "bio",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {},

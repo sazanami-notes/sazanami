@@ -132,9 +132,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			await db.delete(themes).where(
-				and(eq(themes.id, themeId), eq(themes.userId, session.user.id))
-			);
+			await db
+				.delete(themes)
+				.where(and(eq(themes.id, themeId), eq(themes.userId, session.user.id)));
 
 			// 削除したテーマが設定されていた場合のフォールバック
 			const settings = await db.query.userSettings.findFirst({
@@ -156,7 +156,8 @@ export const actions: Actions = {
 				}
 
 				if (updateNeeded) {
-					await db.update(userSettings)
+					await db
+						.update(userSettings)
 						.set({ lightThemeId: newLightThemeId, darkThemeId: newDarkThemeId })
 						.where(eq(userSettings.userId, session.user.id));
 				}

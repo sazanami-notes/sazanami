@@ -2,7 +2,7 @@
 
 import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
-import { magicLink, twoFactor } from 'better-auth/plugins';
+import { magicLink, twoFactor, username } from 'better-auth/plugins';
 import { passkey } from '@better-auth/passkey';
 import { sendVerificationEmail, sendMagicLink } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -52,7 +52,8 @@ export const auth = betterAuth({
 					console.error('Failed to send magic link email:', e);
 				}
 			}
-		})
+		}),
+		username()
 	],
 	database: drizzleAdapter(db, {
 		provider: 'sqlite',
