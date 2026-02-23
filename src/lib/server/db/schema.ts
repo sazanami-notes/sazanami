@@ -153,5 +153,6 @@ export const userSettings = sqliteTable('user_settings', {
 	themeMode: text('theme_mode').notNull().default('system'), // 'light', 'dark', 'system'
 	lightThemeId: text('light_theme_id').notNull().default('sazanami-days'), // 組み込みテーマ名 or themes.id
 	darkThemeId: text('dark_theme_id').notNull().default('sazanami-night'), // 組み込みテーマ名 or themes.id
-	font: text('font').notNull().default('sans-serif')
+	font: text('font').notNull().default('sans-serif'),
+	bio: text('bio')
 });

@@ -19,7 +19,7 @@ export const load: LayoutServerLoad = async ({ request, url }) => {
 	}
 
 	let settings = null;
-	let userThemes: typeof themes.$inferSelect[] = [];
+	let userThemes: (typeof themes.$inferSelect)[] = [];
 
 	if (sessionData?.user) {
 		settings = await db.query.userSettings.findFirst({
@@ -39,7 +39,7 @@ export const load: LayoutServerLoad = async ({ request, url }) => {
 			themeMode: 'system',
 			lightThemeId: 'sazanami-days',
 			darkThemeId: 'sazanami-night',
-			font: 'sans-serif',
+			font: 'sans-serif'
 		}
 	};
 };

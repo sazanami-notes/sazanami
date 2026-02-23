@@ -66,12 +66,23 @@
 
 	<!-- Right: User Avatar -->
 	<div class="flex-none">
-		{#if user && user.image}
-			<div class="avatar">
-				<div class="w-9 rounded-full">
-					<img src={user.image} alt={user.name} />
+		{#if user}
+			<a
+				href="/{user.username || user.id}"
+				class="avatar block transition-transform hover:scale-105 active:scale-95"
+			>
+				<div class="ring-base-300 w-9 rounded-full ring-1">
+					{#if user.image}
+						<img src={user.image} alt={user.name} />
+					{:else}
+						<div
+							class="bg-neutral text-neutral-content flex h-full w-full items-center justify-center font-bold"
+						>
+							{user.name?.charAt(0) || '?'}
+						</div>
+					{/if}
 				</div>
-			</div>
+			</a>
 		{:else}
 			<button class="btn btn-ghost btn-circle" aria-label="User profile">
 				<!-- account_circle -->
