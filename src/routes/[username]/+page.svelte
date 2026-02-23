@@ -88,8 +88,12 @@
 								{formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: ja })}
 							</p>
 							<div class="card-actions mt-2 justify-end">
-								<!-- todo: 本来はノートの詳細画面などへ飛ぶ -->
-								<a href="/home/note/{note.id}" class="btn btn-ghost btn-sm">詳細</a>
+								{#if isOwner}
+									<a href="/home/note/{note.id}" class="btn btn-ghost btn-sm">詳細</a>
+								{:else}
+									<!-- 他人の公開ノートは専用ページがない場合は非表示にするか、別途実装する対応が必要 -->
+									<!-- <a href="/note/{note.id}" class="btn btn-ghost btn-sm">詳細</a> -->
+								{/if}
 							</div>
 						</div>
 					</div>

@@ -6,6 +6,19 @@
 	export let form: ActionData;
 
 	let submitting = false;
+	let imagePreview = data.profile.user?.image || null;
+
+	function handleImageSelect(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				imagePreview = e.target?.result as string;
+			};
+			reader.readAsDataURL(file);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -42,6 +55,7 @@
 
 			<form
 				method="POST"
+				enctype="multipart/form-data"
 				use:enhance={() => {
 					submitting = true;
 					return async ({ update }) => {
@@ -51,6 +65,36 @@
 				}}
 				class="space-y-6"
 			>
+				<!-- Profile Image -->
+				<div class="form-control w-full">
+					<label class="label" for="image">
+						<span class="label-text font-semibold">プロフィール画像</span>
+					</label>
+					<div class="flex items-center gap-4">
+						<div class="avatar">
+							<div class="ring-primary ring-offset-base-100 w-24 rounded-full ring ring-offset-2">
+								{#if imagePreview}
+									<img src={imagePreview} alt="プロフィールプレビュー" />
+								{:else}
+									<div
+										class="bg-neutral text-neutral-content flex h-full w-full items-center justify-center text-2xl font-bold"
+									>
+										{data.profile.name?.charAt(0) || '?'}
+									</div>
+								{/if}
+							</div>
+						</div>
+						<input
+							type="file"
+							id="image"
+							name="image"
+							accept="image/*"
+							class="file-input file-input-bordered w-full max-w-xs"
+							on:change={handleImageSelect}
+						/>
+					</div>
+				</div>
+
 				<!-- 表示名 -->
 				<div class="form-control w-full">
 					<label class="label" for="name">

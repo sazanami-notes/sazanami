@@ -41,9 +41,18 @@
 		// We dispatch 'cancel' to let the parent know it should set its note state to null.
 		dispatch('cancel');
 	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+			e.preventDefault();
+			if (!saving) {
+				handleSave();
+			}
+		}
+	}
 </script>
 
-<dialog bind:this={dialog} class="modal" onclose={handleClose}>
+<dialog bind:this={dialog} class="modal" onclose={handleClose} onkeydown={handleKeydown}>
 	<div class="modal-box w-11/12 max-w-4xl">
 		{#if note}
 			<input
