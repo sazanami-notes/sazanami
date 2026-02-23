@@ -12,7 +12,14 @@ export const load: LayoutServerLoad = async ({ request, url }) => {
 	});
 
 	const allowedPaths = ['/login', '/login/two-factor', '/'];
-	if (!sessionData?.session && !allowedPaths.includes(url.pathname)) {
+	const isAllowedPath =
+		allowedPaths.includes(url.pathname) ||
+		(url.pathname !== '/' && // `/` は上で処理済み
+			!url.pathname.startsWith('/home') &&
+			!url.pathname.startsWith('/settings') &&
+			!url.pathname.includes('/edit')); // /[username]/edit 等は除外
+
+	if (!sessionData?.session && !isAllowedPath) {
 		let redirectUrl = '/login';
 		if (queryParams) redirectUrl += `?${queryParams}`;
 		throw redirect(302, redirectUrl);

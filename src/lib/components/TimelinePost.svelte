@@ -162,6 +162,10 @@
 			</div>
 		{/if}
 
+		{#if note.title && note.title !== 'Untitled Note'}
+			<h2 class="mb-2 text-xl font-bold">{note.title}</h2>
+		{/if}
+
 		<div class="prose text-base-content max-w-none">
 			{@html marked.parse(note.content || '', { breaks: true })}
 		</div>

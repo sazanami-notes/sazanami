@@ -140,7 +140,25 @@
 			goto('/login');
 		}
 	};
+
+	function handleGlobalKeydown(e: KeyboardEvent) {
+		if (hideShell) return;
+
+		const target = e.target as HTMLElement;
+		const isInput =
+			target.tagName === 'INPUT' ||
+			target.tagName === 'TEXTAREA' ||
+			target.tagName === 'SELECT' ||
+			target.isContentEditable;
+
+		if (!isInput && e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+			e.preventDefault();
+			isCreateModalOpen = true;
+		}
+	}
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <svelte:head>
 	{#if fontSetting === 'Noto Sans JP'}
