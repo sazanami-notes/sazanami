@@ -7,7 +7,7 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		host: '0.0.0.0',
-		port: 12000,
+		port: 5173,
 		cors: true,
 		headers: {
 			'Access-Control-Allow-Origin': '*'
