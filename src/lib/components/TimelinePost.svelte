@@ -74,23 +74,57 @@
 
 	// Action to manually apply highlight.js to code blocks that bypassed marked.js
 	function highlightBlocks(node: HTMLElement, _content: string) {
-		const applyHighlight = () => {
+		const applyHighlightAndFeatures = () => {
 			if (!node) return;
-			node.querySelectorAll('pre code').forEach((block) => {
-				// Only highlight if it hasn't been highlighted already
-				if (!block.classList.contains('hljs') && !block.hasAttribute('data-highlighted')) {
-					hljs.highlightElement(block as HTMLElement);
-					block.classList.add('hljs'); // Ensure the class is added just in case
+			node.querySelectorAll('.code-block-wrapper').forEach((wrapper) => {
+				const block = wrapper.querySelector('pre code');
+				if (block) {
+					// Only highlight if it hasn't been highlighted already
+					if (!block.classList.contains('hljs') && !block.hasAttribute('data-highlighted')) {
+						hljs.highlightElement(block as HTMLElement);
+						block.classList.add('hljs'); // Ensure the class is added just in case
+					}
+
+					// Add copy button if it doesn't exist
+					if (!wrapper.querySelector('.copy-code-btn')) {
+						wrapper.classList.add('group'); // For hover effect
+
+						const button = document.createElement('button');
+						button.className =
+							'copy-code-btn btn btn-xs btn-square absolute right-2 top-2 opacity-0 transition-opacity z-10 bg-base-200/50 text-base-content hover:bg-base-300 border-none group-hover:opacity-100 backdrop-blur-sm';
+
+						const copyIcon =
+							'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+						const checkIcon =
+							'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+						button.innerHTML = copyIcon;
+						button.title = 'コードをコピー';
+
+						button.onclick = async (e) => {
+							e.stopPropagation();
+							try {
+								await navigator.clipboard.writeText(block.textContent || '');
+								button.innerHTML = checkIcon;
+								setTimeout(() => {
+									if (button) button.innerHTML = copyIcon;
+								}, 2000);
+							} catch (err) {
+								console.error('Failed to copy text: ', err);
+							}
+						};
+						wrapper.appendChild(button);
+					}
 				}
 			});
 		};
 
 		// Run initially after DOM settles
-		setTimeout(applyHighlight, 0);
+		setTimeout(applyHighlightAndFeatures, 0);
 
 		return {
 			update() {
-				setTimeout(applyHighlight, 0);
+				setTimeout(applyHighlightAndFeatures, 0);
 			}
 		};
 	}
