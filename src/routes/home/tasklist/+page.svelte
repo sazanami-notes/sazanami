@@ -16,17 +16,18 @@
 	const incompleteNotes = $derived(
 		notes.filter((note) => {
 			const content = note.content || '';
-			return content.includes('data-type="taskItem" data-checked="false"');
+			const totalTasks = (content.match(/data-type=["']taskItem["']/g) || []).length;
+			const completedTasks = (content.match(/data-checked=["']true["']/g) || []).length;
+			return totalTasks > completedTasks;
 		})
 	);
 
 	const completedNotes = $derived(
 		notes.filter((note) => {
 			const content = note.content || '';
-			return (
-				content.includes('data-type="taskItem" data-checked="true"') &&
-				!content.includes('data-type="taskItem" data-checked="false"')
-			);
+			const totalTasks = (content.match(/data-type=["']taskItem["']/g) || []).length;
+			const completedTasks = (content.match(/data-checked=["']true["']/g) || []).length;
+			return totalTasks > 0 && totalTasks === completedTasks;
 		})
 	);
 

@@ -187,6 +187,16 @@ ul[data-type='taskList'] li>div>p {
 	opacity: 1;
 }
 
+/* Hide language selector in view mode (prose without tiptap class) */
+.prose:not(.tiptap) .code-block-language-select {
+	display: none !important;
+}
+
+/* Adjust pre padding in view mode since select is hidden */
+.prose:not(.tiptap) .code-block-wrapper pre {
+	padding-top: 1rem !important;
+}
+
 /* hljs minimal overrides for layout */
 .hljs {
 	background: transparent !important;
