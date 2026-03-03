@@ -76,6 +76,18 @@
 	function highlightBlocks(node: HTMLElement, _content: string) {
 		const applyHighlightAndFeatures = () => {
 			if (!node) return;
+			// Find all bare <pre> elements (from Tiptap) and wrap them in .code-block-wrapper if not already
+			node.querySelectorAll('pre').forEach((pre) => {
+				if (!pre.parentElement?.classList.contains('code-block-wrapper')) {
+					const wrapper = document.createElement('div');
+					wrapper.className = 'code-block-wrapper';
+					wrapper.style.position = 'relative';
+					wrapper.style.margin = '1.5rem 0';
+					pre.parentNode?.insertBefore(wrapper, pre);
+					wrapper.appendChild(pre);
+				}
+			});
+
 			node.querySelectorAll('.code-block-wrapper').forEach((wrapper) => {
 				const block = wrapper.querySelector('pre code');
 				if (block) {
