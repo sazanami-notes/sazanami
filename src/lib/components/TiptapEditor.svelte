@@ -9,6 +9,13 @@
 	import { TableRow } from '@tiptap/extension-table-row';
 	import { TableCell } from '@tiptap/extension-table-cell';
 	import { TableHeader } from '@tiptap/extension-table-header';
+	import TaskItem from '@tiptap/extension-task-item';
+	import TaskList from '@tiptap/extension-task-list';
+	import { createLowlight, all } from 'lowlight';
+	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
+	import 'highlight.js/styles/github-dark.css';
+
+	const lowlight = createLowlight(all);
 
 	let {
 		content = $bindable(''),
@@ -30,7 +37,9 @@
 			element: element,
 			editable,
 			extensions: [
-				StarterKit,
+				StarterKit.configure({
+					codeBlock: false
+				}),
 				Placeholder.configure({
 					placeholder: placeholder
 				}),
@@ -43,7 +52,14 @@
 				}),
 				TableRow,
 				TableHeader,
-				TableCell
+				TableCell,
+				TaskList,
+				TaskItem.configure({
+					nested: true
+				}),
+				CodeBlockWithLanguage.configure({
+					lowlight
+				})
 			],
 			content: content,
 			editorProps: {
@@ -138,5 +154,70 @@
 		bottom: 0;
 		background: rgba(200, 200, 255, 0.4);
 		pointer-events: none;
+	}
+
+	/* Task list styles */
+	:global(.tiptap ul[data-type='taskList']) {
+		list-style: none;
+		padding: 0;
+	}
+	:global(.tiptap ul[data-type='taskList'] li) {
+		display: flex;
+		align-items: flex-start;
+	}
+	:global(.tiptap ul[data-type='taskList'] li > label) {
+		flex: 0 0 auto;
+		margin-right: 0.5rem;
+		user-select: none;
+		display: flex;
+		align-items: center;
+		padding-top: 0.3em;
+	}
+	:global(.tiptap ul[data-type='taskList'] li > div) {
+		flex: 1 1 auto;
+	}
+	:global(.tiptap ul[data-type='taskList'] input[type='checkbox']) {
+		cursor: pointer;
+		width: 1.25em;
+		height: 1.25em;
+	}
+	:global(.tiptap ul[data-type='taskList'] li[data-checked='true'] > div > p) {
+		text-decoration: line-through;
+		opacity: 0.7;
+	}
+
+	/* Code block language selector styles */
+	:global(.tiptap .code-block-wrapper) {
+		position: relative;
+	}
+	:global(.tiptap .code-block-wrapper pre) {
+		background: #0d1117;
+		color: #c9d1d9;
+		font-family: 'JetBrainsMono', 'Fira Code', monospace;
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		margin: 1.5rem 0;
+	}
+	:global(.tiptap .code-block-wrapper .code-block-language-select) {
+		position: absolute;
+		right: 0.5rem;
+		top: 0.5rem;
+		font-size: 0.75rem;
+		padding: 2px 6px;
+		background-color: var(--color-base-200);
+		color: var(--color-base-content);
+		border: 1px solid var(--color-base-300);
+		border-radius: 4px;
+		opacity: 0.5;
+		transition: opacity 0.2s;
+	}
+	:global(.tiptap .code-block-wrapper:hover .code-block-language-select) {
+		opacity: 1;
+	}
+
+	/* hljs minimal overrides for layout */
+	:global(.hljs) {
+		background: transparent !important;
+		padding: 0 !important;
 	}
 </style>
