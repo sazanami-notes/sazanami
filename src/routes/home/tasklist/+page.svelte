@@ -12,6 +12,24 @@
 
 	const notes = $derived(data.notes || []);
 
+	// Filter notes into those that have at least one uncompleted task, and those that only have completed tasks
+	const incompleteNotes = $derived(
+		notes.filter((note) => {
+			const content = note.content || '';
+			return content.includes('data-type="taskItem" data-checked="false"');
+		})
+	);
+
+	const completedNotes = $derived(
+		notes.filter((note) => {
+			const content = note.content || '';
+			return (
+				content.includes('data-type="taskItem" data-checked="true"') &&
+				!content.includes('data-type="taskItem" data-checked="false"')
+			);
+		})
+	);
+
 	function handleEdit(event: CustomEvent<Note>) {
 		editingNote = event.detail;
 	}
@@ -52,15 +70,33 @@
 	<!-- Timeline Feed (Filtered by tasks) -->
 	<div class="mx-auto max-w-2xl">
 		<h1 class="mb-4 text-2xl font-bold">タスクリスト</h1>
-		<div class="flex flex-col space-y-4">
-			{#each notes as note (note.id)}
+
+		<h2 class="mb-4 text-xl font-semibold opacity-80">未完了のタスク</h2>
+		<div class="mb-8 flex flex-col space-y-4">
+			{#each incompleteNotes as note (note.id)}
 				<TimelinePost {note} on:edit={handleEdit} />
 			{:else}
-				<p class="text-center text-base-content text-opacity-60">
-					タスクリストを含むノートはありません。
+				<p class="text-center text-base-content text-opacity-60 py-4">
+					未完了のタスクがあるノートはありません。
 				</p>
 			{/each}
 		</div>
+
+		{#if completedNotes.length > 0}
+			<div class="collapse-arrow bg-base-200 border-base-300 collapse border">
+				<input type="checkbox" />
+				<div class="collapse-title text-xl font-medium opacity-80">
+					完了済みのタスク ({completedNotes.length})
+				</div>
+				<div class="collapse-content">
+					<div class="mt-2 flex flex-col space-y-4">
+						{#each completedNotes as note (note.id)}
+							<TimelinePost {note} on:edit={handleEdit} />
+						{/each}
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 

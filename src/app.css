@@ -110,8 +110,10 @@ ul[data-type='taskList'] li>div,
 ul[data-type='taskList'] input[type='checkbox'],
 .prose ul[data-type='taskList'] input[type='checkbox'] {
 	cursor: pointer;
-	width: 1.25em;
-	height: 1.25em;
+	width: 1em;
+	/* Reduced from 1.25em */
+	height: 1em;
+	/* Reduced from 1.25em */
 	accent-color: var(--color-primary);
 	margin: 0;
 	/* reset typography margins */

@@ -4,12 +4,70 @@
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 	import { marked } from 'marked';
-	import { createEventDispatcher } from 'svelte';
+	import { markedHighlight } from 'marked-highlight';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import hljs from 'highlight.js';
+	import 'highlight.js/styles/github-dark.css';
 
 	export let note: Note & { tags: string[] };
 	export let mode: 'timeline' | 'archive' | 'trash' = 'timeline';
 
 	const dispatch = createEventDispatcher<{ edit: Note; delete: Note }>();
+
+	// Configure marked to use highlight.js and wrap code blocks correctly
+	marked.use(
+		markedHighlight({
+			langPrefix: 'hljs language-',
+			highlight(code, lang) {
+				const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+				return hljs.highlight(code, { language }).value;
+			}
+		})
+	);
+
+	const renderer = new marked.Renderer();
+	renderer.code = function ({ text, lang, escaped }) {
+		const language = (lang || '').match(/\S*/)?.[0] || '';
+
+		// `text` here will already be highlighted HTML because of the markedHighlight extension
+		const codeStr = text;
+		const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
+
+		return `
+<div class="code-block-wrapper" style="position: relative; margin: 1.5rem 0;">
+	<pre><code${langAttr}>${codeStr}</code></pre>
+</div>
+`;
+	};
+
+	renderer.listitem = function ({ text, task, checked }) {
+		if (task) {
+			const checkbox = `<input type="checkbox" disabled="" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
+			const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
+			// Replace the checkbox placeholder added by marked with our custom styled one and structural div
+			const content = text.replace(/^\[[ xX]\]\s*/, '');
+			return `<li data-type="taskItem" ${checkedAttr} style="display: flex; align-items: flex-start; margin-bottom: 0.25rem; padding-left: 0;"><label style="flex: 0 0 auto; margin-right: 0.5rem; user-select: none; display: flex; align-items: center; padding-top: 0; margin-top: 0.1rem;">${checkbox}</label><div style="flex: 1 1 auto;"><p style="margin: 0 !important;">${content}</p></div></li>\n`;
+		}
+		return `<li>${text}</li>\n`;
+	};
+
+	renderer.list = function (token) {
+		const isTaskList = token.raw.includes('data-type="taskItem"');
+		if (isTaskList) {
+			const bodyHtml = this.parser.parse(token.items);
+			return `<ul data-type="taskList" class="contains-task-list" style="list-style: none; padding: 0; margin: 0; list-style-type: none !important; padding-left: 0 !important;">\n${bodyHtml}</ul>\n`;
+		}
+
+		const type = token.ordered ? 'ol' : 'ul';
+		const startAttr =
+			token.ordered && token.start !== 1 && token.start !== undefined
+				? ` start="${token.start}"`
+				: '';
+		const bodyHtml = this.parser.parse(token.items);
+		return `<${type}${startAttr}>\n${bodyHtml}</${type}>\n`;
+	};
+
+	marked.use({ gfm: true });
 
 	let interactionDebounce = false;
 	function handleInteraction() {
@@ -167,7 +225,7 @@
 		{/if}
 
 		<div class="prose text-base-content max-w-none">
-			{@html marked.parse(note.content || '', { breaks: true })}
+			{@html marked.parse(note.content || '', { breaks: true, renderer })}
 		</div>
 
 		<div class="text-base-content/60 mt-4 flex items-center justify-between text-xs">
