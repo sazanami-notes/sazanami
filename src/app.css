@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
 @plugin "daisyui" {
 	themes: false;
 }
@@ -75,58 +76,99 @@
 }
 
 /* Task list global styles */
-ul[data-type='taskList'], .prose ul[data-type='taskList'] {
+ul[data-type='taskList'],
+.prose ul[data-type='taskList'] {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
-ul[data-type='taskList'] li, .prose ul[data-type='taskList'] li {
+
+ul[data-type='taskList'] li,
+.prose ul[data-type='taskList'] li {
 	display: flex;
 	align-items: flex-start;
 	margin-bottom: 0.25rem;
 	padding-left: 0;
 }
-ul[data-type='taskList'] li > label, .prose ul[data-type='taskList'] li > label {
+
+ul[data-type='taskList'] li>label,
+.prose ul[data-type='taskList'] li>label {
 	flex: 0 0 auto;
 	margin-right: 0.5rem;
 	user-select: none;
 	display: flex;
 	align-items: center;
-	padding-top: 0.1rem;
+	padding-top: 0;
+	margin-top: 0.1rem;
 }
-ul[data-type='taskList'] li > div, .prose ul[data-type='taskList'] li > div {
+
+ul[data-type='taskList'] li>div,
+.prose ul[data-type='taskList'] li>div {
 	flex: 1 1 auto;
 }
-ul[data-type='taskList'] input[type='checkbox'], .prose ul[data-type='taskList'] input[type='checkbox'] {
+
+ul[data-type='taskList'] input[type='checkbox'],
+.prose ul[data-type='taskList'] input[type='checkbox'] {
 	cursor: pointer;
 	width: 1.25em;
 	height: 1.25em;
 	accent-color: var(--color-primary);
-	margin: 0; /* reset typography margins */
+	margin: 0;
+	/* reset typography margins */
 }
-ul[data-type='taskList'] li[data-checked='true'] > div > p, .prose ul[data-type='taskList'] li[data-checked='true'] > div > p {
+
+ul[data-type='taskList'] li[data-checked='true']>div>p,
+.prose ul[data-type='taskList'] li[data-checked='true']>div>p {
 	text-decoration: line-through;
 	opacity: 0.6;
 }
 
-/* override daisyui prose margins */
-.prose ul[data-type='taskList'] > li::before {
-	content: none;
+}
+
+/* Reset margins inside task list items to prevent vertical misalignment */
+.prose ul[data-type='taskList'] li>div>p,
+ul[data-type='taskList'] li>div>p {
+	margin: 0 !important;
+}
+
+/* override daisyui prose margins and bullets */
+.prose ul[data-type='taskList'] {
+	list-style-type: none !important;
+	padding-left: 0 !important;
+}
+
+.prose ul[data-type='taskList']>li::before,
+.prose ul[data-type='taskList']>li::marker {
+	content: none !important;
+	display: none !important;
 }
 
 /* Code block language selector global styles */
-.code-block-wrapper, .prose .code-block-wrapper {
+.code-block-wrapper,
+.prose .code-block-wrapper {
 	position: relative;
 	margin: 1.5rem 0;
 }
-.code-block-wrapper pre, .prose .code-block-wrapper pre {
+}
+
+/* Apply dark background to standard codeblocks in view mode as well */
+.code-block-wrapper pre,
+.prose .code-block-wrapper pre,
+.prose pre {
 	background: #0d1117 !important;
 	color: #c9d1d9 !important;
-	font-family: 'JetBrainsMono', 'Fira Code', monospace;
+	font-family: 'JetBrainsMono', 'Fira Code', monospace !important;
 	padding: 1rem !important;
-	border-radius: 0.5rem;
-	margin: 0 !important; /* Wrapper handles margin */
+	border-radius: 0.5rem !important;
+	margin: 0 !important;
+	/* Wrapper handles margin for edit mode */
 }
+
+/* For prose pre without wrapper (view mode), we need some margin */
+.prose pre:not(.code-block-wrapper pre) {
+	margin: 1.5rem 0 !important;
+}
+
 .code-block-wrapper .code-block-language-select {
 	position: absolute;
 	right: 0.5rem;
@@ -141,6 +183,7 @@ ul[data-type='taskList'] li[data-checked='true'] > div > p, .prose ul[data-type=
 	transition: opacity 0.2s;
 	z-index: 10;
 }
+
 .code-block-wrapper:hover .code-block-language-select {
 	opacity: 1;
 }
