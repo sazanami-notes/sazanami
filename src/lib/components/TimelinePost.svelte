@@ -72,6 +72,29 @@
 	// Tiptap always wraps text in paragraphs, headings, lists, or code blocks.
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(note.content || '');
 
+	// Action to manually apply highlight.js to code blocks that bypassed marked.js
+	function highlightBlocks(node: HTMLElement, _content: string) {
+		const applyHighlight = () => {
+			if (!node) return;
+			node.querySelectorAll('pre code').forEach((block) => {
+				// Only highlight if it hasn't been highlighted already
+				if (!block.classList.contains('hljs') && !block.hasAttribute('data-highlighted')) {
+					hljs.highlightElement(block as HTMLElement);
+					block.classList.add('hljs'); // Ensure the class is added just in case
+				}
+			});
+		};
+
+		// Run initially after DOM settles
+		setTimeout(applyHighlight, 0);
+
+		return {
+			update() {
+				setTimeout(applyHighlight, 0);
+			}
+		};
+	}
+
 	let interactionDebounce = false;
 	function handleInteraction() {
 		if (interactionDebounce) return;
@@ -227,7 +250,7 @@
 			<h2 class="mb-2 text-xl font-bold">{note.title}</h2>
 		{/if}
 
-		<div class="prose text-base-content max-w-none">
+		<div class="prose text-base-content max-w-none" use:highlightBlocks={note.content}>
 			{#if isHtmlContent}
 				{@html note.content}
 			{:else}
