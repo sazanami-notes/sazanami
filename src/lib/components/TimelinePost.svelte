@@ -41,7 +41,7 @@
 
 	renderer.listitem = function ({ text, task, checked }) {
 		if (task) {
-			const checkbox = `<input type="checkbox" disabled="" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
+			const checkbox = `<input type="checkbox" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
 			const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
 			// Replace the checkbox placeholder added by marked with our custom styled one and structural div
 			const content = text.replace(/^\[[ xX]\]\s*/, '');
@@ -72,9 +72,9 @@
 	// Tiptap always wraps text in paragraphs, headings, lists, or code blocks.
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(note.content || '');
 
-	// Action to manually apply highlight.js to code blocks that bypassed marked.js
-	function highlightBlocks(node: HTMLElement, _content: string) {
-		const applyHighlightAndFeatures = () => {
+	// Action to manually apply enhancements (highlighting, copy buttons, interactive checkboxes)
+	function enhanceProseContent(node: HTMLElement, _content: string) {
+		const applyEnhancements = () => {
 			if (!node) return;
 			// Find all bare <pre> elements (from Tiptap) and wrap them in .code-block-wrapper if not already
 			node.querySelectorAll('pre').forEach((pre) => {
@@ -129,16 +129,93 @@
 					}
 				}
 			});
+
+			// Attach change listeners to checkboxes
+			node.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+				const input = checkbox as HTMLInputElement;
+				// Ensure we only attach once
+				if (!input.hasAttribute('data-interactive-bound')) {
+					input.setAttribute('data-interactive-bound', 'true');
+					input.onchange = (e) => {
+						e.stopPropagation();
+						handleCheckboxChange(index, input.checked);
+					};
+					input.onclick = (e) => {
+						e.stopPropagation();
+					};
+				}
+			});
 		};
 
 		// Run initially after DOM settles
-		setTimeout(applyHighlightAndFeatures, 0);
+		setTimeout(applyEnhancements, 0);
 
 		return {
 			update() {
-				setTimeout(applyHighlightAndFeatures, 0);
+				setTimeout(applyEnhancements, 0);
 			}
 		};
+	}
+
+	async function handleCheckboxChange(index: number, isChecked: boolean) {
+		if (!note.content) return;
+
+		let newContent = note.content;
+
+		if (isHtmlContent) {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(newContent, 'text/html');
+			const checkboxes = doc.querySelectorAll('input[type="checkbox"]');
+
+			if (checkboxes[index]) {
+				const checkbox = checkboxes[index] as HTMLInputElement;
+				if (isChecked) {
+					checkbox.setAttribute('checked', 'checked');
+				} else {
+					checkbox.removeAttribute('checked');
+				}
+
+				const li = checkbox.closest('li[data-type="taskItem"]');
+				if (li) {
+					li.setAttribute('data-checked', isChecked ? 'true' : 'false');
+				}
+				newContent = doc.body.innerHTML;
+			}
+		} else {
+			// Markdown approach
+			let matchCount = 0;
+			// Match a markdown list item with checkbox like "- [ ] " or "* [x] "
+			newContent = newContent.replace(/^(\s*[-*+]\s+)\[([ xX])\]/gm, (match, prefix, state) => {
+				if (matchCount === index) {
+					matchCount++;
+					return `${prefix}[${isChecked ? 'x' : ' '}]`;
+				}
+				matchCount++;
+				return match;
+			});
+		}
+
+		if (newContent !== note.content) {
+			const oldContent = note.content;
+			note.content = newContent; // Optimistic update
+			try {
+				const response = await fetch(`/api/notes/${note.id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ content: newContent })
+				});
+				if (!response.ok) {
+					console.error('Failed to update check status');
+					note.content = oldContent; // Revert on failure
+				} else {
+					// Refresh list so other UI parts (like note view) show the right state
+					await invalidateAll();
+				}
+			} catch (e) {
+				console.error('Error updating checkbox', e);
+				note.content = oldContent; // Revert on failure
+			}
+		}
 	}
 
 	let interactionDebounce = false;
@@ -296,7 +373,7 @@
 			<h2 class="mb-2 text-xl font-bold">{note.title}</h2>
 		{/if}
 
-		<div class="prose text-base-content max-w-none" use:highlightBlocks={note.content}>
+		<div class="prose text-base-content max-w-none" use:enhanceProseContent={note.content}>
 			{#if isHtmlContent}
 				{@html note.content}
 			{:else}
