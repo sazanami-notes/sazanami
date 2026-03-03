@@ -123,8 +123,6 @@ ul[data-type='taskList'] li[data-checked='true']>div>p,
 	opacity: 0.6;
 }
 
-}
-
 /* Reset margins inside task list items to prevent vertical misalignment */
 .prose ul[data-type='taskList'] li>div>p,
 ul[data-type='taskList'] li>div>p {
@@ -148,7 +146,6 @@ ul[data-type='taskList'] li>div>p {
 .prose .code-block-wrapper {
 	position: relative;
 	margin: 1.5rem 0;
-}
 }
 
 /* Apply dark background to standard codeblocks in view mode as well */
