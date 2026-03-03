@@ -1,5 +1,7 @@
 @import 'tailwindcss';
+@import 'highlight.js/styles/github-dark.css';
 @plugin '@tailwindcss/typography';
+
 @plugin "daisyui" {
 	themes: false;
 }
@@ -72,4 +74,132 @@
 	--border: 2px;
 	--depth: 0;
 	--noise: 0;
+}
+
+/* Task list global styles */
+ul[data-type='taskList'],
+.prose ul[data-type='taskList'] {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+ul[data-type='taskList'] li,
+.prose ul[data-type='taskList'] li {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 0.25rem;
+	padding-left: 0;
+}
+
+ul[data-type='taskList'] li>label,
+.prose ul[data-type='taskList'] li>label {
+	flex: 0 0 auto;
+	margin-right: 0.5rem;
+	user-select: none;
+	display: flex;
+	align-items: center;
+	padding-top: 0;
+	margin-top: 0.1rem;
+}
+
+ul[data-type='taskList'] li>div,
+.prose ul[data-type='taskList'] li>div {
+	flex: 1 1 auto;
+}
+
+ul[data-type='taskList'] input[type='checkbox'],
+.prose ul[data-type='taskList'] input[type='checkbox'] {
+	cursor: pointer;
+	width: 1em;
+	/* Reduced from 1.25em */
+	height: 1em;
+	/* Reduced from 1.25em */
+	accent-color: var(--color-primary);
+	margin: 0;
+	/* reset typography margins */
+}
+
+ul[data-type='taskList'] li[data-checked='true']>div>p,
+.prose ul[data-type='taskList'] li[data-checked='true']>div>p {
+	text-decoration: line-through;
+	opacity: 0.6;
+}
+
+/* Reset margins inside task list items to prevent vertical misalignment */
+.prose ul[data-type='taskList'] li>div>p,
+ul[data-type='taskList'] li>div>p {
+	margin: 0 !important;
+}
+
+/* override daisyui prose margins and bullets */
+.prose ul[data-type='taskList'] {
+	list-style-type: none !important;
+	padding-left: 0 !important;
+}
+
+.prose ul[data-type='taskList']>li::before,
+.prose ul[data-type='taskList']>li::marker {
+	content: none !important;
+	display: none !important;
+}
+
+/* Code block language selector global styles */
+.code-block-wrapper,
+.prose .code-block-wrapper {
+	position: relative;
+	margin: 1.5rem 0;
+}
+
+/* Apply dark background to standard codeblocks in view mode as well */
+.code-block-wrapper pre,
+.prose .code-block-wrapper pre,
+.prose pre {
+	background: #0d1117 !important;
+	color: #c9d1d9 !important;
+	font-family: 'JetBrainsMono', 'Fira Code', monospace !important;
+	padding: 1rem !important;
+	border-radius: 0.5rem !important;
+	margin: 0 !important;
+	/* Wrapper handles margin for edit mode */
+}
+
+/* For prose pre without wrapper (view mode), we need some margin */
+.prose pre:not(.code-block-wrapper pre) {
+	margin: 1.5rem 0 !important;
+}
+
+.code-block-wrapper .code-block-language-select {
+	position: absolute;
+	right: 0.5rem;
+	top: 0.5rem;
+	font-size: 0.75rem;
+	padding: 2px 6px;
+	background-color: var(--color-base-200);
+	color: var(--color-base-content);
+	border: 1px solid var(--color-base-300);
+	border-radius: 4px;
+	opacity: 0.5;
+	transition: opacity 0.2s;
+	z-index: 10;
+}
+
+.code-block-wrapper:hover .code-block-language-select {
+	opacity: 1;
+}
+
+/* Hide language selector in view mode (prose without tiptap class) */
+.prose:not(.tiptap) .code-block-language-select {
+	display: none !important;
+}
+
+/* Adjust pre padding in view mode since select is hidden */
+.prose:not(.tiptap) .code-block-wrapper pre {
+	padding-top: 1rem !important;
+}
+
+/* hljs minimal overrides for layout */
+.hljs {
+	background: transparent !important;
+	padding: 0 !important;
 }

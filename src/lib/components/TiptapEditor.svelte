@@ -9,6 +9,12 @@
 	import { TableRow } from '@tiptap/extension-table-row';
 	import { TableCell } from '@tiptap/extension-table-cell';
 	import { TableHeader } from '@tiptap/extension-table-header';
+	import TaskItem from '@tiptap/extension-task-item';
+	import TaskList from '@tiptap/extension-task-list';
+	import { createLowlight, all } from 'lowlight';
+	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
+
+	const lowlight = createLowlight(all);
 
 	let {
 		content = $bindable(''),
@@ -30,7 +36,9 @@
 			element: element,
 			editable,
 			extensions: [
-				StarterKit,
+				StarterKit.configure({
+					codeBlock: false
+				}),
 				Placeholder.configure({
 					placeholder: placeholder
 				}),
@@ -43,7 +51,14 @@
 				}),
 				TableRow,
 				TableHeader,
-				TableCell
+				TableCell,
+				TaskList,
+				TaskItem.configure({
+					nested: true
+				}),
+				CodeBlockWithLanguage.configure({
+					lowlight
+				})
 			],
 			content: content,
 			editorProps: {
