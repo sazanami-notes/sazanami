@@ -86,7 +86,7 @@
 
 	{#if filteredNotes.length === 0}
 		<div class="py-12 text-center">
-			<p class="text-gray-500">メモが見つかりません</p>
+			<p class="opacity-50">メモが見つかりません</p>
 		</div>
 	{/if}
 </div>

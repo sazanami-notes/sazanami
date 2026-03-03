@@ -21,7 +21,7 @@
 			id="title"
 			name="title"
 			value={data.note.title}
-			class="focus:ring-primary focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2 text-2xl font-bold shadow-sm focus:outline-none"
+			class="border-base-300 focus:ring-primary focus:border-primary w-full rounded-md border px-3 py-2 text-2xl font-bold shadow-sm focus:outline-none"
 		/>
 	</div>
 

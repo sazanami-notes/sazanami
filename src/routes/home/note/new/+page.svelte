@@ -71,17 +71,17 @@
 </script>
 
 <div class="mx-auto max-w-4xl p-6">
-	<h1 class="mb-6 text-3xl font-bold text-gray-800">New Note</h1>
+	<h1 class="mb-6 text-3xl font-bold opacity-90">New Note</h1>
 	<form method="post" onsubmit={handleSubmit} class="space-y-6">
 		<div>
-			<label for="title" class="mb-2 block text-sm font-semibold text-gray-700">Title</label>
+			<label for="title" class="mb-2 block text-sm font-semibold opacity-70">Title</label>
 			<input
 				type="text"
 				id="title"
 				name="title"
 				bind:value={title}
 				placeholder="Enter note title..."
-				class="focus:border-primary focus:ring-primary block w-full rounded-md border-gray-300 px-4 py-2 shadow-sm sm:text-lg"
+				class="border-base-300 focus:border-primary focus:ring-primary block w-full rounded-md px-4 py-2 shadow-sm sm:text-lg"
 			/>
 		</div>
 
@@ -100,18 +100,13 @@
 				bind:checked={isPublic}
 				id="isPublic"
 				name="isPublic"
-				class="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+				class="text-primary focus:ring-primary border-base-300 h-4 w-4 rounded"
 			/>
-			<label for="isPublic" class="ml-2 block text-sm text-gray-900">Make this note public</label>
+			<label for="isPublic" class="ml-2 block text-sm opacity-90">Make this note public</label>
 		</div>
 
 		<div class="flex justify-end pt-4">
-			<button
-				type="submit"
-				class="bg-primary hover:bg-primary-focus focus-visible:outline-primary rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-			>
-				Create Note
-			</button>
+			<button type="submit" class="btn btn-primary"> Create Note </button>
 		</div>
 	</form>
 </div>

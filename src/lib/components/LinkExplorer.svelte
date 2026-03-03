@@ -14,7 +14,7 @@
 	<h2 class="mb-4 text-xl font-semibold">Link Explorer</h2>
 
 	{#if oneHopLinks.length === 0 && backlinks.length === 0 && twoHopLinks.length === 0}
-		<p class="text-gray-500">No links found.</p>
+		<p class="opacity-50">No links found.</p>
 	{/if}
 
 	{#if oneHopLinks.length > 0}
@@ -49,11 +49,11 @@
 
 	{#if twoHopLinks.length > 0}
 		<div>
-			<h3 class="mb-2 text-lg font-medium text-gray-700">2-Hop Links</h3>
+			<h3 class="mb-2 text-lg font-medium opacity-70">2-Hop Links</h3>
 			<ul class="list-inside list-disc space-y-1">
 				{#each twoHopLinks as link (link.id)}
 					<li>
-						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
+						<a href="/home/note/{link.id}" class="text-primary hover:underline">
 							{link.title}
 						</a>
 					</li>

@@ -23,16 +23,14 @@
 
 <div class="space-y-3">
 	<div class="flex items-center justify-between">
-		<h3 class="text-sm font-medium text-gray-700">タグでフィルター</h3>
+		<h3 class="text-sm font-medium opacity-70">タグでフィルター</h3>
 		{#if selectedTags.length > 0}
-			<button on:click={clearAll} class="text-sm text-blue-600 hover:text-blue-800">
-				クリア
-			</button>
+			<button on:click={clearAll} class="text-primary text-sm hover:opacity-80"> クリア </button>
 		{/if}
 	</div>
 
 	{#if allTags.length === 0}
-		<p class="text-sm text-gray-500">利用可能なタグがありません</p>
+		<p class="text-sm opacity-50">利用可能なタグがありません</p>
 	{:else}
 		<div class="flex flex-wrap gap-2">
 			{#each allTags as tag}
@@ -40,8 +38,8 @@
 					on:click={() => toggleTag(tag)}
 					class="rounded-full px-3 py-1 text-sm transition-colors
 						{selectedTags.includes(tag)
-						? 'bg-blue-600 text-white'
-						: 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+						? 'bg-primary text-primary-content'
+						: 'bg-base-200 text-base-content hover:bg-base-300'}"
 				>
 					{tag}
 				</button>

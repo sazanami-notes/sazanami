@@ -7,16 +7,16 @@
 </script>
 
 <div
-	class="bg-secondary text-secondary-content z-10 flex h-16 w-full shrink-0 items-center justify-around shadow-lg"
+	class="bg-secondary text-secondary-content z-10 flex h-16 w-full shrink-0 items-center justify-around shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-colors"
 >
 	<!-- Check / List (Notes Box) -->
 	<a
 		href="/home/box"
-		class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs {isActive(
+		class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs transition-colors {isActive(
 			'/home/box'
 		)
-			? 'text-primary-content bg-secondary-content/20 font-bold'
-			: 'text-secondary-content opacity-70 hover:opacity-100'}"
+			? 'bg-secondary-content/20 font-bold opacity-100'
+			: 'hover:bg-secondary-content/10 opacity-70 hover:opacity-100'}"
 		aria-label="Notes Box"
 	>
 		<!-- checklist -->
@@ -35,9 +35,11 @@
 	<!-- Document (Timeline / Home) -->
 	<a
 		href="/home"
-		class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs {isActive('/home')
-			? 'text-primary-content bg-secondary-content/20 font-bold'
-			: 'text-secondary-content opacity-70 hover:opacity-100'}"
+		class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs transition-colors {isActive(
+			'/home'
+		)
+			? 'bg-secondary-content/20 font-bold opacity-100'
+			: 'hover:bg-secondary-content/10 opacity-70 hover:opacity-100'}"
 		aria-label="Timeline"
 	>
 		<!-- description -->
@@ -58,11 +60,11 @@
 	<!-- Grid (Archive) -->
 	<a
 		href="/home/archive"
-		class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs {isActive(
+		class="flex h-full w-full flex-col items-center justify-center gap-1 text-xs transition-colors {isActive(
 			'/home/archive'
 		)
-			? 'text-primary-content bg-secondary-content/20 font-bold'
-			: 'text-secondary-content opacity-70 hover:opacity-100'}"
+			? 'bg-secondary-content/20 font-bold opacity-100'
+			: 'hover:bg-secondary-content/10 opacity-70 hover:opacity-100'}"
 		aria-label="Archive"
 	>
 		<!-- grid_view -->
@@ -82,7 +84,7 @@
 
 	<!-- Hashtag (Placeholder) -->
 	<button
-		class="text-secondary-content flex h-full w-full flex-col items-center justify-center gap-1 text-xs opacity-70 hover:opacity-100"
+		class="hover:bg-secondary-content/10 flex h-full w-full flex-col items-center justify-center gap-1 text-xs opacity-70 transition-colors hover:opacity-100"
 		aria-label="Tags"
 	>
 		<!-- tag -->
@@ -102,7 +104,7 @@
 
 	<!-- Bell (Placeholder) -->
 	<button
-		class="text-secondary-content flex h-full w-full flex-col items-center justify-center gap-1 text-xs opacity-70 hover:opacity-100"
+		class="hover:bg-secondary-content/10 flex h-full w-full flex-col items-center justify-center gap-1 text-xs opacity-70 transition-colors hover:opacity-100"
 		aria-label="Notifications"
 	>
 		<!-- notifications -->

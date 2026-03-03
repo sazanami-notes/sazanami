@@ -32,7 +32,7 @@
 		bind:value={searchQuery}
 		on:keydown={handleKeydown}
 		placeholder="メモを検索..."
-		class="block w-full rounded-lg border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-blue-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+		class="bg-base-100 border-base-300 focus:border-primary focus:ring-primary block w-full rounded-lg border py-2 pr-3 pl-10 leading-5 opacity-70 focus:opacity-100 focus:ring-1 focus:outline-none"
 	/>
 	{#if searchQuery}
 		<button
