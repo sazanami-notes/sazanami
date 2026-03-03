@@ -73,3 +73,80 @@
 	--depth: 0;
 	--noise: 0;
 }
+
+/* Task list global styles */
+ul[data-type='taskList'], .prose ul[data-type='taskList'] {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+ul[data-type='taskList'] li, .prose ul[data-type='taskList'] li {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 0.25rem;
+	padding-left: 0;
+}
+ul[data-type='taskList'] li > label, .prose ul[data-type='taskList'] li > label {
+	flex: 0 0 auto;
+	margin-right: 0.5rem;
+	user-select: none;
+	display: flex;
+	align-items: center;
+	padding-top: 0.1rem;
+}
+ul[data-type='taskList'] li > div, .prose ul[data-type='taskList'] li > div {
+	flex: 1 1 auto;
+}
+ul[data-type='taskList'] input[type='checkbox'], .prose ul[data-type='taskList'] input[type='checkbox'] {
+	cursor: pointer;
+	width: 1.25em;
+	height: 1.25em;
+	accent-color: var(--color-primary);
+	margin: 0; /* reset typography margins */
+}
+ul[data-type='taskList'] li[data-checked='true'] > div > p, .prose ul[data-type='taskList'] li[data-checked='true'] > div > p {
+	text-decoration: line-through;
+	opacity: 0.6;
+}
+
+/* override daisyui prose margins */
+.prose ul[data-type='taskList'] > li::before {
+	content: none;
+}
+
+/* Code block language selector global styles */
+.code-block-wrapper, .prose .code-block-wrapper {
+	position: relative;
+	margin: 1.5rem 0;
+}
+.code-block-wrapper pre, .prose .code-block-wrapper pre {
+	background: #0d1117 !important;
+	color: #c9d1d9 !important;
+	font-family: 'JetBrainsMono', 'Fira Code', monospace;
+	padding: 1rem !important;
+	border-radius: 0.5rem;
+	margin: 0 !important; /* Wrapper handles margin */
+}
+.code-block-wrapper .code-block-language-select {
+	position: absolute;
+	right: 0.5rem;
+	top: 0.5rem;
+	font-size: 0.75rem;
+	padding: 2px 6px;
+	background-color: var(--color-base-200);
+	color: var(--color-base-content);
+	border: 1px solid var(--color-base-300);
+	border-radius: 4px;
+	opacity: 0.5;
+	transition: opacity 0.2s;
+	z-index: 10;
+}
+.code-block-wrapper:hover .code-block-language-select {
+	opacity: 1;
+}
+
+/* hljs minimal overrides for layout */
+.hljs {
+	background: transparent !important;
+	padding: 0 !important;
+}
