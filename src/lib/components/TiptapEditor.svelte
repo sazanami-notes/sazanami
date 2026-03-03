@@ -13,7 +13,6 @@
 	import TaskList from '@tiptap/extension-task-list';
 	import { createLowlight, all } from 'lowlight';
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
-	import 'highlight.js/styles/github-dark.css';
 
 	const lowlight = createLowlight(all);
 

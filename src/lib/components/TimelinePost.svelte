@@ -7,7 +7,6 @@
 	import { markedHighlight } from 'marked-highlight';
 	import { createEventDispatcher, onMount } from 'svelte';
 	import hljs from 'highlight.js';
-	import 'highlight.js/styles/github-dark.css';
 
 	export let note: Note & { tags: string[] };
 	export let mode: 'timeline' | 'archive' | 'trash' = 'timeline';
