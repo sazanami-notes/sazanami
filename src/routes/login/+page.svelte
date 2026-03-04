@@ -18,6 +18,7 @@
 	let isLoading = $state(false);
 	let showPasswordModal = $state(false);
 	let showMagicLinkModal = $state(false);
+	let showForgotPasswordModal = $state(false);
 
 	onMount(() => {
 		if (queryParams.get('error') === 'invalid_token') {
@@ -97,6 +98,7 @@
 		message = null;
 		showPasswordModal = false;
 		showMagicLinkModal = false;
+		showForgotPasswordModal = false;
 	}
 
 	const signInWithMagicLink = async () => {
@@ -161,6 +163,37 @@
 			}
 		} catch (e) {
 			console.error('Signin error', e);
+			error = '予期せぬエラーが発生しました。';
+		} finally {
+			isLoading = false;
+		}
+	};
+
+	const forgotPassword = async () => {
+		if (isLoading) return;
+		if (!email) {
+			error = 'メールアドレスを入力してください。';
+			return;
+		}
+
+		isLoading = true;
+		error = null;
+		message = null;
+
+		try {
+			const { error: forgotError } = await authClient.emailPassword.forgetPassword({
+				email,
+				redirectTo: '/reset-password'
+			});
+
+			if (forgotError) {
+				error = forgotError.message || 'パスワード再設定メールの送信に失敗しました。';
+			} else {
+				message = 'パスワード再設定用のメールを送信しました。';
+				showForgotPasswordModal = false;
+			}
+		} catch (e) {
+			console.error('Forgot password error:', e);
 			error = '予期せぬエラーが発生しました。';
 		} finally {
 			isLoading = false;
@@ -377,7 +410,7 @@
 						disabled={isLoading}
 					/>
 				</div>
-				<div class="form-control mb-6">
+				<div class="form-control mb-2">
 					<label class="label" for="password"><span class="label-text">Password</span></label>
 					<input
 						id="password"
@@ -389,6 +422,22 @@
 						disabled={isLoading}
 					/>
 				</div>
+				{#if mode === 'login'}
+					<div class="mb-6 flex justify-end">
+						<button
+							type="button"
+							class="link link-primary text-xs"
+							onclick={() => {
+								showPasswordModal = false;
+								showForgotPasswordModal = true;
+							}}
+						>
+							パスワードを忘れた場合
+						</button>
+					</div>
+				{:else}
+					<div class="mb-6"></div>
+				{/if}
 				<div class="modal-action">
 					<button type="submit" class="btn btn-primary w-full" disabled={isLoading}>
 						{#if isLoading}<span class="loading loading-spinner"></span>{/if}
@@ -399,6 +448,53 @@
 		</div>
 		<form method="dialog" class="modal-backdrop">
 			<button onclick={() => (showPasswordModal = false)}>close</button>
+		</form>
+	</dialog>
+{/if}
+
+{#if showForgotPasswordModal}
+	<dialog class="modal modal-open">
+		<div class="modal-box">
+			<form method="dialog">
+				<button
+					class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2"
+					onclick={() => (showForgotPasswordModal = false)}>✕</button
+				>
+			</form>
+			<h3 class="mb-4 text-lg font-bold">パスワードを忘れた場合</h3>
+			{#if error}
+				<div role="alert" class="alert alert-error mb-4">
+					<span class="text-sm">{error}</span>
+				</div>
+			{/if}
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					forgotPassword();
+				}}
+			>
+				<div class="form-control mb-6">
+					<label class="label" for="email_forgot"><span class="label-text">Email</span></label>
+					<input
+						id="email_forgot"
+						name="email"
+						type="email"
+						class="input input-bordered w-full"
+						bind:value={email}
+						required
+						disabled={isLoading}
+					/>
+				</div>
+				<div class="modal-action">
+					<button type="submit" class="btn btn-primary w-full" disabled={isLoading}>
+						{#if isLoading}<span class="loading loading-spinner"></span>{/if}
+						再設定メールを送信
+					</button>
+				</div>
+			</form>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button onclick={() => (showForgotPasswordModal = false)}>close</button>
 		</form>
 	</dialog>
 {/if}
