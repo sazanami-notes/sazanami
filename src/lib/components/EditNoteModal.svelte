@@ -13,12 +13,21 @@
 	let dialog: HTMLDialogElement;
 	let title = $state('');
 	let content = $state('');
+	let lastNoteId = $state<string | null>(null);
+
+	$effect.pre(() => {
+		if (note && note.id !== lastNoteId) {
+			title = note.title;
+			content = note.content;
+			lastNoteId = note.id;
+		} else if (!note) {
+			lastNoteId = null;
+		}
+	});
 
 	$effect(() => {
 		if (note) {
-			title = note.title;
-			content = note.content;
-			if (!dialog.open) {
+			if (dialog && !dialog.open) {
 				dialog.showModal();
 			}
 		} else {
