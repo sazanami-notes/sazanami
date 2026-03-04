@@ -259,10 +259,7 @@
 		element.style.transform = 'translateX(0)';
 		isSwiping = false;
 
-		if (Math.abs(diff) < 10) {
-			// It's a tap, not a swipe.
-			handleInteraction();
-		} else if (mode === 'timeline') {
+		if (mode === 'timeline') {
 			if (diff > swipeThreshold) {
 				// Right swipe
 				sendToBox();
@@ -344,15 +341,10 @@
 
 <div
 	bind:this={element}
-	class="card bg-base-100 cursor-pointer shadow-md transition-transform duration-200 ease-in-out select-none"
+	class="card bg-base-100 shadow-md transition-transform duration-200 ease-in-out select-none"
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
-	onclick={handleInteraction}
-	onkeydown={(e) => e.key === 'Enter' && handleInteraction()}
-	role="button"
-	tabindex="0"
-	aria-label="ノートを編集"
 >
 	<div class="card-body p-4">
 		{#if note.isPinned}
@@ -385,6 +377,7 @@
 		<div class="text-base-content/60 mt-4 flex items-center justify-between text-xs">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
+				<button class="btn btn-ghost btn-xs" onclick={handleInteraction}> Edit </button>
 				{#if mode === 'timeline'}
 					<button
 						class="btn btn-ghost btn-xs"
