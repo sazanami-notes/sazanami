@@ -4,7 +4,7 @@ import { betterAuth } from 'better-auth';
 import { sveltekitCookies } from 'better-auth/svelte-kit'; // sveltekitCookiesプラグインをインポート
 import { magicLink, twoFactor, username } from 'better-auth/plugins';
 import { passkey } from '@better-auth/passkey';
-import { sendVerificationEmail, sendMagicLink } from './email';
+import { sendVerificationEmail, sendMagicLink, sendResetPasswordEmail } from './email';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { env } from '$env/dynamic/private';
 import { db } from './db/connection';
@@ -15,7 +15,14 @@ export const auth = betterAuth({
 	appName: 'Sazanami',
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: false
+		requireEmailVerification: false,
+		sendResetPassword: async ({ user, url }) => {
+			try {
+				await sendResetPasswordEmail(user, url);
+			} catch (e) {
+				console.error('Failed to send reset password email:', e);
+			}
+		}
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url }) => {

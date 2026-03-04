@@ -457,44 +457,85 @@
 </div>
 
 <div class="mt-8">
-	<h2 class="text-xl font-semibold">パスワード変更</h2>
+	<h2 class="text-xl font-semibold">パスワード設定</h2>
+
 	{#if data.form?.message}
 		<div class="alert alert-info mt-4">
 			<p>{data.form.message}</p>
 		</div>
 	{/if}
-	<form method="POST" action="?/changePassword" class="mt-2 space-y-4">
-		<div>
-			<label for="currentPassword" class="block text-sm font-medium">現在のパスワード</label>
-			<input
-				type="password"
-				id="currentPassword"
-				name="currentPassword"
-				class="input input-bordered mt-1 w-full"
-				required
-			/>
+
+	<div class="mt-4">
+		<div class="flex items-center gap-4">
+			<span class="font-medium">状態:</span>
+			{#if data.hasPassword}
+				<span class="badge badge-success">設定済み</span>
+			{:else}
+				<span class="badge badge-ghost">未設定</span>
+			{/if}
 		</div>
-		<div>
-			<label for="newPassword" class="block text-sm font-medium">新しいパスワード</label>
-			<input
-				type="password"
-				id="newPassword"
-				name="newPassword"
-				class="input input-bordered mt-1 w-full"
-				required
-			/>
+
+		<div class="mt-4">
+			{#if data.hasPassword}
+				<div class="collapse collapse-arrow bg-base-200">
+					<input type="checkbox" />
+					<div class="collapse-title text-sm font-medium">パスワードを変更する</div>
+					<div class="collapse-content">
+						<form method="POST" action="?/changePassword" class="space-y-4">
+							<div>
+								<label for="currentPassword" class="block text-sm font-medium">現在のパスワード</label>
+								<input
+									type="password"
+									id="currentPassword"
+									name="currentPassword"
+									class="input input-bordered mt-1 w-full"
+									required
+								/>
+							</div>
+							<div>
+								<label for="newPassword" class="block text-sm font-medium">新しいパスワード</label>
+								<input
+									type="password"
+									id="newPassword"
+									name="newPassword"
+									class="input input-bordered mt-1 w-full"
+									required
+								/>
+							</div>
+							<div>
+								<label for="confirmPassword" class="block text-sm font-medium"
+									>新しいパスワード（確認）</label
+								>
+								<input
+									type="password"
+									id="confirmPassword"
+									name="confirmPassword"
+									class="input input-bordered mt-1 w-full"
+									required
+								/>
+							</div>
+							<button type="submit" class="btn btn-primary">パスワードを変更</button>
+						</form>
+
+						<div class="divider">または</div>
+
+						<form method="POST" action="?/resetPasswordDirect">
+							<p class="mb-2 text-sm">
+								現在のパスワードを忘れた場合は、再設定ページへ移動してください。
+							</p>
+							<button type="submit" class="btn btn-outline btn-sm">パスワードを再設定する</button>
+						</form>
+					</div>
+				</div>
+			{:else}
+				<form method="POST" action="?/resetPasswordDirect">
+					<p class="mb-4 text-sm text-gray-600">
+						マジックリンク等でログインしており、パスワードが設定されていません。<br />
+						以下のボタンからパスワード設定画面へ移動できます。
+					</p>
+					<button type="submit" class="btn btn-primary">パスワードを設定する</button>
+				</form>
+			{/if}
 		</div>
-		<div>
-			<label for="confirmPassword" class="block text-sm font-medium">新しいパスワード（確認）</label
-			>
-			<input
-				type="password"
-				id="confirmPassword"
-				name="confirmPassword"
-				class="input input-bordered mt-1 w-full"
-				required
-			/>
-		</div>
-		<button type="submit" class="btn btn-primary">パスワードを変更</button>
-	</form>
+	</div>
 </div>

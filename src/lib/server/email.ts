@@ -83,4 +83,24 @@ export async function sendMagicLink({ email, url }: { email: string; url: string
 	return sendEmail(email, subject, text, html);
 }
 
+export async function sendResetPasswordEmail(user: { name: string; email: string }, url: string) {
+	const username = user.name || '';
+	const subject = '【Sazanami】パスワードの再設定';
+	const text =
+		`こんにちは ${username}。\n` +
+		`パスワードを再設定するには、以下のリンクをクリックしてください：\n` +
+		`${url}\n` +
+		`もしこの操作に心当たりがない場合は、このメールを無視してください。`;
+
+	const html = `
+        <p>こんにちは ${username}。</p>
+        <p>以下のボタンをクリックしてパスワードを再設定してください。</p>
+        <p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">パスワードを再設定する</a></p>
+        <p>リンクが機能しない場合はこちらの URL をコピーしてブラウザに貼り付けてください：</p>
+        <p>${url}</p>
+        <p>もしこの操作に心当たりがない場合は、このメールを無視してください。</p>`;
+
+	return sendEmail(user.email, subject, text, html);
+}
+
 export default transporter;
