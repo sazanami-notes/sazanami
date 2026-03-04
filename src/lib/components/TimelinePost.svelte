@@ -240,6 +240,7 @@
 
 	function handleTouchStart(e: TouchEvent) {
 		touchStartX = e.touches[0].clientX;
+		touchCurrentX = touchStartX;
 		isSwiping = true;
 	}
 
