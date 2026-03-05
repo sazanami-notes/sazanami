@@ -120,8 +120,10 @@ export const POST: RequestHandler = async ({ request }) => {
 			id,
 			title,
 			content,
-			tags: tagNames
-		} = body as { id?: string; title?: string; content?: string; tags?: string[] };
+			tags: tagNames,
+			skipTimeline,
+			status
+		} = body as { id?: string; title?: string; content?: string; tags?: string[]; skipTimeline?: boolean; status?: string };
 
 		// IDのバリデーション
 		let noteId: string;
@@ -159,16 +161,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			content: noteContent,
 			createdAt: now,
 			updatedAt: now,
-			isPublic: false
+			isPublic: false,
+			...(status ? { status } : {})
 		});
 
-		// タイムラインイベントを記録
-		await db.insert(timeline).values({
-			userId: session.session.userId,
-			noteId: noteId,
-			type: 'note_created',
-			createdAt: now
-		});
+		// タイムラインイベントを記録（フラグでスキップ可能）
+		if (!skipTimeline) {
+			await db.insert(timeline).values({
+				userId: session.session.userId,
+				noteId: noteId,
+				type: 'note_created',
+				createdAt: now
+			});
+		}
 
 		// タグの処理
 		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {

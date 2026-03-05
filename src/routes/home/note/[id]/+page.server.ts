@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getNoteById, updateNote, updateNoteLinks } from '$lib/server/db';
-import { error, redirect } from '@sveltejs/kit';
+import { error, redirect, isRedirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, locals, fetch }) => {
 	if (!locals.user) {
@@ -57,13 +57,18 @@ export const actions: Actions = {
 				content
 			});
 
-			// After updating the note, update its links
-			await updateNoteLinks(existingNote.id, content, locals.user.id);
+			try {
+				// After updating the note, update its links
+				await updateNoteLinks(existingNote.id, content, locals.user.id);
+			} catch (linkError) {
+				console.error('Failed to update note links, but note was saved:', linkError);
+				// We don't throw here to allow the note save to succeed even if link parsing fails
+			}
 
 			// Redirect to the updated note page
 			throw redirect(303, `/home/note/${existingNote.id}`);
 		} catch (err) {
-			if (err instanceof Error && 'status' in err && err.status === 303) {
+			if (isRedirect(err)) {
 				throw err; // Re-throw redirects
 			}
 			console.error('Error updating note:', err);

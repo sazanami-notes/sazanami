@@ -13,8 +13,49 @@
 	import TaskList from '@tiptap/extension-task-list';
 	import { createLowlight, all } from 'lowlight';
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
+	// @ts-expect-error: turndown types are sometimes structurally incompatible
+	import TurndownService from 'turndown';
+	import { marked } from 'marked';
 
 	const lowlight = createLowlight(all);
+
+	const turndownService = new TurndownService({
+		headingStyle: 'atx',
+		codeBlockStyle: 'fenced'
+	});
+
+	turndownService.addRule('listItemParagraph', {
+		filter: 'p',
+		replacement: function (content: string, node: any) {
+			const isInsideList = node.parentNode && node.parentNode.nodeName === 'LI';
+			if (isInsideList) {
+				return content;
+			}
+			return '\n\n' + content + '\n\n';
+		}
+	});
+
+	function convertHtmlToMarkdown(html: string) {
+		let markdownBody = turndownService.turndown(html || '');
+		const lines = markdownBody.split('\n');
+		const cleanedLines = [];
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const isBlank = line.trim() === '';
+			if (isBlank && i > 0 && i < lines.length - 1) {
+				const prevLine = lines[i - 1];
+				const nextLine = lines[i + 1];
+				const prevIsListOrIndent =
+					/^\s*(?:[-*+]|\d+\.)\s/.test(prevLine) || /^\s{2,}/.test(prevLine);
+				const nextIsList = /^\s*(?:[-*+]|\d+\.)\s/.test(nextLine);
+				if (prevIsListOrIndent && nextIsList) {
+					continue;
+				}
+			}
+			cleanedLines.push(line);
+		}
+		return cleanedLines.join('\n');
+	}
 
 	let {
 		content = $bindable(''),
@@ -25,57 +66,68 @@
 		content?: string;
 		editable?: boolean;
 		placeholder?: string;
-		onchange?: (event: CustomEvent<{ markdown: string }>) => void;
+		onchange?: (event: { markdown: string }) => void;
 	}>();
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
 
 	onMount(() => {
-		editor = new Editor({
-			element: element,
-			editable,
-			extensions: [
-				StarterKit.configure({
-					codeBlock: false
-				}),
-				Placeholder.configure({
-					placeholder: placeholder
-				}),
-				Link.configure({
-					openOnClick: false
-				}),
-				Image,
-				Table.configure({
-					resizable: true
-				}),
-				TableRow,
-				TableHeader,
-				TableCell,
-				TaskList,
-				TaskItem.configure({
-					nested: true
-				}),
-				CodeBlockWithLanguage.configure({
-					lowlight
-				})
-			],
-			content: content,
-			editorProps: {
-				attributes: {
-					class:
-						'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-xl focus:outline-none max-w-none min-h-[300px] p-4'
+		try {
+			editor = new Editor({
+				element: element,
+				editable,
+				extensions: [
+					StarterKit.configure({
+						codeBlock: false
+					}),
+					Placeholder.configure({
+						placeholder: placeholder
+					}),
+					Link.configure({
+						openOnClick: false
+					}),
+					Image,
+					Table.configure({
+						resizable: true
+					}),
+					TableRow,
+					TableHeader,
+					TableCell,
+					TaskList,
+					TaskItem.configure({
+						nested: true
+					}),
+					CodeBlockWithLanguage.configure({
+						lowlight
+					})
+				],
+				content: marked.parse(content || ''), // MarkdownからHTMLに変換して初期化
+				editorProps: {
+					attributes: {
+						class:
+							'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-xl focus:outline-none max-w-none min-h-[300px] p-4'
+					}
+				},
+				onUpdate: ({ editor: e }) => {
+					const html = e.getHTML();
+					// TurndownでMarkdownに変換し、不要な空行を除去して返す
+					const md = convertHtmlToMarkdown(html);
+					content = md; // コンポーネント外の `bind:content` に変更を通知する
+					if (onchange) {
+						onchange({ markdown: md });
+					}
 				}
-			},
-			onUpdate: ({ editor: e }) => {
-				const html = e.getHTML();
-				content = html;
-				if (onchange) {
-					onchange(new CustomEvent('change', { detail: { markdown: html } }));
-				}
-			}
-		});
+			});
+		} catch (error: any) {
+			console.error('Editor init error:', error);
+			alert('エディタの読み込みに失敗しました: ' + error.message);
+		}
 	});
+
+	export function getMarkdownContent() {
+		return editor ? convertHtmlToMarkdown(editor.getHTML()) : content;
+	}
 
 	onDestroy(() => {
 		if (editor) {
@@ -92,14 +144,16 @@
 	let isUpdatingInternal = false;
 
 	$effect(() => {
-		if (editor && content !== undefined) {
-			const currentContent = editor.getHTML();
-			if (content !== currentContent && !isUpdatingInternal) {
+		if (editor && content !== undefined && !isUpdatingInternal) {
+			const mdFromEditor = convertHtmlToMarkdown(editor.getHTML());
+			if (content !== mdFromEditor) {
 				isUpdatingInternal = true;
-				editor.commands.setContent(content);
+				// Promiseが返るmarked.parseを扱うため少し強引だが同期的に処理
+				const htmlContent = marked.parse(content) as string;
+				editor.commands.setContent(htmlContent);
 				setTimeout(() => {
 					isUpdatingInternal = false;
-				}, 0);
+				}, 10);
 			}
 		}
 	});

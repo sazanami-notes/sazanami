@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 
 	// Use page store instead of data prop
@@ -10,9 +11,60 @@
 	let content = $state('');
 	let isPublic = $state(false);
 
-	const handleContentChange = (value: string) => {
-		content = value;
+	let saveTimeout: ReturnType<typeof setTimeout>;
+	let isCreating = $state(false);
+
+	let urlStatus = $page.url.searchParams.get('status') || 'inbox';
+
+	const handleContentChange = (value: { markdown: string }) => {
+		// handleContentChangeはMarkdownを受け取るようにすでにTiptapEditorが修正されている
+		content = value.markdown;
 	};
+
+	// ユーザーが入力し始めたら自動で新規作成して編集画面へ遷移する
+	$effect(() => {
+		const currentTitle = title.trim();
+		const currentContent = content.trim();
+
+		// タイトルかコンテンツのどちらかに入力があれば自動作成をトリガー
+		if (currentTitle || currentContent) {
+			clearTimeout(saveTimeout);
+			saveTimeout = setTimeout(async () => {
+				if (isCreating) return;
+				isCreating = true;
+
+				try {
+					console.log('Auto-creating new note...');
+					const response = await fetch('/api/notes', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						// 新規作成時、タイムラインには載せる設定（skipTimeline: false はデフォルト）
+						body: JSON.stringify({
+							title: currentTitle || 'Untitled Note',
+							content: currentContent,
+							isPublic,
+							skipTimeline: urlStatus === 'box',
+							status: urlStatus
+						})
+					});
+
+					if (response.ok) {
+						const newNote = await response.json();
+						// 作成成功したら、そのノートの編集ページにシームレスに遷移する
+						if (newNote && newNote.id) {
+							goto(`/home/note/${newNote.id}`, { replaceState: true });
+						}
+					} else {
+						console.error('Failed to auto-create note', await response.text());
+						isCreating = false; // エラー時は再試行できるようにフラグを戻す
+					}
+				} catch (error) {
+					console.error('Error auto-creating note', error);
+					isCreating = false;
+				}
+			}, 1000); // 1秒 debounce
+		}
+	});
 
 	const handleSubmit = async (event: SubmitEvent) => {
 		event.preventDefault();
@@ -88,13 +140,18 @@
 		<div>
 			<label for="content" class="mb-2 block text-sm font-semibold text-gray-700">Content</label>
 			<div class="min-h-[400px] w-full">
-				<TiptapEditor bind:content placeholder="Start writing your note here..." />
+				<TiptapEditor
+					{content}
+					onchange={handleContentChange}
+					placeholder="Start writing your note here..."
+				/>
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
 			<textarea id="content" name="content" class="hidden">{content}</textarea>
 		</div>
 
 		<div class="flex items-center">
+			<input type="hidden" name="status" value={urlStatus} />
 			<input
 				type="checkbox"
 				bind:checked={isPublic}
