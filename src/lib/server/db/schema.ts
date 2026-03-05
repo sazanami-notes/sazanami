@@ -136,6 +136,7 @@ export const themes = sqliteTable('themes', {
 	accentColor: text('accent_color'),
 	backgroundColor: text('background_color'),
 	textColor: text('text_color'),
+	config: text('config'),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
 		.$defaultFn(() => Date.now()),

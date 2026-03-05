@@ -25,6 +25,21 @@
 	let newAccentColor = '#37cdbe';
 	let newBackgroundColor = '#ffffff';
 	let newTextColor = '#1f2937';
+
+	let importThemeName = '';
+	let importThemeConfig = '';
+
+	function handleExport(theme: any) {
+		const config = theme.config ? JSON.parse(theme.config) : {
+			primary: theme.primaryColor,
+			secondary: theme.secondaryColor,
+			accent: theme.accentColor,
+			'base-100': theme.backgroundColor,
+			'base-content': theme.textColor,
+		};
+		navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+		alert('JSONをクリップボードにコピーしました。');
+	}
 </script>
 
 <h1 class="mb-6 text-2xl font-bold">外観設定 (Appearance)</h1>
@@ -164,6 +179,7 @@
 								></div>
 							</div>
 							<div class="card-actions mt-2 justify-end">
+								<button class="btn btn-ghost text-primary btn-xs" on:click={() => handleExport(theme)}>Export</button>
 								<form method="POST" action="?/deleteTheme" use:enhance>
 									<input type="hidden" name="themeId" value={theme.id} />
 									<button
@@ -308,6 +324,45 @@
 
 				<div class="pt-2">
 					<button class="btn btn-secondary" disabled={!newThemeName.trim()}>テーマを作成</button>
+				</div>
+			</form>
+		</div>
+
+		<!-- テーマインポートフォーム -->
+		<div class="space-y-4 rounded-lg border p-6">
+			<h3 class="mb-4 text-lg font-bold">Daisy UI JSONからインポート</h3>
+			<form method="POST" action="?/importTheme" use:enhance class="space-y-6">
+				<div class="form-control w-full max-w-md">
+					<label class="label" for="importName">
+						<span class="label-text font-medium">テーマ名 <span class="text-error">*</span></span>
+					</label>
+					<input
+						type="text"
+						id="importName"
+						name="name"
+						bind:value={importThemeName}
+						placeholder="例: インポートしたテーマ"
+						class="input input-bordered w-full"
+						required
+					/>
+				</div>
+
+				<div class="form-control w-full">
+					<label class="label" for="importConfig">
+						<span class="label-text font-medium">JSON設定 <span class="text-error">*</span></span>
+					</label>
+					<textarea
+						id="importConfig"
+						name="config"
+						bind:value={importThemeConfig}
+						placeholder='{"primary": "#570df8", ...}'
+						class="textarea textarea-bordered h-32 w-full font-mono text-sm"
+						required
+					></textarea>
+				</div>
+
+				<div class="pt-2">
+					<button class="btn btn-secondary" disabled={!importThemeName.trim() || !importThemeConfig.trim()}>テーマをインポート</button>
 				</div>
 			</form>
 		</div>
