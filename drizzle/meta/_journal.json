@@ -8,6 +8,13 @@
       "when": 1771916237068,
       "tag": "0000_awesome_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772678698906,
+      "tag": "0001_melted_saracen",
+      "breakpoints": true
     }
   ]
 }

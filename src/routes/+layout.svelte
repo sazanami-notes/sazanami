@@ -80,6 +80,7 @@
 	// テーマ適用ロジック
 	let activeThemeName = 'sazanami-days';
 	let activeCustomTheme: any = null;
+	let customStyleVariables: Record<string, string> = {};
 
 	$: {
 		if (typeof window !== 'undefined') {
@@ -95,13 +96,62 @@
 			if (targetThemeId === 'sazanami-days' || targetThemeId === 'sazanami-night') {
 				activeThemeName = targetThemeId;
 				activeCustomTheme = null;
+				customStyleVariables = {};
 			} else {
 				// マイテーマの場合
 				activeThemeName = isDarkMode ? 'sazanami-night' : 'sazanami-days'; // ベーステーマ
 				activeCustomTheme = data.userThemes?.find((t: any) => t.id === targetThemeId) || null;
+
+				if (activeCustomTheme) {
+					const variables: Record<string, string> = {};
+					if (activeCustomTheme.config) {
+						try {
+							const config = JSON.parse(activeCustomTheme.config);
+							Object.entries(config).forEach(([key, value]) => {
+								const cssKey = key.startsWith('--') ? key : `--color-${key}`;
+								variables[cssKey] = String(value);
+							});
+						} catch (e) {
+							console.error('Failed to parse theme config:', e);
+						}
+					} else {
+						// Fallback to individual colors
+						if (activeCustomTheme.primaryColor) variables['--color-primary'] = activeCustomTheme.primaryColor;
+						if (activeCustomTheme.secondaryColor) variables['--color-secondary'] = activeCustomTheme.secondaryColor;
+						if (activeCustomTheme.accentColor) variables['--color-accent'] = activeCustomTheme.accentColor;
+						if (activeCustomTheme.backgroundColor) variables['--color-base-100'] = activeCustomTheme.backgroundColor;
+						if (activeCustomTheme.textColor) variables['--color-base-content'] = activeCustomTheme.textColor;
+					}
+					customStyleVariables = variables;
+				} else {
+					customStyleVariables = {};
+				}
 			}
 
 			document.documentElement.setAttribute('data-theme', activeThemeName);
+
+			// セキュアにスタイルを適用 (CSS変数を直接セット)
+			// 前のカスタム変数をクリアするために一旦リセットするのが理想だが、
+			// ここでは data-theme 切り替えでリセットされることを期待するか、
+			// 差分だけ更新するか。
+			// インラインスタイルとしてまとめて設定するのが最も確実かつクリーン。
+			if (typeof document !== 'undefined') {
+				let styleElement = document.getElementById('custom-theme-styles');
+				if (!styleElement) {
+					styleElement = document.createElement('style');
+					styleElement.id = 'custom-theme-styles';
+					document.head.appendChild(styleElement);
+				}
+				const cssText = Object.entries(customStyleVariables)
+					.map(([key, value]) => {
+						// CSSインジェクション対策: keyとvalueから特殊文字（; { } \）を除去
+						const safeKey = key.replace(/[;{}\\]/g, '');
+						const safeValue = value.replace(/[;{}\\]/g, '');
+						return `${safeKey}: ${safeValue} !important;`;
+					})
+					.join(' ');
+				styleElement.textContent = `:root { ${cssText} }`;
+			}
 		}
 	}
 
@@ -187,17 +237,6 @@
 		</style>
 	{/if}
 
-	{#if activeCustomTheme}
-		<style>
-			:root {
-				--color-primary: {activeCustomTheme.primaryColor} !important;
-				--color-secondary: {activeCustomTheme.secondaryColor} !important;
-				--color-accent: {activeCustomTheme.accentColor} !important;
-				--color-base-100: {activeCustomTheme.backgroundColor} !important;
-				--color-base-content: {activeCustomTheme.textColor} !important;
-			}
-		</style>
-	{/if}
 </svelte:head>
 
 <div class="drawer">

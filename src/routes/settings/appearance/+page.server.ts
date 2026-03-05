@@ -96,6 +96,7 @@ export const actions: Actions = {
 		const accentColor = formData.get('accentColor') as string | null;
 		const backgroundColor = formData.get('backgroundColor') as string | null;
 		const textColor = formData.get('textColor') as string | null;
+		const config = formData.get('config') as string | null;
 
 		try {
 			await db.insert(themes).values({
@@ -105,7 +106,8 @@ export const actions: Actions = {
 				secondaryColor: secondaryColor || null,
 				accentColor: accentColor || null,
 				backgroundColor: backgroundColor || null,
-				textColor: textColor || null
+				textColor: textColor || null,
+				config: config || null
 			});
 
 			return { success: true, message: '新しいテーマを作成しました。' };
@@ -167,6 +169,63 @@ export const actions: Actions = {
 		} catch (e) {
 			console.error('Failed to delete theme:', e);
 			return fail(500, { message: 'テーマの削除に失敗しました。' });
+		}
+	},
+
+	importTheme: async ({ request }) => {
+		const session = await auth.api.getSession({
+			headers: request.headers
+		});
+
+		if (!session) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const formData = await request.formData();
+		const name = formData.get('name') as string;
+		const configJson = formData.get('config') as string;
+
+		if (!name || !name.trim()) {
+			return fail(400, { message: 'テーマ名を入力してください。' });
+		}
+
+		if (!configJson || !configJson.trim()) {
+			return fail(400, { message: 'JSON設定を入力してください。' });
+		}
+
+		try {
+			const config = JSON.parse(configJson);
+			// Daisy UI JSON形式かどうかの簡単なチェック (キーがいくつか存在するか)
+			const essentialKeys = ['primary', 'secondary', 'accent', 'base-100'];
+			const hasEssentialKeys = essentialKeys.some((key) => key in config || `--color-${key}` in config);
+
+			if (!hasEssentialKeys) {
+				// 形式が少し違う可能性もあるので警告しつつ進めるか、厳密にするか。
+				// ここでは最低限のバリデーションとする。
+			}
+
+			// JSONから主要な色を抽出して、互換性のために保存する
+			const primary = config.primary || config['--color-primary'];
+			const secondary = config.secondary || config['--color-secondary'];
+			const accent = config.accent || config['--color-accent'];
+			const background = config['base-100'] || config['--color-base-100'];
+			const text = config['base-content'] || config['--color-base-content'];
+
+			await db.insert(themes).values({
+				userId: session.user.id,
+				name,
+				primaryColor: primary || null,
+				secondaryColor: secondary || null,
+				accentColor: accent || null,
+				backgroundColor: background || null,
+				textColor: text || null,
+				config: configJson
+			});
+
+			return { success: true, message: 'テーマをインポートしました。' };
+		} catch (e) {
+			console.error('Failed to import theme:', e);
+			return fail(400, { message: '無効なJSON形式です。' });
 		}
 	}
 };
