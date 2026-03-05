@@ -1,6 +1,4 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import TimelinePost from '$lib/components/TimelinePost.svelte';
 	import type { Note } from '$lib/types';

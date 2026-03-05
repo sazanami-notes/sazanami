@@ -1,45 +1,46 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import CreateNoteModal from '$lib/components/CreateNoteModal.svelte';
 	import type { LayoutData } from './$types';
+	import { untrack } from 'svelte';
 	import { invalidateAll, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { authClient } from '$lib/auth-client';
 
-	export let data: LayoutData;
+	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
-	$: isLandingPage = $page.url.pathname === '/';
-	$: hideShell = $page.url.pathname === '/' || $page.url.pathname.startsWith('/login');
+	const hideShell = $derived($page.url.pathname === '/' || $page.url.pathname.startsWith('/login'));
 
-	let drawerChecked = false;
-	let waveSoundEnabled = false;
-	let audioElement: HTMLAudioElement;
+	let drawerChecked = $state(false);
+	let waveSoundEnabled = $state(false);
+	let audioElement = $state<HTMLAudioElement>();
 
-	$: themeMode = data.settings?.themeMode || 'system';
-	$: lightThemeId = data.settings?.lightThemeId || 'sazanami-days';
-	$: darkThemeId = data.settings?.darkThemeId || 'sazanami-night';
-	$: fontSetting = data.settings?.font || 'sans-serif';
+	const themeMode = $derived(data.settings?.themeMode || 'system');
+	const lightThemeId = $derived(data.settings?.lightThemeId || 'sazanami-days');
+	const darkThemeId = $derived(data.settings?.darkThemeId || 'sazanami-night');
+	const fontSetting = $derived(data.settings?.font || 'sans-serif');
 
-	let isCreateModalOpen = false;
-	let isSavingNewNote = false;
+	let isCreateModalOpen = $state(false);
+	let isSavingNewNote = $state(false);
 
 	// モード切り替えを即時反映するためのローカルステート
-	let currentThemeMode = themeMode;
+	let currentThemeMode = $state(themeMode);
 
-	$: {
+	$effect(() => {
 		// サーバーから渡された値が変わったら同期する（他タブや設定画面での変更用）
-		currentThemeMode = themeMode;
-	}
+		untrack(() => {
+			currentThemeMode = themeMode;
+		});
+	});
 
-	async function handleSaveNewNote(event: CustomEvent<{ title: string; content: string }>) {
-		if (!event.detail.content.trim()) return;
+	async function handleSaveNewNote(detail: { title: string; content: string }) {
+		if (!detail.content.trim()) return;
 
 		isSavingNewNote = true;
 		try {
-			const { title, content } = event.detail;
+			const { title, content } = detail;
 			const response = await fetch('/api/notes', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -65,7 +66,7 @@
 		isCreateModalOpen = false;
 	}
 
-	$: {
+	$effect(() => {
 		if (audioElement) {
 			if (waveSoundEnabled) {
 				audioElement.play().catch((e) => {
@@ -75,35 +76,33 @@
 				audioElement.pause();
 			}
 		}
-	}
+	});
 
 	// テーマ適用ロジック
-	let activeThemeName = 'sazanami-days';
-	let activeCustomTheme: any = null;
-
-	$: {
-		if (typeof window !== 'undefined') {
-			let isDarkMode = false;
-			if (currentThemeMode === 'system') {
-				isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			} else {
-				isDarkMode = currentThemeMode === 'dark';
-			}
-
-			const targetThemeId = isDarkMode ? darkThemeId : lightThemeId;
-
-			if (targetThemeId === 'sazanami-days' || targetThemeId === 'sazanami-night') {
-				activeThemeName = targetThemeId;
-				activeCustomTheme = null;
-			} else {
-				// マイテーマの場合
-				activeThemeName = isDarkMode ? 'sazanami-night' : 'sazanami-days'; // ベーステーマ
-				activeCustomTheme = data.userThemes?.find((t: any) => t.id === targetThemeId) || null;
-			}
-
-			document.documentElement.setAttribute('data-theme', activeThemeName);
+	const isDarkMode = $derived.by(() => {
+		if (typeof window === 'undefined') return false;
+		if (currentThemeMode === 'system') {
+			// Note: this might not be perfectly reactive if system preference changes without page reload
+			// but it matches original behavior.
+			return window.matchMedia('(prefers-color-scheme: dark)').matches;
 		}
-	}
+		return currentThemeMode === 'dark';
+	});
+
+	const activeThemeId = $derived(isDarkMode ? darkThemeId : lightThemeId);
+
+	const themeInfo = $derived.by(() => {
+		if (activeThemeId === 'sazanami-days' || activeThemeId === 'sazanami-night') {
+			return { name: activeThemeId, custom: null };
+		} else {
+			const custom = data.userThemes.find((t) => t.id === activeThemeId) || null;
+			return { name: isDarkMode ? 'sazanami-night' : 'sazanami-days', custom };
+		}
+	});
+
+	$effect(() => {
+		document.documentElement.setAttribute('data-theme', themeInfo.name);
+	});
 
 	// モード変更時にサーバーへ保存
 	async function handleModeChange(e: Event) {
@@ -187,29 +186,33 @@
 		</style>
 	{/if}
 
-	{#if activeCustomTheme}
+	{#if themeInfo.custom}
 		<style>
 			:root {
-				--color-primary: {activeCustomTheme.primaryColor} !important;
-				--color-secondary: {activeCustomTheme.secondaryColor} !important;
-				--color-accent: {activeCustomTheme.accentColor} !important;
-				--color-base-100: {activeCustomTheme.backgroundColor} !important;
-				--color-base-content: {activeCustomTheme.textColor} !important;
+				--color-primary: {themeInfo.custom.primaryColor} !important;
+				--color-secondary: {themeInfo.custom.secondaryColor} !important;
+				--color-accent: {themeInfo.custom.accentColor} !important;
+				--color-base-100: {themeInfo.custom.backgroundColor} !important;
+				--color-base-content: {themeInfo.custom.textColor} !important;
 			}
 		</style>
 	{/if}
 </svelte:head>
 
-<div class="drawer">
+<div class="drawer {!hideShell ? 'lg:drawer-open' : ''}">
 	<input id="main-menu-drawer" type="checkbox" class="drawer-toggle" bind:checked={drawerChecked} />
 	<div class="drawer-content bg-base-300 flex min-h-screen flex-col items-center">
-		<div class="bg-base-100 relative flex h-[100dvh] w-full max-w-md flex-col shadow-xl">
+		<div
+			class="bg-base-100 relative flex h-[100dvh] w-full flex-col shadow-xl {hideShell
+				? 'max-w-md'
+				: 'lg:max-w-4xl'}"
+		>
 			{#if !hideShell}
 				<Header user={data.user} />
 			{/if}
 
 			<main class="relative w-full flex-grow overflow-y-auto">
-				<slot />
+				{@render children()}
 			</main>
 
 			{#if !hideShell}
@@ -289,8 +292,8 @@
 <CreateNoteModal
 	open={isCreateModalOpen}
 	saving={isSavingNewNote}
-	on:save={handleSaveNewNote}
-	on:cancel={handleCancelNewNote}
+	onsave={handleSaveNewNote}
+	oncancel={handleCancelNewNote}
 />
 
 <audio bind:this={audioElement} src="/sazanami-loop.mp3" loop></audio>

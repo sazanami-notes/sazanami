@@ -2,9 +2,9 @@
 	import { goto } from '$app/navigation';
 	import type { LayoutData } from '../../routes/$types';
 
-	export let user: LayoutData['user'];
+	let { user }: { user: LayoutData['user'] } = $props();
 
-	let searchQuery = '';
+	let searchQuery = $state('');
 
 	function handleSearch(event: KeyboardEvent) {
 		if (event.key === 'Enter' && searchQuery) {
@@ -15,7 +15,7 @@
 
 <div class="navbar bg-base-100 border-base-200 min-h-16 gap-2 border-b px-2">
 	<!-- Left: Hamburger Menu -->
-	<div class="flex-none">
+	<div class="flex-none lg:hidden">
 		<label
 			for="main-menu-drawer"
 			class="btn btn-ghost btn-circle drawer-button"
@@ -59,7 +59,7 @@
 				class="grow border-none bg-transparent focus:ring-0"
 				placeholder="Search"
 				bind:value={searchQuery}
-				on:keydown={handleSearch}
+				onkeydown={handleSearch}
 			/>
 		</label>
 	</div>
