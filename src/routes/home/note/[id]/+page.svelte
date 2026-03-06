@@ -15,19 +15,54 @@
 	let copySuccess = $state(false);
 	let titleError = $state('');
 
-	function copyAsMarkdown() {
-		const markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
-		navigator.clipboard
-			.writeText(markdownContent)
-			.then(() => {
-				copySuccess = true;
-				setTimeout(() => {
-					copySuccess = false;
-				}, 2000);
-			})
-			.catch((err) => {
-				console.error('Failed to copy text: ', err);
-			});
+	let isCopying = $state(false);
+
+	async function copyAsMarkdown() {
+		isCopying = true;
+		try {
+			let markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
+
+			// ![[メモ名]] を探して実際のコンテンツに置換する
+			const regex = /!\[\[(.*?)\]\]/g;
+			const matches = [...markdownContent.matchAll(regex)];
+			const replacements = [];
+
+			for (const match of matches) {
+				const embedTitle = match[1];
+				try {
+					const res = await fetch(`/api/notes/embed?title=${encodeURIComponent(embedTitle)}`);
+					if (res.ok) {
+						const data = await res.json();
+						const text = data.content || '';
+						// 埋め込みとわかるようにブロック引用としてフォーマット
+						const formattedText =
+							`> **埋め込み: ${embedTitle}**\n>\n` +
+							text
+								.split('\n')
+								.map((l: string) => `> ${l}`)
+								.join('\n');
+						replacements.push({ target: match[0], text: formattedText });
+					}
+				} catch (err) {
+					console.error(`Failed to fetch embed: ${embedTitle}`, err);
+				}
+			}
+
+			for (const r of replacements) {
+				markdownContent = markdownContent.replace(r.target, r.text);
+			}
+
+			await navigator.clipboard.writeText(markdownContent);
+
+			copySuccess = true;
+			setTimeout(() => {
+				copySuccess = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy text: ', err);
+		} finally {
+			isCopying = false;
+		}
 	}
 
 	function triggerAutoSave() {
@@ -47,7 +82,11 @@
 				} else if (response.ok) {
 					titleError = '';
 					const updatedNote = await response.json();
-					data.note.updatedAt = updatedNote.updatedAt;
+					// タイトル、更新日時だけでなく、resolvedLinksなども含めて更新する
+					Object.assign(data.note, updatedNote);
+					// 下のLinkExplorerなどを最新にするためにデータを再取得
+					const { invalidateAll } = await import('$app/navigation');
+					await invalidateAll();
 				} else {
 					console.error('Failed to auto-save note', await response.text());
 				}

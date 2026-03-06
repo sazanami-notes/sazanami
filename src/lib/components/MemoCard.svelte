@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { goto } from '$app/navigation';
 	import type { Note } from '$lib/types';
 	import { marked } from 'marked';
 	import { markedHighlight } from 'marked-highlight';
 	import hljs from 'highlight.js';
+	import { renderWikiLinks } from '$lib/utils/note-utils';
 
 	export let note: Note;
 	export let linkToDetail = false; // Default to false for modal behavior
@@ -16,7 +18,9 @@
 		}
 	}
 
-	$: renderedContent = marked(note.content || '');
+	$: processedContent = renderWikiLinks(note.content, note.resolvedLinks);
+	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(processedContent || '');
+	$: renderedContent = isHtmlContent ? processedContent || '' : marked(processedContent || '');
 
 	// Configure marked to use highlight.js and wrap code blocks correctly
 	marked.use(
@@ -107,14 +111,23 @@
 </script>
 
 {#if linkToDetail}
-	<a
-		href={note.id ? `/home/note/${note.id}` : undefined}
-		class="card bg-base-200 rounded-box block max-h-64 min-h-48 overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+	<div
+		class="card bg-base-200 rounded-box block max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		onclick={(e) => {
+			// WikiLinkへのクリックなら親の遷移を無視する
+			if ((e.target as HTMLElement).closest('a.wiki-link')) return;
+			if (note.id) goto(`/home/note/${note.id}`);
+		}}
+		role="button"
+		tabindex="0"
+		onkeydown={(e) => {
+			if (e.key === 'Enter' && note.id) goto(`/home/note/${note.id}`);
+		}}
 	>
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
 		<div
 			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
-			use:enhanceProseContent={note.content}
+			use:enhanceProseContent={processedContent}
 		>
 			{@html renderedContent}
 		</div>
@@ -123,7 +136,7 @@
 				<span class="badge badge-sm badge-ghost">{tag}</span>
 			{/each}
 		</div>
-	</a>
+	</div>
 {:else}
 	<div
 		class="card bg-base-200 rounded-box max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
@@ -136,7 +149,7 @@
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
 		<div
 			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
-			use:enhanceProseContent={note.content}
+			use:enhanceProseContent={processedContent}
 		>
 			{@html renderedContent}
 		</div>

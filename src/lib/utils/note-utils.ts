@@ -31,9 +31,49 @@ export function getNoteDetailUrl(note: Note, username: string): string {
 // ノートのコンテンツからWikiリンク（例: [[Page Title]]）を抽出する関数
 export const extractWikiLinks = (content: string | null | undefined): string[] => {
 	if (!content) return [];
-	const regex = /\[\[(.*?)\]\]/g;
-	const matches = content.match(regex);
-	if (!matches) return [];
-	// "[[Page Title]]" から "Page Title" を抽出して返す
-	return matches.map((match) => match.slice(2, -2));
+	// エスケープされた \[\[ も考慮する
+	const regex = /\\?\[\\?\[(.*?)\\?\]\\?\]/g;
+	const matches = [...content.matchAll(regex)];
+	if (!matches.length) return [];
+	// グループ1 (タイトル部分) を抽出
+	return matches.map((match) => match[1]);
 };
+
+/**
+ * Markdownコンテンツ内の [[Title]] 構文を実際のリンク（HTML）に変換する。
+ * @param content Markdownコンテンツ
+ * @param resolvedLinks 解決済みリンクのマップ (JSON文字列またはオブジェクト)
+ * @returns 変換後のHTML文字列
+ */
+export function renderWikiLinks(content: string | null | undefined, resolvedLinks: any): string {
+	if (!content) return '';
+
+	let linksMap: Record<string, string> = {};
+	if (typeof resolvedLinks === 'string') {
+		try {
+			linksMap = JSON.parse(resolvedLinks);
+		} catch (e) {
+			console.error('Failed to parse resolvedLinks:', e);
+		}
+	} else if (resolvedLinks && typeof resolvedLinks === 'object') {
+		linksMap = resolvedLinks;
+	}
+
+	// キーをすべて小文字に変換（Case-insensitive用）
+	const normalizedMap: Record<string, string> = {};
+	for (const [key, value] of Object.entries(linksMap)) {
+		normalizedMap[key.toLowerCase()] = value;
+	}
+
+	// [[Title]] または \[\[Title\]\] を置換
+	return content.replace(/\\?\[\\?\[(.*?)\\?\]\\?\]/g, (match, title) => {
+		const targetId = normalizedMap[title.toLowerCase()];
+		if (targetId) {
+			// 解決済み: IDへのリンク
+			return `<a href="/home/note/${targetId}" class="wiki-link" data-wiki-link="resolved">${title}</a>`;
+		} else {
+			// 未解決: スタイルのみ適用（または特殊なリンク）
+			return `<span class="wiki-link-unresolved" data-wiki-link="unresolved">${title}</span>`;
+		}
+	});
+}

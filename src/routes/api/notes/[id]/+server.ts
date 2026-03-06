@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-import { db, updateNoteLinks } from '$lib/server/db';
+import { db, updateNoteLinks, updateBacklinksOnTitleChange } from '$lib/server/db';
 import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -216,6 +216,11 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const finalContent = content !== undefined ? content : existingNote[0].content;
 		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 
+		// タイトルが変更された場合、他のノートからのWikiLink（バックリンク）を更新
+		if (title !== undefined && title !== existingNote[0].title && existingNote[0].title) {
+			await updateBacklinksOnTitleChange(noteId, existingNote[0].title, title, session.session.userId);
+		}
+
 		const updatedNote = await db
 			.select()
 			.from(notes)
@@ -231,7 +236,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		const noteWithTags = {
 			...updatedNote[0],
-			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
+			tags: noteTagsList.map((nt) => nt.name).filter(Boolean),
+			resolvedLinks: updatedNote[0].resolvedLinks // ここで明示的に含める（select * なので本来含まれるが確認用）
 		};
 
 		return json(noteWithTags);

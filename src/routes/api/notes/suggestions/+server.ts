@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes } from '$lib/server/db/schema';
-import { eq, and, like, ne } from 'drizzle-orm';
+import { eq, and, like, ne, desc } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 
 /**
@@ -32,6 +32,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
                         like(notes.title, `%${q}%`)
                     )
                 )
+                .orderBy(desc(notes.updatedAt))
                 .limit(limit);
         } else {
             results = await db
@@ -44,6 +45,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
                         ne(notes.title, '')
                     )
                 )
+                .orderBy(desc(notes.updatedAt))
                 .limit(limit);
         }
 

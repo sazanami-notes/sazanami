@@ -13,6 +13,8 @@
 	import TaskList from '@tiptap/extension-task-list';
 	import { createLowlight, all } from 'lowlight';
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
+	import { WikiLinkMark } from './extensions/WikiLinkMark';
+	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
 	import TurndownService from 'turndown';
 	import { marked } from 'marked';
 
@@ -34,8 +36,25 @@
 		}
 	});
 
+	turndownService.addRule('wikiLink', {
+		filter: (node: HTMLElement) =>
+			node.nodeName === 'SPAN' && node.getAttribute('data-wiki-link') === 'true',
+		replacement: function (content: string) {
+			return content;
+		}
+	});
+
+	turndownService.addRule('noteEmbed', {
+		filter: (node: HTMLElement) => node.nodeName === 'DIV' && node.hasAttribute('data-note-embed'),
+		replacement: function (content: string, node: any) {
+			return `\n\n![[${node.getAttribute('title')}]]\n\n`;
+		}
+	});
+
 	function convertHtmlToMarkdown(html: string) {
 		let markdownBody = turndownService.turndown(html || '');
+		// WikiLinkのブラケットがエスケープされるのを防ぐ
+		markdownBody = markdownBody.replace(/\\\[\\\[/g, '[[').replace(/\\\]\\\]/g, ']]');
 		const lines = markdownBody.split('\n');
 		const cleanedLines = [];
 		for (let i = 0; i < lines.length; i++) {
@@ -54,6 +73,14 @@
 			cleanedLines.push(line);
 		}
 		return cleanedLines.join('\n');
+	}
+
+	function preprocessWikiLinks(md: string) {
+		let processed = md.replace(/!\[\[(.*?)\]\]/g, '\n\n<div data-note-embed title="$1"></div>\n\n');
+		return processed.replace(
+			/\[\[(.*?)\]\]/g,
+			'<span class="wiki-link-mark" data-wiki-link="true">[[$1]]</span>'
+		);
 	}
 
 	let {
@@ -99,9 +126,9 @@
 		const { from } = state.selection;
 		// カーソル前のテキストを取得（最大50文字）
 		const textBefore = state.doc.textBetween(Math.max(0, from - 50), from, '\n');
-		// [[ で始まりまだ ]] で閉じていない部分を検索
-		const match = textBefore.match(/\[\[([^\]\n]*)$/);
-		return match ? match[1] : null;
+		// ![[ または [[ で始まりまだ ]] で閉じていない部分を検索
+		const match = textBefore.match(/(!?)\[\[([^\]\n]*)$/);
+		return match ? match[2] : null;
 	}
 
 	function updateSuggestionPosition() {
@@ -137,16 +164,40 @@
 		const { state, view } = editor;
 		const { from } = state.selection;
 		const textBefore = state.doc.textBetween(Math.max(0, from - 50), from, '\n');
-		const match = textBefore.match(/\[\[([^\]\n]*)$/);
+		const match = textBefore.match(/(!?)\[\[([^\]\n]*)$/);
 		if (!match) return;
 
-		// [[query の部分を [[タイトル]] に置き換え
+		const isEmbed = match[1] === '!';
 		const deleteFrom = from - match[0].length;
-		const insertText = `[[${suggestion.title}]]`;
-		view.dispatch(state.tr.delete(deleteFrom, from).insertText(insertText, deleteFrom));
+
+		if (isEmbed) {
+			// 埋め込みノードとして挿入する（Tiptapのコマンドでブロック分割を安全に行う）
+			editor
+				.chain()
+				.focus()
+				.deleteRange({ from: deleteFrom, to: from })
+				.insertContent({
+					type: 'noteEmbed',
+					attrs: { title: suggestion.title }
+				})
+				// 次の段落を用意して入力を続けられるようにする
+				.insertContent({ type: 'paragraph' })
+				.run();
+		} else {
+			// 通常のWikiLinkとして挿入
+			const insertText = `[[${suggestion.title}]]`;
+
+			// 編集トランザクション: 文字列をマーク付きで挿入
+			editor
+				.chain()
+				.focus()
+				.deleteRange({ from: deleteFrom, to: from })
+				.insertContent(`<span class="wiki-link-mark" data-wiki-link="true">${insertText}</span> `)
+				.run();
+		}
+
 		showSuggestions = false;
 		suggestions = [];
-		editor.commands.focus();
 	}
 
 	function handleKeyDown(e: KeyboardEvent): boolean {
@@ -201,9 +252,11 @@
 					}),
 					CodeBlockWithLanguage.configure({
 						lowlight
-					})
+					}),
+					WikiLinkMark,
+					NoteEmbedNode
 				],
-				content: marked.parse(content || ''), // MarkdownからHTMLに変換して初期化
+				content: marked.parse(preprocessWikiLinks(content || '')), // MarkdownからHTMLに変換して初期化
 				editorProps: {
 					attributes: {
 						class:
@@ -220,9 +273,9 @@
 					const { state } = e;
 					const { from } = state.selection;
 					const textBefore = state.doc.textBetween(Math.max(0, from - 50), from, '\n');
-					const match = textBefore.match(/\[\[([^\]\n]*)$/);
+					const match = textBefore.match(/(!?)\[\[([^\]\n]*)$/);
 					if (match) {
-						const query = match[1];
+						const query = match[2];
 						updateSuggestionPosition();
 						showSuggestions = true;
 						if (query !== suggestionQuery) {
@@ -275,7 +328,7 @@
 			if (content !== mdFromEditor) {
 				isUpdatingInternal = true;
 				// Promiseが返るmarked.parseを扱うため少し強引だが同期的に処理
-				const htmlContent = marked.parse(content) as string;
+				const htmlContent = marked.parse(preprocessWikiLinks(content)) as string;
 				editor.commands.setContent(htmlContent);
 				setTimeout(() => {
 					isUpdatingInternal = false;
@@ -334,6 +387,16 @@
 		float: left;
 		height: 0;
 		pointer-events: none;
+	}
+
+	:global(.tiptap .wiki-link-mark) {
+		color: var(--color-primary);
+		background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+		border-radius: 0.25rem;
+		padding: 0 0.25rem;
+		text-decoration: underline;
+		text-decoration-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+		text-underline-offset: 2px;
 	}
 
 	/* Table styles */

@@ -15,6 +15,13 @@
       "when": 1772773230549,
       "tag": "0001_add_box_title_unique_index",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772775121775,
+      "tag": "0002_mysterious_puff_adder",
+      "breakpoints": true
     }
   ]
 }

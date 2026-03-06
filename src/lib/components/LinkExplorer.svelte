@@ -1,18 +1,15 @@
 <script lang="ts">
-	type Link = {
-		id: string;
-		title: string;
-		slug: string;
-	};
+	import type { Note } from '$lib/types';
+	import MemoCard from './MemoCard.svelte';
 
 	let {
 		oneHopLinks = [],
 		backlinks = [],
 		twoHopLinks = []
 	}: {
-		oneHopLinks?: Link[];
-		backlinks?: Link[];
-		twoHopLinks?: Link[];
+		oneHopLinks?: Note[];
+		backlinks?: Note[];
+		twoHopLinks?: Note[];
 	} = $props();
 
 	const hasLinks = $derived(
@@ -43,11 +40,11 @@
 		<p class="text-base-content/40 text-sm">リンクはありません</p>
 	{/if}
 
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+	<div class="flex flex-col gap-8">
 		{#if backlinks.length > 0}
-			<div class="bg-base-200 rounded-lg p-3">
+			<div>
 				<h3
-					class="text-base-content/50 mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+					class="text-base-content/50 mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -65,39 +62,18 @@
 					</svg>
 					被リンク
 				</h3>
-				<ul class="space-y-1">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					{#each backlinks as link (link.id)}
-						<li>
-							<a
-								href="/home/note/{link.id}"
-								class="text-primary hover:bg-base-300 flex items-center gap-1.5 rounded px-1 py-0.5 text-sm transition-colors"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3 w-3 shrink-0 opacity-60"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-									/>
-								</svg>
-								<span class="truncate">{link.title}</span>
-							</a>
-						</li>
+						<MemoCard note={link} linkToDetail={true} />
 					{/each}
-				</ul>
+				</div>
 			</div>
 		{/if}
 
 		{#if oneHopLinks.length > 0}
-			<div class="bg-base-200 rounded-lg p-3">
+			<div>
 				<h3
-					class="text-base-content/50 mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+					class="text-base-content/50 mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -115,39 +91,18 @@
 					</svg>
 					リンク先
 				</h3>
-				<ul class="space-y-1">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					{#each oneHopLinks as link (link.id)}
-						<li>
-							<a
-								href="/home/note/{link.id}"
-								class="text-primary hover:bg-base-300 flex items-center gap-1.5 rounded px-1 py-0.5 text-sm transition-colors"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3 w-3 shrink-0 opacity-60"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-									/>
-								</svg>
-								<span class="truncate">{link.title}</span>
-							</a>
-						</li>
+						<MemoCard note={link} linkToDetail={true} />
 					{/each}
-				</ul>
+				</div>
 			</div>
 		{/if}
 
 		{#if twoHopLinks.length > 0}
-			<div class="bg-base-200/60 rounded-lg p-3">
+			<div>
 				<h3
-					class="text-base-content/40 mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+					class="text-base-content/40 mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -165,32 +120,11 @@
 					</svg>
 					2ホップ先
 				</h3>
-				<ul class="space-y-1">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					{#each twoHopLinks as link (link.id)}
-						<li>
-							<a
-								href="/home/note/{link.id}"
-								class="text-base-content/50 hover:bg-base-300 hover:text-primary flex items-center gap-1.5 rounded px-1 py-0.5 text-sm transition-colors"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3 w-3 shrink-0 opacity-60"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-									/>
-								</svg>
-								<span class="truncate">{link.title}</span>
-							</a>
-						</li>
+						<MemoCard note={link} linkToDetail={true} />
 					{/each}
-				</ul>
+				</div>
 			</div>
 		{/if}
 	</div>

@@ -35,7 +35,8 @@ export const notes = sqliteTable(
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)
 		isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
 		isPinned: integer('is_pinned', { mode: 'boolean' }).notNull().default(false),
-		status: text('status').notNull().default('inbox') // inbox, box, archived, trash
+		status: text('status').notNull().default('inbox'), // inbox, box, archived, trash
+		resolvedLinks: text('resolved_links') // WikiLink解決用のタイトル->IDマップ (JSON)
 	},
 	(table) => [
 		// Boxノートのタイトルはユーザー内で一意にする（WikiLink解決のため）
