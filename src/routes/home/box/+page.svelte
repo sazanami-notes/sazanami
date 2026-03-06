@@ -5,10 +5,14 @@
 	import type { Note } from '$lib/types';
 	import MemoCard from '$lib/components/MemoCard.svelte';
 	import TagFilter from '$lib/components/TagFilter.svelte';
+	import SortSelector from '$lib/components/SortSelector.svelte';
+	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
 
 	let selectedTags: string[] = [];
-	let allTags: string[] = [];
 	let filteredNotes: Note[] = [];
+	let sortKey: SortKey = 'updatedAt_desc';
+
+	$: allTags = (get(page).data.allTags || []) as string[];
 
 	$: {
 		const notesStore = (get(page).data.notes || []) as Note[];
@@ -17,7 +21,7 @@
 				selectedTags.length === 0 || selectedTags.every((tag) => note.tags?.includes(tag));
 			return matchesTags;
 		});
-		filteredNotes = filtered;
+		filteredNotes = sortNotes(filtered, sortKey);
 	}
 
 	function createNewNote() {
@@ -27,6 +31,10 @@
 	function handleTagSelect(event: CustomEvent<string[]>) {
 		selectedTags = event.detail;
 	}
+
+	function handleSort(event: CustomEvent<SortKey>) {
+		sortKey = event.detail;
+	}
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -35,8 +43,13 @@
 		<button onclick={createNewNote} class="btn btn-primary"> 新規ノート作成 </button>
 	</div>
 
-	<div class="mb-6">
-		<TagFilter {allTags} on:tagSelect={handleTagSelect} />
+	<div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex-1">
+			<TagFilter {allTags} on:filter={handleTagSelect} />
+		</div>
+		<div class="shrink-0">
+			<SortSelector bind:value={sortKey} on:sort={handleSort} />
+		</div>
 	</div>
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
