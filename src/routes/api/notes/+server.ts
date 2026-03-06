@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { db, updateNoteLinks } from '$lib/server/db';
 import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
-import { eq, or, like, desc, sql, and } from 'drizzle-orm';
+import { eq, or, like, desc, sql, and, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { auth } from '$lib/server/auth';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
@@ -151,6 +151,32 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		const noteSlug = noteTitle ? generateSlug(noteTitle) : noteId; // タイトルが空の場合はIDをスラッグにする
+
+		// Boxノートのバリデーション
+		if (status === 'box') {
+			// タイトルが必須
+			if (!noteTitle || noteTitle.trim() === '') {
+				return json({ message: 'Boxノートにはタイトルが必要です' }, { status: 400 });
+			}
+			// タイトルの一意性チェック
+			const existingWithSameTitle = await db
+				.select({ id: notes.id })
+				.from(notes)
+				.where(
+					and(
+						eq(notes.userId, session.session.userId),
+						eq(notes.status, 'box'),
+						eq(notes.title, noteTitle)
+					)
+				)
+				.limit(1);
+			if (existingWithSameTitle.length > 0) {
+				return json(
+					{ message: `「${noteTitle}」というタイトルのノートが既に存在します` },
+					{ status: 409 }
+				);
+			}
+		}
 
 		// 新規メモを作成
 		await db.insert(notes).values({

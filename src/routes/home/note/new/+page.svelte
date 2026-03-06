@@ -10,11 +10,13 @@
 	let title = $state('');
 	let content = $state('');
 	let isPublic = $state(false);
+	let titleError = $state('');
 
 	let saveTimeout: ReturnType<typeof setTimeout>;
 	let isCreating = $state(false);
 
 	let urlStatus = $page.url.searchParams.get('status') || 'inbox';
+	let isBoxNote = urlStatus === 'box';
 
 	const handleContentChange = (value: { markdown: string }) => {
 		// handleContentChangeはMarkdownを受け取るようにすでにTiptapEditorが修正されている
@@ -26,8 +28,12 @@
 		const currentTitle = title.trim();
 		const currentContent = content.trim();
 
+		// boxノートはタイトルが入力されるまで自動作成しない
+		if (isBoxNote && !currentTitle) return;
+
 		// タイトルかコンテンツのどちらかに入力があれば自動作成をトリガー
 		if (currentTitle || currentContent) {
+			titleError = '';
 			clearTimeout(saveTimeout);
 			saveTimeout = setTimeout(async () => {
 				if (isCreating) return;
@@ -48,7 +54,11 @@
 						})
 					});
 
-					if (response.ok) {
+					if (response.status === 409) {
+						const err = await response.json();
+						titleError = err.message || '同じタイトルのノートが既に存在します';
+						isCreating = false;
+					} else if (response.ok) {
 						const newNote = await response.json();
 						// 作成成功したら、そのノートの編集ページにシームレスに遷移する
 						if (newNote && newNote.id) {
@@ -126,15 +136,24 @@
 	<h1 class="mb-6 text-3xl font-bold opacity-90">New Note</h1>
 	<form method="post" onsubmit={handleSubmit} class="space-y-6">
 		<div>
-			<label for="title" class="mb-2 block text-sm font-semibold opacity-70">Title</label>
+			<label for="title" class="mb-2 flex items-center gap-2 text-sm font-semibold opacity-70">
+				Title
+				{#if isBoxNote}
+					<span class="badge badge-warning badge-xs">必須</span>
+				{/if}
+			</label>
 			<input
 				type="text"
 				id="title"
 				name="title"
 				bind:value={title}
-				placeholder="Enter note title..."
-				class="border-base-300 focus:border-primary focus:ring-primary block w-full rounded-md px-4 py-2 shadow-sm sm:text-lg"
+				placeholder={isBoxNote ? 'ノートのタイトルを入力（必須）...' : 'Enter note title...'}
+				class="border-base-300 focus:border-primary focus:ring-primary block w-full rounded-md px-4 py-2 shadow-sm sm:text-lg
+					{titleError ? 'border-error' : ''}"
 			/>
+			{#if titleError}
+				<p class="text-error mt-1 text-sm">{titleError}</p>
+			{/if}
 		</div>
 
 		<div>

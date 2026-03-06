@@ -2,7 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { db, updateNoteLinks } from '$lib/server/db';
 import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { auth } from '$lib/server/auth';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
@@ -104,6 +104,33 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		if (content !== undefined && content !== existingNote[0].content) {
 			updatedFields.content = content;
 			metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
+		}
+
+		// Boxノートのタイトル変更時に一意性チェック
+		if (
+			title !== undefined &&
+			title !== existingNote[0].title &&
+			existingNote[0].status === 'box' &&
+			title.trim() !== ''
+		) {
+			const duplicate = await db
+				.select({ id: notes.id })
+				.from(notes)
+				.where(
+					and(
+						eq(notes.userId, session.session.userId),
+						eq(notes.status, 'box'),
+						eq(notes.title, title.trim()),
+						ne(notes.id, noteId) // 自分自身は除外
+					)
+				)
+				.limit(1);
+			if (duplicate.length > 0) {
+				return json(
+					{ message: `「${title.trim()}」というタイトルのノートが既に存在します` },
+					{ status: 409 }
+				);
+			}
 		}
 
 		// ノートを更新

@@ -6,13 +6,14 @@
 	import { format } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
-	let content = data.note.content;
-	let title = data.note.title;
+	let content = $state(data.note.content);
+	let title = $state(data.note.title);
 	let saveTimeout: ReturnType<typeof setTimeout>;
-	let isSaving = false;
-	let copySuccess = false;
+	let isSaving = $state(false);
+	let copySuccess = $state(false);
+	let titleError = $state('');
 
 	function copyAsMarkdown() {
 		const markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
@@ -40,7 +41,11 @@
 					body: JSON.stringify({ title, content })
 				});
 
-				if (response.ok) {
+				if (response.status === 409) {
+					const err = await response.json();
+					titleError = err.message || '同じタイトルのノートが既に存在します';
+				} else if (response.ok) {
+					titleError = '';
 					const updatedNote = await response.json();
 					data.note.updatedAt = updatedNote.updatedAt;
 				} else {
@@ -64,9 +69,11 @@
 		triggerAutoSave();
 	};
 
-	$: formattedUpdatedAt = data.note.updatedAt
-		? format(new Date(data.note.updatedAt), 'yyyy年M月d日 HH:mm', { locale: ja })
-		: '';
+	const formattedUpdatedAt = $derived(
+		data.note.updatedAt
+			? format(new Date(data.note.updatedAt), 'yyyy年M月d日 HH:mm', { locale: ja })
+			: ''
+	);
 </script>
 
 <div class="mb-6 flex items-center justify-between">
@@ -120,6 +127,9 @@
 			class="w-full bg-transparent px-3 py-2 text-3xl font-bold focus:outline-none"
 			placeholder="タイトルを入力..."
 		/>
+		{#if titleError}
+			<p class="text-error px-3 text-sm">{titleError}</p>
+		{/if}
 	</div>
 
 	<hr class="border-base-300 my-4" />
