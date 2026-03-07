@@ -10,6 +10,7 @@ export interface Note {
 	status: string; // 'inbox' | 'box' | 'archived' | 'trash'
 	tags: string[];
 	slug: string;
+	resolvedLinks?: string | Record<string, string>;
 }
 
 export interface User {

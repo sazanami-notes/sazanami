@@ -203,3 +203,24 @@ ul[data-type='taskList'] li>div>p {
 	background: transparent !important;
 	padding: 0 !important;
 }
+
+/* WikiLink styles */
+.wiki-link {
+	color: var(--color-primary);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	cursor: pointer;
+	transition: opacity 0.15s;
+}
+
+.wiki-link:hover {
+	opacity: 0.75;
+}
+
+.wiki-link-unresolved {
+	color: var(--color-base-content);
+	opacity: 0.45;
+	text-decoration: underline dashed;
+	text-underline-offset: 2px;
+	cursor: not-allowed;
+}

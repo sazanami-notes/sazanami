@@ -5,13 +5,17 @@
 	import TimelinePost from '$lib/components/TimelinePost.svelte';
 	import type { Note } from '$lib/types';
 	import EditNoteModal from '$lib/components/EditNoteModal.svelte';
+	import SortSelector from '$lib/components/SortSelector.svelte';
+	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
 
 	let { data } = $props();
 
 	let editingNote: Note | null = $state(null);
 	let isSavingNote = $state(false);
+	let sortKey: SortKey = $state('updatedAt_desc');
 
-	const notes = $derived(data.notes || []);
+	const rawNotes = $derived(data.notes || []);
+	const notes = $derived(sortNotes(rawNotes, sortKey));
 
 	function handleEdit(event: CustomEvent<Note>) {
 		console.log('Edit event received:', event.detail);
@@ -21,6 +25,10 @@
 
 	function handleCancelEdit() {
 		editingNote = null;
+	}
+
+	function handleSort(event: CustomEvent<SortKey>) {
+		sortKey = event.detail;
 	}
 
 	async function handleSaveEdit(event: CustomEvent<{ title: string; content: string }>) {
@@ -54,7 +62,10 @@
 <div class="container mx-auto px-4 py-8">
 	<!-- Timeline Feed -->
 	<div class="mx-auto max-w-2xl">
-		<h1 class="mb-4 text-2xl font-bold">タイムライン</h1>
+		<div class="mb-4 flex items-center justify-between">
+			<h1 class="text-2xl font-bold">タイムライン</h1>
+			<SortSelector bind:value={sortKey} on:sort={handleSort} />
+		</div>
 		<div class="flex flex-col space-y-4">
 			{#each notes as note (note.id)}
 				<TimelinePost {note} on:edit={handleEdit} />

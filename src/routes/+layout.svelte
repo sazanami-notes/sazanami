@@ -40,10 +40,18 @@
 		isSavingNewNote = true;
 		try {
 			const { title, content } = event.detail;
+
+			// If not on the main timeline page (/home), skip adding this note to the timeline
+			const skipTimeline = $page.url.pathname !== '/home';
+			let status = 'inbox';
+			if ($page.url.pathname === '/home/box' || $page.url.pathname.startsWith('/home/note/')) {
+				status = 'box';
+			}
+
 			const response = await fetch('/api/notes', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title, content })
+				body: JSON.stringify({ title, content, skipTimeline, status })
 			});
 
 			if (response.ok) {

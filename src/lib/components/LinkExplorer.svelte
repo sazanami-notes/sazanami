@@ -1,64 +1,131 @@
 <script lang="ts">
-	type Link = {
-		id: string;
-		title: string;
-		slug: string;
-	};
+	import type { Note } from '$lib/types';
+	import MemoCard from './MemoCard.svelte';
 
-	export let oneHopLinks: Link[] = [];
-	export let backlinks: Link[] = [];
-	export let twoHopLinks: Link[] = [];
+	let {
+		oneHopLinks = [],
+		backlinks = [],
+		twoHopLinks = []
+	}: {
+		oneHopLinks?: Note[];
+		backlinks?: Note[];
+		twoHopLinks?: Note[];
+	} = $props();
+
+	const hasLinks = $derived(
+		oneHopLinks.length > 0 || backlinks.length > 0 || twoHopLinks.length > 0
+	);
 </script>
 
-<div class="link-explorer mt-8 border-t pt-4">
-	<h2 class="mb-4 text-xl font-semibold">Link Explorer</h2>
+<div class="border-base-300 mt-8 border-t pt-6">
+	<h2 class="text-base-content/70 mb-4 flex items-center gap-2 text-base font-semibold">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-4 w-4"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke="currentColor"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+			/>
+		</svg>
+		リンク
+	</h2>
 
-	{#if oneHopLinks.length === 0 && backlinks.length === 0 && twoHopLinks.length === 0}
-		<p class="opacity-50">No links found.</p>
+	{#if !hasLinks}
+		<p class="text-base-content/40 text-sm">リンクはありません</p>
 	{/if}
 
-	{#if oneHopLinks.length > 0}
-		<div class="mb-6">
-			<h3 class="mb-2 text-lg font-medium text-gray-700">1-Hop Links</h3>
-			<ul class="list-inside list-disc space-y-1">
-				{#each oneHopLinks as link (link.id)}
-					<li>
-						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
-							{link.title}
-						</a>
-					</li>
-				{/each}
-			</ul>
-		</div>
-	{/if}
+	<div class="flex flex-col gap-8">
+		{#if backlinks.length > 0}
+			<div>
+				<h3
+					class="text-base-content/50 mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M11 17l-5-5m0 0l5-5m-5 5h12"
+						/>
+					</svg>
+					被リンク
+				</h3>
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					{#each backlinks as link (link.id)}
+						<MemoCard note={link} linkToDetail={true} />
+					{/each}
+				</div>
+			</div>
+		{/if}
 
-	{#if backlinks.length > 0}
-		<div class="mb-6">
-			<h3 class="mb-2 text-lg font-medium text-gray-700">Backlinks</h3>
-			<ul class="list-inside list-disc space-y-1">
-				{#each backlinks as link (link.id)}
-					<li>
-						<a href="/home/note/{link.id}" class="text-blue-600 hover:underline">
-							{link.title}
-						</a>
-					</li>
-				{/each}
-			</ul>
-		</div>
-	{/if}
+		{#if oneHopLinks.length > 0}
+			<div>
+				<h3
+					class="text-base-content/50 mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M13 7l5 5m0 0l-5 5m5-5H6"
+						/>
+					</svg>
+					リンク先
+				</h3>
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					{#each oneHopLinks as link (link.id)}
+						<MemoCard note={link} linkToDetail={true} />
+					{/each}
+				</div>
+			</div>
+		{/if}
 
-	{#if twoHopLinks.length > 0}
-		<div>
-			<h3 class="mb-2 text-lg font-medium opacity-70">2-Hop Links</h3>
-			<ul class="list-inside list-disc space-y-1">
-				{#each twoHopLinks as link (link.id)}
-					<li>
-						<a href="/home/note/{link.id}" class="text-primary hover:underline">
-							{link.title}
-						</a>
-					</li>
-				{/each}
-			</ul>
-		</div>
-	{/if}
+		{#if twoHopLinks.length > 0}
+			<div>
+				<h3
+					class="text-base-content/40 mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M17 8l4 4m0 0l-4 4m4-4H3"
+						/>
+					</svg>
+					2ホップ先
+				</h3>
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					{#each twoHopLinks as link (link.id)}
+						<MemoCard note={link} linkToDetail={true} />
+					{/each}
+				</div>
+			</div>
+		{/if}
+	</div>
 </div>
