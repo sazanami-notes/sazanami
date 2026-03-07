@@ -2,7 +2,7 @@
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import CreateNoteModal from '$lib/components/CreateNoteModal.svelte';
+	import NoteModal from '$lib/components/NoteModal.svelte';
 	import type { LayoutData } from './$types';
 	import { untrack } from 'svelte';
 	import { invalidateAll, goto } from '$app/navigation';
@@ -22,8 +22,7 @@
 	const darkThemeId = $derived(data.settings?.darkThemeId || 'sazanami-night');
 	const fontSetting = $derived(data.settings?.font || 'sans-serif');
 
-	let isCreateModalOpen = $state(false);
-	let isSavingNewNote = $state(false);
+	let createNoteId: string | null = $state(null);
 
 	// モード切り替えを即時反映するためのローカルステート
 	let currentThemeMode = $state(themeMode);
@@ -35,14 +34,9 @@
 		});
 	});
 
-	async function handleSaveNewNote(detail: { title: string; content: string }) {
-		if (!detail.content.trim()) return;
-
-		isSavingNewNote = true;
+	async function openCreateModal() {
+		// 空のノートをサーバーに作成し、そのIDでNoteModalを開く
 		try {
-			const { title, content } = event.detail;
-
-			// If not on the main timeline page (/home), skip adding this note to the timeline
 			const skipTimeline = $page.url.pathname !== '/home';
 			let status = 'inbox';
 			if ($page.url.pathname === '/home/box' || $page.url.pathname.startsWith('/home/note/')) {
@@ -52,26 +46,22 @@
 			const response = await fetch('/api/notes', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title, content, skipTimeline, status })
+				body: JSON.stringify({ title: '', content: '', skipTimeline, status })
 			});
 
 			if (response.ok) {
-				isCreateModalOpen = false;
-				await invalidateAll();
+				const newNote = await response.json();
+				createNoteId = newNote.id;
 			} else {
-				alert('ノートの作成に失敗しました。');
-				console.error('Failed to create note', await response.text());
+				console.error('Failed to create draft note', await response.text());
 			}
 		} catch (error) {
-			alert('エラーが発生しました。');
-			console.error('Error creating note', error);
-		} finally {
-			isSavingNewNote = false;
+			console.error('Error creating draft note', error);
 		}
 	}
 
-	function handleCancelNewNote() {
-		isCreateModalOpen = false;
+	function handleCloseCreateModal() {
+		createNoteId = null;
 	}
 
 	$effect(() => {
@@ -160,7 +150,7 @@
 
 		if (!isInput && e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
 			e.preventDefault();
-			isCreateModalOpen = true;
+			openCreateModal();
 		}
 	}
 </script>
@@ -227,7 +217,7 @@
 				<Footer />
 
 				<button
-					onclick={() => (isCreateModalOpen = true)}
+					onclick={() => openCreateModal()}
 					class="btn btn-circle btn-primary btn-lg absolute right-4 bottom-20 z-20 shadow-lg"
 					aria-label="Create Note"
 				>
@@ -297,11 +287,6 @@
 	{/if}
 </div>
 
-<CreateNoteModal
-	open={isCreateModalOpen}
-	saving={isSavingNewNote}
-	onsave={handleSaveNewNote}
-	oncancel={handleCancelNewNote}
-/>
+<NoteModal noteId={createNoteId} onclose={handleCloseCreateModal} />
 
 <audio bind:this={audioElement} src="/sazanami-loop.mp3" loop></audio>
