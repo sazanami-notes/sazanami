@@ -3,12 +3,11 @@
 	import { invalidateAll } from '$app/navigation';
 	import TimelinePost from '$lib/components/TimelinePost.svelte';
 	import type { Note } from '$lib/types';
-	import EditNoteModal from '$lib/components/EditNoteModal.svelte';
+	import NoteModal from '$lib/components/NoteModal.svelte';
 
 	let { data } = $props();
 
-	let editingNote: Note | null = $state(null);
-	let isSavingNote = $state(false);
+	let editingNoteId: string | null = $state(null);
 
 	const notes = $derived(data.notes || []);
 
@@ -32,38 +31,11 @@
 	);
 
 	function handleEdit(event: CustomEvent<Note>) {
-		editingNote = event.detail;
+		editingNoteId = event.detail.id;
 	}
 
-	function handleCancelEdit() {
-		editingNote = null;
-	}
-
-	async function handleSaveEdit(event: CustomEvent<{ title: string; content: string }>) {
-		if (!editingNote) return;
-
-		isSavingNote = true;
-		try {
-			const { title, content } = event.detail;
-			const response = await fetch(`/api/notes/${editingNote.id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title, content })
-			});
-
-			if (response.ok) {
-				editingNote = null;
-				await invalidateAll();
-			} else {
-				alert('ノートの保存に失敗しました。');
-				console.error('Failed to save note', await response.text());
-			}
-		} catch (error) {
-			alert('エラーが発生しました。');
-			console.error('Error saving note', error);
-		} finally {
-			isSavingNote = false;
-		}
+	function handleCloseEdit() {
+		editingNoteId = null;
 	}
 </script>
 
@@ -101,9 +73,4 @@
 	</div>
 </div>
 
-<EditNoteModal
-	note={editingNote}
-	on:save={handleSaveEdit}
-	on:cancel={handleCancelEdit}
-	saving={isSavingNote}
-/>
+<NoteModal noteId={editingNoteId} onclose={handleCloseEdit} />

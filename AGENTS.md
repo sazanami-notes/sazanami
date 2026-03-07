@@ -72,3 +72,8 @@ AIエージェントがタスクを実行・提案する際は、以下のコマ
 - DBマイグレーション生成: `npm run db:generate`
 - DBマイグレーション適用: `npm run db:migrate`
 - DB閲覧スタジオ: `npm run db:studio`
+
+テストユーザーには
+email: test@test.com
+password: test0000
+ではいれます。
