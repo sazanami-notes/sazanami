@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
             return json({ message: 'Note not found' }, { status: 404 });
         }
 
-        return json({ content: note.content });
+        return json({ id: note.id, title: note.title, content: note.content });
     } catch (error) {
         console.error('Error fetching embed note:', error);
         return json({ message: 'Internal Server Error' }, { status: 500 });

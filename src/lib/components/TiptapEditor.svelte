@@ -15,73 +15,10 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
-	import TurndownService from 'turndown';
-	import { marked } from 'marked';
+	import { Markdown } from '@tiptap/markdown';
+	import { goto } from '$app/navigation';
 
 	const lowlight = createLowlight(all);
-
-	const turndownService = new TurndownService({
-		headingStyle: 'atx',
-		codeBlockStyle: 'fenced'
-	});
-
-	turndownService.addRule('listItemParagraph', {
-		filter: 'p',
-		replacement: function (content: string, node: any) {
-			const isInsideList = node.parentNode && node.parentNode.nodeName === 'LI';
-			if (isInsideList) {
-				return content;
-			}
-			return '\n\n' + content + '\n\n';
-		}
-	});
-
-	turndownService.addRule('wikiLink', {
-		filter: (node: HTMLElement) =>
-			node.nodeName === 'SPAN' && node.getAttribute('data-wiki-link') === 'true',
-		replacement: function (content: string) {
-			return content;
-		}
-	});
-
-	turndownService.addRule('noteEmbed', {
-		filter: (node: HTMLElement) => node.nodeName === 'DIV' && node.hasAttribute('data-note-embed'),
-		replacement: function (content: string, node: any) {
-			return `\n\n![[${node.getAttribute('title')}]]\n\n`;
-		}
-	});
-
-	function convertHtmlToMarkdown(html: string) {
-		let markdownBody = turndownService.turndown(html || '');
-		// WikiLinkのブラケットがエスケープされるのを防ぐ
-		markdownBody = markdownBody.replace(/\\\[\\\[/g, '[[').replace(/\\\]\\\]/g, ']]');
-		const lines = markdownBody.split('\n');
-		const cleanedLines = [];
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			const isBlank = line.trim() === '';
-			if (isBlank && i > 0 && i < lines.length - 1) {
-				const prevLine = lines[i - 1];
-				const nextLine = lines[i + 1];
-				const prevIsListOrIndent =
-					/^\s*(?:[-*+]|\d+\.)\s/.test(prevLine) || /^\s{2,}/.test(prevLine);
-				const nextIsList = /^\s*(?:[-*+]|\d+\.)\s/.test(nextLine);
-				if (prevIsListOrIndent && nextIsList) {
-					continue;
-				}
-			}
-			cleanedLines.push(line);
-		}
-		return cleanedLines.join('\n');
-	}
-
-	function preprocessWikiLinks(md: string) {
-		let processed = md.replace(/!\[\[(.*?)\]\]/g, '\n\n<div data-note-embed title="$1"></div>\n\n');
-		return processed.replace(
-			/\[\[(.*?)\]\]/g,
-			'<span class="wiki-link-mark" data-wiki-link="true">[[$1]]</span>'
-		);
-	}
 
 	let {
 		content = $bindable(''),
@@ -185,14 +122,16 @@
 				.run();
 		} else {
 			// 通常のWikiLinkとして挿入
-			const insertText = `[[${suggestion.title}]]`;
+			const text = suggestion.title;
 
 			// 編集トランザクション: 文字列をマーク付きで挿入
 			editor
 				.chain()
 				.focus()
 				.deleteRange({ from: deleteFrom, to: from })
-				.insertContent(`<span class="wiki-link-mark" data-wiki-link="true">${insertText}</span> `)
+				.insertContent(
+					`<a class="wiki-link font-medium text-primary hover:underline cursor-pointer transition-colors" data-wiki-link="true">${text}</a> `
+				)
 				.run();
 		}
 
@@ -254,9 +193,11 @@
 						lowlight
 					}),
 					WikiLinkMark,
-					NoteEmbedNode
+					NoteEmbedNode,
+					Markdown
 				],
-				content: marked.parse(preprocessWikiLinks(content || '')), // MarkdownからHTMLに変換して初期化
+				content: content || '',
+				contentType: 'markdown',
 				editorProps: {
 					attributes: {
 						class:
@@ -265,6 +206,31 @@
 					handleKeyDown(_, event) {
 						// trueを返すとtiptapがイベントを消費（デフォルト動作を阻止）
 						return handleKeyDown(event);
+					},
+					handleClick(view, pos, event) {
+						if (event.ctrlKey || event.metaKey) {
+							const target = event.target as HTMLElement;
+							const link = target.closest('a[data-wiki-link="true"]');
+							if (link) {
+								event.preventDefault();
+								const title = link.textContent;
+								if (title) {
+									fetch(`/api/notes/embed?title=${encodeURIComponent(title)}`)
+										.then((res) => {
+											if (res.ok) return res.json();
+											throw new Error('Not found');
+										})
+										.then((data) => {
+											if (data && data.id) {
+												goto(`/home/note/${data.id}`);
+											}
+										})
+										.catch((err) => console.error('Failed to open Note:', err));
+								}
+								return true;
+							}
+						}
+						return false;
 					}
 				},
 				onTransaction: ({ editor: e }) => {
@@ -288,9 +254,8 @@
 					}
 				},
 				onUpdate: ({ editor: e }) => {
-					const html = e.getHTML();
-					// TurndownでMarkdownに変換し、不要な空行を除去して返す
-					const md = convertHtmlToMarkdown(html);
+					// Use Tiptap Markdown natively to export clean MD
+					const md = e.getMarkdown();
 					content = md; // コンポーネント外の `bind:content` に変更を通知する
 					if (onchange) {
 						onchange({ markdown: md });
@@ -304,7 +269,7 @@
 	});
 
 	export function getMarkdownContent() {
-		return editor ? convertHtmlToMarkdown(editor.getHTML()) : content;
+		return editor ? editor.getMarkdown() : content;
 	}
 
 	onDestroy(() => {
@@ -324,12 +289,10 @@
 
 	$effect(() => {
 		if (editor && content !== undefined && !isUpdatingInternal) {
-			const mdFromEditor = convertHtmlToMarkdown(editor.getHTML());
+			const mdFromEditor = editor.getMarkdown();
 			if (content !== mdFromEditor) {
 				isUpdatingInternal = true;
-				// Promiseが返るmarked.parseを扱うため少し強引だが同期的に処理
-				const htmlContent = marked.parse(preprocessWikiLinks(content)) as string;
-				editor.commands.setContent(htmlContent);
+				editor.commands.setContent(content, { contentType: 'markdown' });
 				setTimeout(() => {
 					isUpdatingInternal = false;
 				}, 10);
@@ -389,15 +352,7 @@
 		pointer-events: none;
 	}
 
-	:global(.tiptap .wiki-link-mark) {
-		color: var(--color-primary);
-		background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-		border-radius: 0.25rem;
-		padding: 0 0.25rem;
-		text-decoration: underline;
-		text-decoration-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
-		text-underline-offset: 2px;
-	}
+	/* Removed wiki-link-mark styling as we use tailwind classes now */
 
 	/* Table styles */
 	:global(.tiptap table) {

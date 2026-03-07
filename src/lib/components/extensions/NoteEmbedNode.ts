@@ -84,7 +84,9 @@ export const NoteEmbedNode = Node.create({
                 e.stopPropagation();
                 if (typeof getPos === 'function') {
                     const pos = getPos();
-                    editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).insertContent(`![[${node.attrs.title}]]`).run();
+                    if (pos !== undefined) {
+                        editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).insertContent(`![[${node.attrs?.title}]]`).run();
+                    }
                 }
             };
             header.appendChild(editBtn);
@@ -118,5 +120,36 @@ export const NoteEmbedNode = Node.create({
                 dom
             };
         };
+    },
+
+    // --- @tiptap/markdown v3 integration ---
+
+    markdownTokenizer: {
+        name: 'noteEmbed',
+        level: 'block' as const,
+
+        start: (src: string) => {
+            return src.indexOf('![[');
+        },
+
+        tokenize: (src: string, _tokens: any[], _lexer: any) => {
+            const match = /^!\[\[(.*?)\]\]/.exec(src);
+            if (!match) return undefined;
+            return {
+                type: 'noteEmbed',
+                raw: match[0],
+                title: match[1]
+            };
+        }
+    },
+
+    parseMarkdown(token: any, helpers: any) {
+        return helpers.createNode('noteEmbed', {
+            title: token.title || ''
+        });
+    },
+
+    renderMarkdown(node: any, _helpers: any, _ctx: any) {
+        return `![[${node.attrs?.title || ''}]]\n\n`;
     }
 });
