@@ -1,26 +1,30 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import TiptapEditor from './TiptapEditor.svelte';
 
-	let { open, saving = false }: { open: boolean; saving?: boolean } = $props();
+	let {
+		open,
+		saving = false,
+		onsave,
+		oncancel
+	}: {
+		open: boolean;
+		saving?: boolean;
+		onsave?: (detail: { title: string; content: string }) => void;
+		oncancel?: () => void;
+	} = $props();
 
-	const dispatch = createEventDispatcher<{
-		save: { title: string; content: string };
-		cancel: void;
-	}>();
-
-	let dialog: HTMLDialogElement;
+	let dialog: HTMLDialogElement | undefined = $state();
 	let title = $state('');
 	let content = $state('');
 	let showTitleInput = $state(false);
 
 	$effect(() => {
 		if (open) {
-			if (!dialog?.open) {
+			if (dialog && !dialog.open) {
 				dialog.showModal();
 			}
 		} else {
-			if (dialog?.open) {
+			if (dialog && dialog.open) {
 				dialog.close();
 				title = '';
 				content = '';
@@ -30,11 +34,11 @@
 	});
 
 	function handleSave() {
-		dispatch('save', { title, content });
+		onsave?.({ title, content });
 	}
 
 	function handleClose() {
-		dispatch('cancel');
+		oncancel?.();
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
