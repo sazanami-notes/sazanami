@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import type { Note } from '$lib/types';
 	import MemoCard from '$lib/components/MemoCard.svelte';
 	import TagFilter from '$lib/components/TagFilter.svelte';
-	import EditNoteModal from '$lib/components/EditNoteModal.svelte';
+	import SortSelector from '$lib/components/SortSelector.svelte';
+	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
 
 	let selectedTags: string[] = [];
-	let allTags: string[] = [];
 	let filteredNotes: Note[] = [];
+	let sortKey: SortKey = 'updatedAt_desc';
 
-	let editingNote: Note | null = null;
-	let isSavingNote = false;
+	$: allTags = (get(page).data.allTags || []) as string[];
 
 	$: {
 		const notesStore = (get(page).data.notes || []) as Note[];
@@ -21,50 +21,19 @@
 				selectedTags.length === 0 || selectedTags.every((tag) => note.tags?.includes(tag));
 			return matchesTags;
 		});
-		filteredNotes = filtered;
+		filteredNotes = sortNotes(filtered, sortKey);
 	}
 
 	function createNewNote() {
-		goto('/home/note/new');
+		goto('/home/note/new?status=box');
 	}
 
 	function handleTagSelect(event: CustomEvent<string[]>) {
 		selectedTags = event.detail;
 	}
 
-	function handleEdit(event: CustomEvent<Note>) {
-		editingNote = event.detail;
-	}
-
-	function handleCancelEdit() {
-		editingNote = null;
-	}
-
-	async function handleSaveEdit(event: CustomEvent<{ title: string; content: string }>) {
-		if (!editingNote) return;
-
-		isSavingNote = true;
-		try {
-			const { content } = event.detail;
-			const response = await fetch(`/api/notes/${editingNote.id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ content })
-			});
-
-			if (response.ok) {
-				editingNote = null;
-				await invalidateAll();
-			} else {
-				alert('ノートの保存に失敗しました。');
-				console.error('Failed to save note', await response.text());
-			}
-		} catch (error) {
-			alert('エラーが発生しました。');
-			console.error('Error saving note', error);
-		} finally {
-			isSavingNote = false;
-		}
+	function handleSort(event: CustomEvent<SortKey>) {
+		sortKey = event.detail;
 	}
 </script>
 
@@ -74,13 +43,18 @@
 		<button onclick={createNewNote} class="btn btn-primary"> 新規ノート作成 </button>
 	</div>
 
-	<div class="mb-6">
-		<TagFilter {allTags} on:tagSelect={handleTagSelect} />
+	<div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex-1">
+			<TagFilter {allTags} on:filter={handleTagSelect} />
+		</div>
+		<div class="shrink-0">
+			<SortSelector bind:value={sortKey} on:sort={handleSort} />
+		</div>
 	</div>
 
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 		{#each filteredNotes as note (note.id)}
-			<MemoCard {note} on:edit={handleEdit} />
+			<MemoCard {note} linkToDetail={true} />
 		{/each}
 	</div>
 
@@ -90,10 +64,3 @@
 		</div>
 	{/if}
 </div>
-
-<EditNoteModal
-	note={editingNote}
-	on:save={handleSaveEdit}
-	on:cancel={handleCancelEdit}
-	saving={isSavingNote}
-/>

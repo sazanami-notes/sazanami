@@ -24,6 +24,7 @@ export const actions: Actions = {
 			let title = formData.get('title')?.toString();
 			const content = formData.get('content')?.toString() || '';
 			const isPublic = formData.get('isPublic') === 'on';
+			const status = formData.get('status')?.toString() || 'inbox';
 
 			if (title === undefined || title.trim() === '') {
 				const firstLine = content.split('\n')[0] || '';
@@ -50,15 +51,18 @@ export const actions: Actions = {
 				slug,
 				createdAt: now,
 				updatedAt: now,
-				isPublic
+				isPublic,
+				status
 			});
 
-			await db.insert(timeline).values({
-				userId: locals.user.id,
-				noteId: noteId,
-				type: 'note_created',
-				createdAt: now
-			});
+			if (status !== 'box') {
+				await db.insert(timeline).values({
+					userId: locals.user.id,
+					noteId: noteId,
+					type: 'note_created',
+					createdAt: now
+				});
+			}
 
 			await updateNoteLinks(noteId, content, locals.user.id);
 

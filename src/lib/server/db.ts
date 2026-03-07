@@ -1,5 +1,5 @@
 import { noteLinks, notes, user } from './db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, ne, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import type { Note } from '$lib/types';
 import { generateSlug } from '$lib/utils/slug';
@@ -61,11 +61,59 @@ export const createNote = async (note: Omit<Note, 'id' | 'createdAt' | 'updatedA
 	return newNote;
 };
 
+/**
+ * タイトルが変更された場合、このノートへリンクしている他のノートの本文内のWikiLinkを一括置換する
+ */
+export const updateBacklinksOnTitleChange = async (
+	noteId: string,
+	oldTitle: string,
+	newTitle: string,
+	userId: string
+) => {
+	// このノートにリンクしている(被リンク)ノートのIDを取得
+	const links = await db.select().from(noteLinks).where(eq(noteLinks.targetNoteId, noteId));
+	const sourceNoteIds = links.map((l) => l.sourceNoteId);
+
+	if (sourceNoteIds.length > 0) {
+		const sourceNotes = await db.select().from(notes).where(inArray(notes.id, sourceNoteIds));
+
+		for (const sourceNote of sourceNotes) {
+			if (sourceNote.content) {
+				// 正規表現のエスケープ用関数
+				const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+				// 大文字小文字を区別せず、[[oldTitle]] を [[newTitle]] に置換
+				const regex = new RegExp(`\\[\\[${escapeRegExp(oldTitle)}\\]\\]`, 'gi');
+				const newContent = sourceNote.content.replace(regex, `[[${newTitle}]]`);
+
+				if (newContent !== sourceNote.content) {
+					// 本文を更新
+					await db
+						.update(notes)
+						.set({
+							content: newContent,
+							updatedAt: new Date()
+						})
+						.where(eq(notes.id, sourceNote.id));
+
+					// 拡張子つきやIDマップなど、リンク情報を再計算して更新
+					await updateNoteLinks(sourceNote.id, newContent, userId);
+				}
+			}
+		}
+	}
+};
+
 export const updateNote = async (
 	id: string,
 	userId: string,
 	updates: Partial<Omit<Note, 'id' | 'userId'>>
 ) => {
+	let oldNote = null;
+	if (updates.title) {
+		oldNote = await getNoteById(userId, id);
+	}
+
 	const updatedNote = {
 		...updates,
 		updatedAt: new Date()
@@ -75,6 +123,11 @@ export const updateNote = async (
 		.update(notes)
 		.set(updatedNote)
 		.where(and(eq(notes.id, id), eq(notes.userId, userId)));
+
+	// タイトルが変更された場合、このノートへリンクしている他のノートの本文内のWikiLinkを更新する
+	if (oldNote && updates.title !== undefined && oldNote.title !== updates.title && oldNote.title) {
+		await updateBacklinksOnTitleChange(id, oldNote.title, updates.title, userId);
+	}
 
 	return getNoteById(userId, id);
 };
@@ -95,15 +148,28 @@ export const updateNoteLinks = async (sourceNoteId: string, content: string, use
 	const linkedTitles = extractWikiLinks(content);
 
 	// 2. Find the corresponding notes for each link title
-	let targetNotes: { id: string }[] = [];
+	let targetNotes: { id: string; title: string }[] = [];
 	if (linkedTitles.length > 0) {
-		const linkedSlugs = linkedTitles.map(generateSlug);
-		targetNotes = await db
-			.select({ id: notes.id })
+		// ユーザーの全Boxノートを取得（性能上、数千件程度なら問題なし）
+		const allUserNotes = await db
+			.select({ id: notes.id, title: notes.title })
 			.from(notes)
-			.where(and(eq(notes.userId, userId), inArray(notes.slug, linkedSlugs)));
+			.where(and(eq(notes.userId, userId), ne(notes.title, '')));
+
+		const lowerLinkedTitles = new Set(linkedTitles.map((t) => t.toLowerCase()));
+		targetNotes = allUserNotes.filter(
+			(n) => n.title && lowerLinkedTitles.has(n.title.toLowerCase())
+		);
 	}
 	const targetNoteIds = targetNotes.map((n) => n.id);
+
+	// Create a mapping of Title -> ID for unresolved link rendering (Case-insensitive)
+	const resolvedLinksMap: Record<string, string> = {};
+	targetNotes.forEach((n) => {
+		if (n.title) {
+			resolvedLinksMap[n.title.toLowerCase()] = n.id;
+		}
+	});
 
 	// 3. Delete all existing links from this source note
 	await db.delete(noteLinks).where(eq(noteLinks.sourceNoteId, sourceNoteId));
@@ -117,4 +183,12 @@ export const updateNoteLinks = async (sourceNoteId: string, content: string, use
 		}));
 		await db.insert(noteLinks).values(newLinks);
 	}
+
+	// 5. Update the source note with the resolved links mapping
+	await db
+		.update(notes)
+		.set({
+			resolvedLinks: JSON.stringify(resolvedLinksMap)
+		})
+		.where(eq(notes.id, sourceNoteId));
 };

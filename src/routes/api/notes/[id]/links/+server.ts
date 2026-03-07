@@ -1,16 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { notes, noteLinks } from '$lib/server/db/schema';
+import { notes, noteLinks, tags, noteTags } from '$lib/server/db/schema';
 import { eq, and, not, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { auth } from '$lib/server/auth';
-
-type Link = {
-	id: string;
-	title: string;
-	slug: string;
-};
+import type { Note } from '$lib/types';
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
@@ -20,29 +15,49 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	const noteId = params.id;
 
 	try {
+		const attachTags = async (noteRecords: any[]) => {
+			if (noteRecords.length === 0) return [];
+			const noteIds = noteRecords.map(r => r.id);
+			const tagsResult = await db
+				.select({
+					noteId: noteTags.noteId,
+					tagName: tags.name
+				})
+				.from(noteTags)
+				.innerJoin(tags, eq(noteTags.tagId, tags.id))
+				.where(inArray(noteTags.noteId, noteIds));
+
+			const tagsMap = new Map<string, string[]>();
+			for (const row of tagsResult) {
+				if (!tagsMap.has(row.noteId)) {
+					tagsMap.set(row.noteId, []);
+				}
+				tagsMap.get(row.noteId)!.push(row.tagName);
+			}
+
+			return noteRecords.map(n => ({
+				...n,
+				tags: tagsMap.get(n.id) || []
+			}));
+		};
+
 		// 1. Get 1-hop links
 		const targetNote = alias(notes, 'targetNote');
-		const oneHopLinksResult = await db
-			.select({
-				id: targetNote.id,
-				title: targetNote.title,
-				slug: targetNote.slug
-			})
+		const oneHopLinksData = await db
+			.select({ note: targetNote })
 			.from(noteLinks)
 			.innerJoin(targetNote, eq(noteLinks.targetNoteId, targetNote.id))
 			.where(eq(noteLinks.sourceNoteId, noteId));
+		const oneHopLinksResult = await attachTags(oneHopLinksData.map(d => d.note));
 
 		// 2. Get backlinks
 		const sourceNote = alias(notes, 'sourceNote');
-		const backlinksResult = await db
-			.select({
-				id: sourceNote.id,
-				title: sourceNote.title,
-				slug: sourceNote.slug
-			})
+		const backlinksData = await db
+			.select({ note: sourceNote })
 			.from(noteLinks)
 			.innerJoin(sourceNote, eq(noteLinks.sourceNoteId, sourceNote.id))
 			.where(eq(noteLinks.targetNoteId, noteId));
+		const backlinksResult = await attachTags(backlinksData.map(d => d.note));
 
 		// 3. Get 2-hop links
 		const oneHopLinkTargetIds = (
@@ -52,15 +67,11 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				.where(eq(noteLinks.sourceNoteId, noteId))
 		).map((r) => r.id);
 
-		let twoHopLinksResult: Link[] = [];
+		let twoHopLinksData: any[] = [];
 		if (oneHopLinkTargetIds.length > 0) {
 			const twoHopTargetNote = alias(notes, 'twoHopTargetNote');
-			twoHopLinksResult = await db
-				.select({
-					id: twoHopTargetNote.id,
-					title: twoHopTargetNote.title,
-					slug: twoHopTargetNote.slug
-				})
+			twoHopLinksData = await db
+				.select({ note: twoHopTargetNote })
 				.from(noteLinks)
 				.innerJoin(twoHopTargetNote, eq(noteLinks.targetNoteId, twoHopTargetNote.id))
 				.where(
@@ -72,9 +83,11 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				);
 		}
 
+		const twoHopLinksRaw = await attachTags(twoHopLinksData.map(d => d.note));
+
 		// Deduplicate 2-hop links
-		const uniqueTwoHopLinks = new Map<string, Link>();
-		twoHopLinksResult.forEach((link) => {
+		const uniqueTwoHopLinks = new Map<string, Note>();
+		twoHopLinksRaw.forEach((link: any) => {
 			uniqueTwoHopLinks.set(link.slug, link);
 		});
 
