@@ -20,7 +20,8 @@ export const POST: RequestHandler = async ({ request, params }) => {
 		const body = await request.json();
 		const { status } = body as { status: string };
 
-		if (!status || !['inbox', 'box', 'archived', 'trash'].includes(status)) {
+		const validStatuses = ['inbox', 'box', 'archived', 'trash', 'box-archived', 'box-deleted'];
+		if (!status || !validStatuses.includes(status)) {
 			return json({ message: 'Invalid status provided' }, { status: 400 });
 		}
 

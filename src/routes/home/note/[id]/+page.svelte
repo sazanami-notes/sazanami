@@ -125,6 +125,37 @@
 			? format(new Date(data.note.updatedAt), 'yyyy年M月d日 HH:mm', { locale: ja })
 			: ''
 	);
+
+	let isMenuOpen: boolean = $state(false);
+	let isUpdatingStatus: boolean = $state(false);
+
+	async function updateNoteStatus(newStatus: string) {
+		isUpdatingStatus = true;
+		try {
+			const response = await fetch(`/api/notes/${data.note.id}/status`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ status: newStatus })
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				console.error('Failed to update note status:', error);
+				throw new Error(error.message || 'Failed to update note status');
+			}
+
+			isMenuOpen = false;
+			const { goto } = await import('$app/navigation');
+			await goto('/home/box');
+		} catch (error) {
+			console.error('Error updating note status:', error);
+			alert('ステータスの更新に失敗しました');
+		} finally {
+			isUpdatingStatus = false;
+		}
+	}
 </script>
 
 <div class="mb-6 flex items-center justify-between">
@@ -145,26 +176,92 @@
 		</svg>
 		一覧に戻る
 	</a>
-	<button
-		class="btn btn-outline btn-sm {copySuccess ? 'btn-success' : ''}"
-		onclick={copyAsMarkdown}
-	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke-width="1.5"
-			stroke="currentColor"
-			class="mr-1 h-4 w-4"
+	<div class="flex gap-2">
+		<button
+			class="btn btn-outline btn-sm {copySuccess ? 'btn-success' : ''}"
+			onclick={copyAsMarkdown}
 		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-			/>
-		</svg>
-		{copySuccess ? 'コピーしました！' : 'Markdownコピー'}
-	</button>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke-width="1.5"
+				stroke="currentColor"
+				class="mr-1 h-4 w-4"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+				/>
+			</svg>
+			{copySuccess ? 'コピーしました！' : 'Markdownコピー'}
+		</button>
+		
+		<!-- 三点リーダーメニュー -->
+		<div class="dropdown dropdown-end">
+			<button
+				class="btn btn-ghost btn-sm"
+				onclick={() => (isMenuOpen = !isMenuOpen)}
+				type="button"
+			>
+				⋮
+			</button>
+			{#if isMenuOpen}
+				<ul class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+					{#if data.note.status === 'box'}
+						<li>
+							<button
+								onclick={() => updateNoteStatus('box-archived')}
+								disabled={isUpdatingStatus}
+								type="button"
+							>
+								📁 アーカイブ
+							</button>
+						</li>
+						<li>
+							<button
+								onclick={() => updateNoteStatus('box-deleted')}
+								disabled={isUpdatingStatus}
+								type="button"
+							>
+								🗑️ 削除
+							</button>
+						</li>
+					{:else if data.note.status === 'box-archived'}
+						<li>
+							<button
+								onclick={() => updateNoteStatus('box')}
+								disabled={isUpdatingStatus}
+								type="button"
+							>
+								↩️ Box に戻す
+							</button>
+						</li>
+						<li>
+							<button
+								onclick={() => updateNoteStatus('box-deleted')}
+								disabled={isUpdatingStatus}
+								type="button"
+							>
+								🗑️ 削除
+							</button>
+						</li>
+					{:else if data.note.status === 'box-deleted'}
+						<li>
+							<button
+								onclick={() => updateNoteStatus('box')}
+								disabled={isUpdatingStatus}
+								type="button"
+							>
+								↩️ Box に戻す
+							</button>
+						</li>
+					{/if}
+				</ul>
+			{/if}
+		</div>
+	</div>
 </div>
 
 <div class="prose max-w-none">

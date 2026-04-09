@@ -3,10 +3,9 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/connection';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-
 import { auth } from '$lib/server/auth';
 
-export const load: PageServerLoad = async ({ request, params }) => {
+export const load: PageServerLoad = async ({ request }) => {
 	const sessionData = await auth.api.getSession({
 		headers: request.headers
 	});
@@ -15,11 +14,13 @@ export const load: PageServerLoad = async ({ request, params }) => {
 		throw redirect(302, '/login');
 	}
 
-	// Fetch notes for this user that are in the 'box' (active only)
-	const userNotes = await db
+	// Fetch deleted box notes for this user
+	const deletedNotes = await db
 		.select()
 		.from(notes)
-		.where(and(eq(notes.userId, sessionData.user.id), eq(notes.status, 'box')))
+		.where(
+			and(eq(notes.userId, sessionData.user.id), eq(notes.status, 'box-deleted'))
+		)
 		.orderBy(desc(notes.updatedAt));
 
 	// Fetch all tags for the user
@@ -33,7 +34,7 @@ export const load: PageServerLoad = async ({ request, params }) => {
 	const allTags = userTagsResult.map((t) => t.name);
 
 	return {
-		notes: userNotes,
+		notes: deletedNotes,
 		allTags,
 		user: sessionData.user
 	};
