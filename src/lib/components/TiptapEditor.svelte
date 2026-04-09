@@ -170,13 +170,16 @@
 				editable,
 				extensions: [
 					StarterKit.configure({
-						codeBlock: false
+						codeBlock: false,
+						// If StarterKit happens to include something that conflicts, we could disable it here.
+						// Note: In newer Tiptap, some bundles might include link, but ours shouldn't.
 					}),
 					Placeholder.configure({
 						placeholder: placeholder
 					}),
 					Link.configure({
-						openOnClick: false
+						openOnClick: false,
+						autolink: true
 					}),
 					Image,
 					Table.configure({

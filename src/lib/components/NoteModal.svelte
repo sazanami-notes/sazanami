@@ -20,6 +20,7 @@
 	let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 	let lastNoteId: string | null = $state(null);
 	let initialized = $state(false);
+	let processingClose = false;
 
 	// noteIdが変更されたら既存ノートの内容を読み込む
 	$effect(() => {
@@ -78,6 +79,40 @@
 		}
 	}
 
+	async function saveNote() {
+		if (!noteId) return;
+
+		autoSaveStatus = 'saving';
+		const currentTitle = title;
+		const currentContent = content;
+
+		try {
+			const response = await fetch(`/api/notes/${noteId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title: currentTitle, content: currentContent })
+			});
+
+			if (response.ok) {
+				autoSaveStatus = 'saved';
+				setTimeout(() => {
+					if (autoSaveStatus === 'saved') {
+						autoSaveStatus = 'idle';
+					}
+				}, 3000);
+				return true;
+			} else {
+				autoSaveStatus = 'error';
+				console.error('Save failed', await response.text());
+				return false;
+			}
+		} catch (error) {
+			autoSaveStatus = 'error';
+			console.error('Save error', error);
+			return false;
+		}
+	}
+
 	function triggerAutoSave() {
 		if (!noteId) return;
 
@@ -86,34 +121,9 @@
 		}
 
 		autoSaveStatus = 'saving';
-		const currentNoteId = noteId;
-		const currentTitle = title;
-		const currentContent = content;
-
 		autoSaveTimer = setTimeout(async () => {
-			if (!currentNoteId) return;
-			try {
-				const response = await fetch(`/api/notes/${currentNoteId}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ title: currentTitle, content: currentContent })
-				});
-
-				if (response.ok) {
-					autoSaveStatus = 'saved';
-					setTimeout(() => {
-						if (autoSaveStatus === 'saved') {
-							autoSaveStatus = 'idle';
-						}
-					}, 3000);
-				} else {
-					autoSaveStatus = 'error';
-					console.error('Auto-save failed', await response.text());
-				}
-			} catch (error) {
-				autoSaveStatus = 'error';
-				console.error('Auto-save error', error);
-			}
+			await saveNote();
+			autoSaveTimer = null;
 		}, 800);
 	}
 
@@ -123,6 +133,7 @@
 		showTitleInput = false;
 		autoSaveStatus = 'idle';
 		initialized = false;
+		lastNoteId = null; // Important! Allow re-loading the same note
 		if (autoSaveTimer) {
 			clearTimeout(autoSaveTimer);
 			autoSaveTimer = null;
@@ -130,24 +141,34 @@
 	}
 
 	async function handleClose() {
-		// タイマーが残っていたらクリア
-		if (autoSaveTimer) {
-			clearTimeout(autoSaveTimer);
-			autoSaveTimer = null;
-		}
+		if (processingClose || !noteId) return;
+		processingClose = true;
 
-		// 新規作成モードで内容が空の場合はノートを削除
-		if (noteId && !content?.trim() && !title?.trim()) {
-			try {
-				await fetch(`/api/notes/${noteId}`, { method: 'DELETE' });
-			} catch (e) {
-				console.error('Error cleaning up empty note:', e);
+		try {
+			// Capture the state BEFORE anything else
+			const currentContent = content;
+			const currentTitle = title;
+
+			// ALWAYS attempt a final save if anything has changed and we were initialized
+			// Or just always try to save to be 100% safe
+			if (initialized) {
+				await saveNote();
 			}
-		}
 
-		resetState();
-		await invalidateAll();
-		onclose?.();
+			// Now check if it's truly empty after the final save
+			if (noteId && !content?.trim() && !title?.trim()) {
+				try {
+					await fetch(`/api/notes/${noteId}`, { method: 'DELETE' });
+				} catch (e) {
+					console.error('Error cleaning up empty note:', e);
+				}
+			}
+		} finally {
+			resetState();
+			processingClose = false;
+			await invalidateAll();
+			onclose?.();
+		}
 	}
 </script>
 

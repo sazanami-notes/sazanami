@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
-	import { marked } from 'marked';
+	import { marked, Marked } from 'marked';
 	import { markedHighlight } from 'marked-highlight';
 	import { createEventDispatcher, onMount } from 'svelte';
 	import hljs from 'highlight.js';
@@ -14,8 +14,8 @@
 
 	const dispatch = createEventDispatcher<{ edit: Note; delete: Note }>();
 
-	// Configure marked to use highlight.js and wrap code blocks correctly
-	marked.use(
+	// Create a local instance of Marked to avoid global state issues and ensure v16 compatibility
+	const customMarked = new Marked(
 		markedHighlight({
 			langPrefix: 'hljs language-',
 			highlight(code, lang) {
@@ -25,62 +25,60 @@
 		})
 	);
 
-	const renderer = new marked.Renderer();
-	renderer.code = function ({ text, lang, escaped }) {
-		const language = (lang || '').match(/\S*/)?.[0] || '';
+	const renderer = {
+		code(this: any, { text, lang }: { text: string; lang?: string }) {
+			const language = (lang || '').match(/\S*/)?.[0] || '';
+			const codeStr = text;
+			const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
 
-		// `text` here will already be highlighted HTML because of the markedHighlight extension
-		const codeStr = text;
-		const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
-
-		return `
+			return `
 <div class="code-block-wrapper" style="position: relative; margin: 1.5rem 0;">
 	<pre><code${langAttr}>${codeStr}</code></pre>
 </div>
 `;
-	};
+		},
+		listitem(this: any, token: any) {
+			const { text, task, checked, tokens } = token;
+			if (task) {
+				const checkbox = `<input type="checkbox" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
+				const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
+				const content = (text || '').replace(/^\[[ xX]\]\s*/, '');
+				return `<li data-type="taskItem" ${checkedAttr} style="display: flex; align-items: flex-start; margin-bottom: 0.25rem; padding-left: 0;"><label style="flex: 0 0 auto; margin-right: 0.5rem; user-select: none; display: flex; align-items: center; padding-top: 0; margin-top: 0.1rem;">${checkbox}</label><div style="flex: 1 1 auto;"><p style="margin: 0 !important;">${content}</p></div></li>\n`;
+			}
+			const content = tokens && tokens.length > 0 ? customMarked.parser(tokens) : text;
+			return `<li>${content}</li>\n`;
+		},
+		list(this: any, token: any) {
+			const items = token.items || [];
+			const bodyHtml = items.map((item: any) => this.listitem(item)).join('');
+			const isTaskList =
+				items.some((item: any) => item.task) || (token.raw || '').includes('data-type="taskItem"');
 
-	renderer.listitem = function ({ text, task, checked }) {
-		if (task) {
-			const checkbox = `<input type="checkbox" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
-			const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
-			// Replace the checkbox placeholder added by marked with our custom styled one and structural div
-			const content = text.replace(/^\[[ xX]\]\s*/, '');
-			return `<li data-type="taskItem" ${checkedAttr} style="display: flex; align-items: flex-start; margin-bottom: 0.25rem; padding-left: 0;"><label style="flex: 0 0 auto; margin-right: 0.5rem; user-select: none; display: flex; align-items: center; padding-top: 0; margin-top: 0.1rem;">${checkbox}</label><div style="flex: 1 1 auto;"><p style="margin: 0 !important;">${content}</p></div></li>\n`;
+			if (isTaskList) {
+				return `<ul data-type="taskList" class="contains-task-list" style="list-style: none; padding: 0; margin: 0; list-style-type: none !important; padding-left: 0 !important;">\n${bodyHtml}</ul>\n`;
+			}
+
+			const type = token.ordered ? 'ol' : 'ul';
+			const startAttr =
+				token.ordered && token.start !== 1 && token.start !== undefined
+					? ` start="${token.start}"`
+					: '';
+			return `<${type}${startAttr}>\n${bodyHtml}</${type}>\n`;
 		}
-		return `<li>${text}</li>\n`;
 	};
 
-	renderer.list = function (token) {
-		const isTaskList = token.raw.includes('data-type="taskItem"');
-		if (isTaskList) {
-			const bodyHtml = this.parser.parse(token.items);
-			return `<ul data-type="taskList" class="contains-task-list" style="list-style: none; padding: 0; margin: 0; list-style-type: none !important; padding-left: 0 !important;">\n${bodyHtml}</ul>\n`;
-		}
-
-		const type = token.ordered ? 'ol' : 'ul';
-		const startAttr =
-			token.ordered && token.start !== 1 && token.start !== undefined
-				? ` start="${token.start}"`
-				: '';
-		const bodyHtml = this.parser.parse(token.items);
-		return `<${type}${startAttr}>\n${bodyHtml}</${type}>\n`;
-	};
-
-	marked.use({ gfm: true });
+	customMarked.use({ gfm: true, renderer });
 
 	// Render wiki links before markdown parsing
 	$: processedContent = renderWikiLinks(note.content, note.resolvedLinks);
 
 	// Determine if the content is likely generated by Tiptap (already HTML)
-	// Tiptap always wraps text in paragraphs, headings, lists, or code blocks.
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(processedContent || '');
 
 	// Action to manually apply enhancements (highlighting, copy buttons, interactive checkboxes)
 	function enhanceProseContent(node: HTMLElement, _content: string) {
 		const applyEnhancements = () => {
 			if (!node) return;
-			// Find all bare <pre> elements (from Tiptap) and wrap them in .code-block-wrapper if not already
 			node.querySelectorAll('pre').forEach((pre) => {
 				if (!pre.parentElement?.classList.contains('code-block-wrapper')) {
 					const wrapper = document.createElement('div');
@@ -95,7 +93,6 @@
 			node.querySelectorAll('.code-block-wrapper').forEach((wrapper) => {
 				const block = wrapper.querySelector('pre code');
 				if (block) {
-					// Only highlight if it hasn't been highlighted already
 					if (!block.classList.contains('hljs') && !block.hasAttribute('data-highlighted')) {
 						hljs.highlightElement(block as HTMLElement);
 						block.classList.add('hljs'); // Ensure the class is added just in case
@@ -238,12 +235,21 @@
 	let element: HTMLElement;
 	let deleteDialog: HTMLDialogElement;
 	let touchStartX = 0;
+	let touchStartY = 0;
 	let touchCurrentX = 0;
 	let isSwiping = false;
 	const swipeThreshold = 100; // Swipe distance in pixels to trigger action
 
 	function handleTouchStart(e: TouchEvent) {
+		// Don't start swipe if touching an interactive element
+		const target = e.target as HTMLElement;
+		if (target.closest('button, input, a, [role="button"]')) {
+			isSwiping = false;
+			return;
+		}
+
 		touchStartX = e.touches[0].clientX;
+		touchStartY = e.touches[0].clientY; // Track Y for scroll detection
 		touchCurrentX = touchStartX;
 		isSwiping = true;
 	}
@@ -251,8 +257,23 @@
 	function handleTouchMove(e: TouchEvent) {
 		if (!isSwiping) return;
 		touchCurrentX = e.touches[0].clientX;
-		const diff = touchCurrentX - touchStartX;
-		element.style.transform = `translateX(${diff}px)`;
+		const touchCurrentY = e.touches[0].clientY;
+
+		const diffX = touchCurrentX - touchStartX;
+		const diffY = touchCurrentY - touchStartY;
+
+		// If user is scrolling vertically more than horizontally, cancel swipe
+		if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
+			isSwiping = false;
+			element.style.transform = 'translateX(0)';
+			return;
+		}
+
+		// Prevent default only if we are horizontally swiping to avoid blocking scroll
+		if (Math.abs(diffX) > 10) {
+			// e.preventDefault(); // Might cause issues in some browsers
+			element.style.transform = `translateX(${diffX}px)`;
+		}
 	}
 
 	function handleTouchEnd() {
@@ -349,6 +370,8 @@
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
+	role="article"
+	aria-label={note.title || 'メモ'}
 >
 	<div class="card-body p-4">
 		{#if note.isPinned}
@@ -374,7 +397,7 @@
 			{#if isHtmlContent}
 				{@html processedContent}
 			{:else}
-				{@html marked.parse(processedContent || '', { breaks: true, renderer })}
+				{@html customMarked.parse(processedContent || '', { breaks: true })}
 			{/if}
 		</div>
 
