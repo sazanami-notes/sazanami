@@ -17,6 +17,16 @@
 
 	let isCopying = $state(false);
 
+	function normalizeMarkdownForClipboard(markdown: string) {
+		return markdown
+			// Convert non-breaking spaces to normal spaces first.
+			.replace(/\u00a0/g, ' ')
+			// Remove standalone "&nbsp;" lines often produced by pasted rich text.
+			.replace(/^[ \t]*&nbsp;[ \t]*$/gm, '')
+			// Replace remaining HTML entity spaces with regular spaces.
+			.replace(/&nbsp;/g, ' ');
+	}
+
 	async function copyAsMarkdown() {
 		isCopying = true;
 		try {
@@ -51,6 +61,8 @@
 			for (const r of replacements) {
 				markdownContent = markdownContent.replace(r.target, r.text);
 			}
+
+			markdownContent = normalizeMarkdownForClipboard(markdownContent);
 
 			await navigator.clipboard.writeText(markdownContent);
 

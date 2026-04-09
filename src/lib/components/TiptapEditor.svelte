@@ -20,20 +20,30 @@
 
 	const lowlight = createLowlight(all);
 
+	type Props = {
+		content?: string;
+		editable?: boolean;
+		placeholder?: string;
+		onchange?: (event: { markdown: string }) => void;
+	};
+
 	let {
 		content = $bindable(''),
 		editable = true,
 		placeholder = 'Write something...',
 		onchange
-	} = $props<{
-		content?: string;
-		editable?: boolean;
-		placeholder?: string;
-		onchange?: (event: { markdown: string }) => void;
-	}>();
+	}: Props = $props();
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
+	let lastSyncedMarkdown = $state('');
+
+	function normalizeMarkdown(markdown: string) {
+		return markdown
+			.replace(/\u00a0/g, ' ')
+			.replace(/^[ \t]*&nbsp;[ \t]*$/gm, '')
+			.replace(/&nbsp;/g, ' ');
+	}
 
 	// --- WikiLink サジェスト ---
 	type Suggestion = { id: string; title: string; slug: string };
@@ -199,7 +209,7 @@
 					NoteEmbedNode,
 					Markdown
 				],
-				content: content || '',
+				content: normalizeMarkdown(content || ''),
 				contentType: 'markdown',
 				editorProps: {
 					attributes: {
@@ -258,13 +268,16 @@
 				},
 				onUpdate: ({ editor: e }) => {
 					// Use Tiptap Markdown natively to export clean MD
-					const md = e.getMarkdown();
+					const md = normalizeMarkdown(e.getMarkdown());
+					lastSyncedMarkdown = md;
 					content = md; // コンポーネント外の `bind:content` に変更を通知する
 					if (onchange) {
 						onchange({ markdown: md });
 					}
 				}
 			});
+
+			lastSyncedMarkdown = normalizeMarkdown(editor.getMarkdown());
 		} catch (error: any) {
 			console.error('Editor init error:', error);
 			alert('エディタの読み込みに失敗しました: ' + error.message);
@@ -292,10 +305,14 @@
 
 	$effect(() => {
 		if (editor && content !== undefined && !isUpdatingInternal) {
-			const mdFromEditor = editor.getMarkdown();
-			if (content !== mdFromEditor) {
+			const normalizedIncoming = normalizeMarkdown(content);
+			const normalizedEditor = normalizeMarkdown(editor.getMarkdown());
+
+			// Skip internal echo updates and only apply true external changes.
+			if (normalizedIncoming !== normalizedEditor && normalizedIncoming !== lastSyncedMarkdown) {
 				isUpdatingInternal = true;
-				editor.commands.setContent(content, { contentType: 'markdown' });
+				lastSyncedMarkdown = normalizedIncoming;
+				editor.commands.setContent(normalizedIncoming, { contentType: 'markdown' });
 				setTimeout(() => {
 					isUpdatingInternal = false;
 				}, 10);
