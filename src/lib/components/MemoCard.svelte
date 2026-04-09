@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { Note } from '$lib/types';
-	import { marked } from 'marked';
+	import { Marked } from 'marked';
 	import { markedHighlight } from 'marked-highlight';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
@@ -12,18 +12,12 @@
 
 	const dispatch = createEventDispatcher<{ edit: Note }>();
 
-	function handleClick() {
-		if (!linkToDetail && note.id) {
-			dispatch('edit', note);
-		}
-	}
+	type EmbedPlaceholder = {
+		placeholder: string;
+		title: string;
+	};
 
-	$: processedContent = renderWikiLinks(note.content, note.resolvedLinks);
-	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(processedContent || '');
-	$: renderedContent = isHtmlContent ? processedContent || '' : marked(processedContent || '');
-
-	// Configure marked to use highlight.js and wrap code blocks correctly
-	marked.use(
+	const customMarked = new Marked(
 		markedHighlight({
 			langPrefix: 'hljs language-',
 			highlight(code, lang) {
@@ -33,19 +27,95 @@
 		})
 	);
 
-	const renderer = new marked.Renderer();
-	renderer.code = function ({ text, lang }) {
-		const language = (lang || '').match(/\S*/)?.[0] || '';
-		const codeStr = text;
-		const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
+	const renderer = {
+		code(this: any, { text, lang }: { text: string; lang?: string }) {
+			const language = (lang || '').match(/\S*/)?.[0] || '';
+			const codeStr = text;
+			const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
 
-		return `
+			return `
 <div class="code-block-wrapper" style="position: relative; margin: 1.5rem 0;">
 	<pre><code${langAttr}>${codeStr}</code></pre>
 </div>
 `;
+		},
+		listitem(this: any, token: any) {
+			const { text, task, checked, tokens } = token;
+			if (task) {
+				const checkbox = `<input type="checkbox" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
+				const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
+				const content = (text || '').replace(/^\[[ xX]\]\s*/, '');
+				return `<li data-type="taskItem" ${checkedAttr} style="display: flex; align-items: flex-start; margin-bottom: 0.25rem; padding-left: 0;"><label style="flex: 0 0 auto; margin-right: 0.5rem; user-select: none; display: flex; align-items: center; padding-top: 0; margin-top: 0.1rem;">${checkbox}</label><div style="flex: 1 1 auto;"><p style="margin: 0 !important;">${content}</p></div></li>\n`;
+			}
+			const content = tokens && tokens.length > 0 ? customMarked.parser(tokens) : text;
+			return `<li>${content}</li>\n`;
+		},
+		list(this: any, token: any) {
+			const items = token.items || [];
+			const bodyHtml = items.map((item: any) => this.listitem(item)).join('');
+			const isTaskList =
+				items.some((item: any) => item.task) || (token.raw || '').includes('data-type="taskItem"');
+
+			if (isTaskList) {
+				return `<ul data-type="taskList" class="contains-task-list" style="list-style: none; padding: 0; margin: 0; list-style-type: none !important; padding-left: 0 !important;">\n${bodyHtml}</ul>\n`;
+			}
+
+			const type = token.ordered ? 'ol' : 'ul';
+			const startAttr =
+				token.ordered && token.start !== 1 && token.start !== undefined
+					? ` start="${token.start}"`
+					: '';
+			return `<${type}${startAttr}>\n${bodyHtml}</${type}>\n`;
+		}
 	};
-	marked.use({ gfm: true, renderer });
+
+	customMarked.use({ gfm: true, renderer });
+
+	function escapeHtml(value: string) {
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	function escapeMarkdownText(value: string) {
+		return value.replace(/\\/g, '\\\\').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+	}
+
+	function protectNoteEmbeds(content: string) {
+		const embeds: EmbedPlaceholder[] = [];
+		const protectedContent = content.replace(/!\[\[(.*?)\]\]/g, (_match, title) => {
+			const placeholder = `__SAZANAMI_NOTE_EMBED_${embeds.length}__`;
+			embeds.push({ placeholder, title });
+			return placeholder;
+		});
+
+		return { content: protectedContent, embeds };
+	}
+
+	function restoreNoteEmbeds(content: string, embeds: EmbedPlaceholder[]) {
+		let restored = content;
+		for (const embed of embeds) {
+			const linkText = `埋め込み: ${escapeMarkdownText(embed.title)}`;
+			const encodedTitle = encodeURIComponent(embed.title);
+			restored = restored.replace(embed.placeholder, `[${linkText}](note-embed:${encodedTitle})`);
+		}
+		return restored;
+	}
+
+	function handleClick() {
+		if (!linkToDetail && note.id) {
+			dispatch('edit', note);
+		}
+	}
+
+	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
+	$: processedContent = renderWikiLinks(noteEmbedsProtected.content, note.resolvedLinks);
+	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
+	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(contentWithEmbeds || '');
+	$: renderedContent = isHtmlContent ? contentWithEmbeds || '' : customMarked.parse(contentWithEmbeds || '', { breaks: true });
 
 	function enhanceProseContent(node: HTMLElement, _content: string) {
 		const applyEnhancements = () => {
@@ -99,6 +169,47 @@
 						wrapper.appendChild(button);
 					}
 				}
+			});
+
+			node.querySelectorAll('a[href^="note-embed:"]').forEach((anchor) => {
+				const embedLink = anchor as HTMLAnchorElement;
+				if (embedLink.hasAttribute('data-embed-bound')) return;
+				embedLink.setAttribute('data-embed-bound', 'true');
+
+				const href = embedLink.getAttribute('href') || '';
+				const title = decodeURIComponent(href.replace('note-embed:', ''));
+				const wrapper = document.createElement('div');
+				wrapper.className =
+					'note-embed-wrapper border-l-4 border-primary pl-4 py-2 my-4 bg-base-200/30 rounded-r-lg';
+				wrapper.innerHTML = `
+					<div class="text-xs text-base-content/50 mb-2 font-semibold flex items-center justify-between">
+						<div class="flex items-center gap-1">
+							<span>🔗</span>
+							<span>埋め込み: ${escapeHtml(title)}</span>
+						</div>
+					</div>
+					<div class="note-embed-content prose prose-sm max-w-none opacity-80">
+						<span class="loading loading-dots loading-sm"></span>
+					</div>
+				`;
+
+				const content = wrapper.querySelector('.note-embed-content') as HTMLElement | null;
+				embedLink.replaceWith(wrapper);
+
+				if (!content || !title) return;
+
+				fetch(`/api/notes/embed?title=${encodeURIComponent(title)}`)
+					.then((res) => {
+						if (!res.ok) throw new Error('Not found');
+						return res.json();
+					})
+					.then((data) => {
+						content.innerHTML = customMarked.parse(data.content || '', { breaks: true }) as string;
+					})
+					.catch(() => {
+						content.textContent = `ノート「${title}」が見つかりませんでした。`;
+						content.className = 'text-error text-sm mt-2 block';
+					});
 			});
 		};
 		setTimeout(applyEnhancements, 0);
