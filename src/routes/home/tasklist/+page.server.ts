@@ -34,7 +34,19 @@ export const load: ServerLoad = async ({ request, url }) => {
             and(
                 eq(notes.userId, sessionData.user.id),
                 eq(notes.status, 'inbox'),
-                or(like(notes.content, '%data-type="taskList"%'), like(notes.content, '%data-type="taskItem"%'))
+                or(
+                    like(notes.content, '%data-type="taskList"%'),
+                    like(notes.content, '%data-type="taskItem"%'),
+                    like(notes.content, '%- [ ] %'),
+                    like(notes.content, '%- [x] %'),
+                    like(notes.content, '%- [X] %'),
+                    like(notes.content, '%* [ ] %'),
+                    like(notes.content, '%* [x] %'),
+                    like(notes.content, '%* [X] %'),
+                    like(notes.content, '%+ [ ] %'),
+                    like(notes.content, '%+ [x] %'),
+                    like(notes.content, '%+ [X] %')
+                )
             )
         )
         .groupBy(notes.id)

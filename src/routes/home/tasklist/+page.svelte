@@ -11,12 +11,24 @@
 
 	const notes = $derived(data.notes || []);
 
+	function countTasks(content: string) {
+		const htmlTaskItems = (content.match(/data-type=["']taskItem["']/g) || []).length;
+		const htmlCompleted = (content.match(/data-checked=["']true["']/g) || []).length;
+
+		const markdownTaskItems = (content.match(/^\s*[-*+]\s+\[(?: |x|X)\]\s+/gm) || []).length;
+		const markdownCompleted = (content.match(/^\s*[-*+]\s+\[(?:x|X)\]\s+/gm) || []).length;
+
+		return {
+			total: htmlTaskItems + markdownTaskItems,
+			completed: htmlCompleted + markdownCompleted
+		};
+	}
+
 	// Filter notes into those that have at least one uncompleted task, and those that only have completed tasks
 	const incompleteNotes = $derived(
 		notes.filter((note) => {
 			const content = note.content || '';
-			const totalTasks = (content.match(/data-type=["']taskItem["']/g) || []).length;
-			const completedTasks = (content.match(/data-checked=["']true["']/g) || []).length;
+			const { total: totalTasks, completed: completedTasks } = countTasks(content);
 			return totalTasks > completedTasks;
 		})
 	);
@@ -24,8 +36,7 @@
 	const completedNotes = $derived(
 		notes.filter((note) => {
 			const content = note.content || '';
-			const totalTasks = (content.match(/data-type=["']taskItem["']/g) || []).length;
-			const completedTasks = (content.match(/data-checked=["']true["']/g) || []).length;
+			const { total: totalTasks, completed: completedTasks } = countTasks(content);
 			return totalTasks > 0 && totalTasks === completedTasks;
 		})
 	);
