@@ -14,8 +14,19 @@
 	let isSaving = $state(false);
 	let copySuccess = $state(false);
 	let titleError = $state('');
+	let lastSavedTitle = '';
+	let lastSavedContent = '';
+	let hasInitializedLastSaved = false;
 
 	let isCopying = $state(false);
+
+	$effect(() => {
+		if (!hasInitializedLastSaved) {
+			lastSavedTitle = title ?? '';
+			lastSavedContent = content ?? '';
+			hasInitializedLastSaved = true;
+		}
+	});
 
 	function normalizeMarkdownForClipboard(markdown: string) {
 		return markdown
@@ -27,39 +38,35 @@
 			.replace(/&nbsp;/g, ' ');
 	}
 
-	async function copyAsMarkdown() {
+	async function expandEmbedsInMarkdown(markdown: string) {
+		const regex = /!\[\[(.*?)\]\]/g;
+		const matches = [...markdown.matchAll(regex)];
+		let expandedMarkdown = markdown;
+
+		for (const match of matches) {
+			const embedTitle = match[1];
+			try {
+				const res = await fetch(`/api/notes/embed?title=${encodeURIComponent(embedTitle)}`);
+				if (res.ok) {
+					const data = await res.json();
+					const text = (data.content || '').trim();
+					expandedMarkdown = expandedMarkdown.replace(match[0], text);
+				}
+			} catch (err) {
+				console.error(`Failed to fetch embed: ${embedTitle}`, err);
+			}
+		}
+
+		return expandedMarkdown;
+	}
+
+	async function copyAsMarkdown(options?: { expandEmbeds?: boolean }) {
 		isCopying = true;
 		try {
 			let markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
 
-			// ![[メモ名]] を探して実際のコンテンツに置換する
-			const regex = /!\[\[(.*?)\]\]/g;
-			const matches = [...markdownContent.matchAll(regex)];
-			const replacements = [];
-
-			for (const match of matches) {
-				const embedTitle = match[1];
-				try {
-					const res = await fetch(`/api/notes/embed?title=${encodeURIComponent(embedTitle)}`);
-					if (res.ok) {
-						const data = await res.json();
-						const text = data.content || '';
-						// 埋め込みとわかるようにブロック引用としてフォーマット
-						const formattedText =
-							`> **埋め込み: ${embedTitle}**\n>\n` +
-							text
-								.split('\n')
-								.map((l: string) => `> ${l}`)
-								.join('\n');
-						replacements.push({ target: match[0], text: formattedText });
-					}
-				} catch (err) {
-					console.error(`Failed to fetch embed: ${embedTitle}`, err);
-				}
-			}
-
-			for (const r of replacements) {
-				markdownContent = markdownContent.replace(r.target, r.text);
+			if (options?.expandEmbeds) {
+				markdownContent = await expandEmbedsInMarkdown(markdownContent);
 			}
 
 			markdownContent = normalizeMarkdownForClipboard(markdownContent);
@@ -80,6 +87,10 @@
 	function triggerAutoSave() {
 		clearTimeout(saveTimeout);
 		saveTimeout = setTimeout(async () => {
+			if (title === lastSavedTitle && content === lastSavedContent) {
+				return;
+			}
+
 			isSaving = true;
 			try {
 				const response = await fetch(`/api/notes/${data.note.id}`, {
@@ -94,6 +105,8 @@
 				} else if (response.ok) {
 					titleError = '';
 					const updatedNote = await response.json();
+					lastSavedTitle = updatedNote.title ?? title;
+					lastSavedContent = updatedNote.content ?? content;
 					// タイトル、更新日時だけでなく、resolvedLinksなども含めて更新する
 					Object.assign(data.note, updatedNote);
 					// 下のLinkExplorerなどを最新にするためにデータを再取得
@@ -179,7 +192,7 @@
 	<div class="flex gap-2">
 		<button
 			class="btn btn-outline btn-sm {copySuccess ? 'btn-success' : ''}"
-			onclick={copyAsMarkdown}
+			onclick={() => copyAsMarkdown()}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -209,6 +222,18 @@
 			</button>
 			{#if isMenuOpen}
 				<ul class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+					<li>
+						<button
+							onclick={async () => {
+								await copyAsMarkdown({ expandEmbeds: true });
+								isMenuOpen = false;
+							}}
+							disabled={isCopying}
+							type="button"
+						>
+							{isCopying ? 'コピー中...' : '引用を展開してコピー'}
+						</button>
+					</li>
 					{#if data.note.status === 'box'}
 						<li>
 							<button
