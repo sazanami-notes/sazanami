@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 
 # SQLite
 *.db
+
+# Local uploads (use S3 or similar in production)
+/static/uploads/

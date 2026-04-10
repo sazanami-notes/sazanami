@@ -3,23 +3,49 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { attachments } from '$lib/server/db/schema';
 import { auth } from '$lib/server/auth';
+import { getStorageDriver } from '$lib/server/storage';
 import { ulid } from 'ulid';
-import fs from 'fs/promises';
-import path from 'path';
+import { eq, and, desc } from 'drizzle-orm';
 
-// The directory where uploads will be stored
-const UPLOAD_DIR = path.resolve(process.cwd(), 'static/uploads');
+// 許可する MIME タイプ
+const ALLOWED_MIME_TYPES = [
+	'image/jpeg',
+	'image/png',
+	'image/gif',
+	'image/webp',
+	'image/svg+xml',
+	'image/avif'
+];
 
-// Ensure the upload directory exists
-const ensureUploadDir = async () => {
-	try {
-		await fs.mkdir(UPLOAD_DIR, { recursive: true });
-	} catch (error) {
-		console.error('Error creating upload directory:', error);
-		throw new Error('Could not create upload directory');
+// 最大ファイルサイズ (10MB)
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+// --------------------------------------------------------
+// GET /api/attachments - ユーザーの画像一覧
+// --------------------------------------------------------
+export const GET: RequestHandler = async ({ request, url }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session?.user) {
+		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
+
+	const limit = Math.min(Number(url.searchParams.get('limit') ?? '50'), 100);
+	const offset = Number(url.searchParams.get('offset') ?? '0');
+
+	const rows = await db
+		.select()
+		.from(attachments)
+		.where(eq(attachments.userId, session.user.id))
+		.orderBy(desc(attachments.createdAt))
+		.limit(limit)
+		.offset(offset);
+
+	return json(rows);
 };
 
+// --------------------------------------------------------
+// POST /api/attachments - ファイルアップロード
+// --------------------------------------------------------
 export const POST: RequestHandler = async ({ request }) => {
 	const session = await auth.api.getSession({ headers: request.headers });
 	if (!session?.user) {
@@ -27,31 +53,37 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	try {
-		await ensureUploadDir();
-
 		const formData = await request.formData();
-		const file = formData.get('file') as File;
+		const file = formData.get('file') as File | null;
 
 		if (!file) {
 			return json({ message: 'No file uploaded' }, { status: 400 });
 		}
 
-		// Generate a unique filename to prevent collisions
-		const uniqueId = ulid();
-		const fileExtension = path.extname(file.name);
-		const uniqueFileName = `${uniqueId}${fileExtension}`;
-		const filePath = path.join(UPLOAD_DIR, uniqueFileName);
+		if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+			return json({ message: 'File type not allowed' }, { status: 415 });
+		}
 
-		// Save the file to the filesystem
-		const buffer = await file.arrayBuffer();
-		await fs.writeFile(filePath, Buffer.from(buffer));
+		if (file.size > MAX_FILE_SIZE) {
+			return json({ message: 'File too large (max 10MB)' }, { status: 413 });
+		}
 
-		// Save metadata to the database
+		const fileId = ulid();
+		const buffer = Buffer.from(await file.arrayBuffer());
+
+		const storage = await getStorageDriver();
+		const { url, filePath } = await storage.upload({
+			fileId,
+			fileName: file.name,
+			buffer,
+			mimeType: file.type
+		});
+
 		const newAttachment = {
-			id: uniqueId,
+			id: fileId,
 			userId: session.user.id,
 			fileName: file.name,
-			filePath: `/uploads/${uniqueFileName}`, // Store the public URL path
+			filePath,
 			mimeType: file.type,
 			fileSize: file.size,
 			createdAt: new Date()
@@ -59,15 +91,51 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		await db.insert(attachments).values(newAttachment);
 
-		return json(
-			{
-				success: true,
-				url: newAttachment.filePath
-			},
-			{ status: 201 }
-		);
+		return json({ success: true, url, id: fileId, fileName: file.name }, { status: 201 });
 	} catch (error) {
 		console.error('Error handling file upload:', error);
 		return json({ message: 'Internal Server Error' }, { status: 500 });
 	}
+};
+
+// --------------------------------------------------------
+// DELETE /api/attachments?id=XXX - 画像削除
+// --------------------------------------------------------
+export const DELETE: RequestHandler = async ({ request, url }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session?.user) {
+		return json({ message: 'Unauthorized' }, { status: 401 });
+	}
+
+	const id = url.searchParams.get('id');
+	if (!id) {
+		return json({ message: 'id is required' }, { status: 400 });
+	}
+
+	// 自分のファイルか確認
+	const rows = await db
+		.select()
+		.from(attachments)
+		.where(and(eq(attachments.id, id), eq(attachments.userId, session.user.id)))
+		.limit(1);
+
+	if (rows.length === 0) {
+		return json({ message: 'Not found' }, { status: 404 });
+	}
+
+	const attachment = rows[0];
+
+	try {
+		const storage = await getStorageDriver();
+		await storage.delete(attachment.filePath);
+	} catch (err) {
+		console.error('Storage delete error:', err);
+		// ストレージ削除失敗でもDBは削除する（孤立ファイルより孤立DBレコードの方がマシ）
+	}
+
+	await db
+		.delete(attachments)
+		.where(and(eq(attachments.id, id), eq(attachments.userId, session.user.id)));
+
+	return json({ success: true });
 };

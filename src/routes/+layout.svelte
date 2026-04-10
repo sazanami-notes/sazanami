@@ -77,14 +77,17 @@
 	});
 
 	// テーマ適用ロジック
-	const isDarkMode = $derived.by(() => {
-		if (typeof window === 'undefined') return false;
+	// NOTE: isDarkModeはSSR/CSRのhydration mismatchを防ぐため、
+	// 初期値はfalse（SSRと一致）にして、マウント後に実際の値に更新する。
+	let isDarkMode = $state(false);
+
+	$effect(() => {
+		// クライアントサイドでのみダークモードを評価する
 		if (currentThemeMode === 'system') {
-			// Note: this might not be perfectly reactive if system preference changes without page reload
-			// but it matches original behavior.
-			return window.matchMedia('(prefers-color-scheme: dark)').matches;
+			isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		} else {
+			isDarkMode = currentThemeMode === 'dark';
 		}
-		return currentThemeMode === 'dark';
 	});
 
 	const activeThemeId = $derived(isDarkMode ? darkThemeId : lightThemeId);
@@ -246,6 +249,7 @@
 					<li><a href="/home/tasklist">タスクリスト</a></li>
 					<li><a href="/home/archive">アーカイブ</a></li>
 					<li><a href="/home/trash">ゴミ箱</a></li>
+					<li><a href="/home/media">メディア</a></li>
 					<div class="divider"></div>
 					<li><a href="/settings/account">アカウント設定</a></li>
 					<li><a href="/settings/appearance">外観設定</a></li>

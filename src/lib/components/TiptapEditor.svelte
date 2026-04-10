@@ -38,11 +38,83 @@
 	let editor: Editor | null = $state(null);
 	let lastSyncedMarkdown = $state('');
 
+	// 画像アップロード関連
+	let isUploading = $state(false);
+	let uploadProgress = $state(0);
+	let fileInputEl: HTMLInputElement;
+
 	function normalizeMarkdown(markdown: string) {
 		return markdown
 			.replace(/\u00a0/g, ' ')
 			.replace(/^[ \t]*&nbsp;[ \t]*$/gm, '')
 			.replace(/&nbsp;/g, ' ');
+	}
+
+	// --- 画像アップロード処理 ---
+	async function uploadImageFile(file: File): Promise<string | null> {
+		if (!file.type.startsWith('image/')) return null;
+		if (file.size > 10 * 1024 * 1024) {
+			alert('画像ファイルのサイズは10MB以下にしてください。');
+			return null;
+		}
+
+		isUploading = true;
+		uploadProgress = 0;
+
+		try {
+			const formData = new FormData();
+			formData.append('file', file);
+
+			// XMLHttpRequest でプログレス表示
+			const url = await new Promise<string>((resolve, reject) => {
+				const xhr = new XMLHttpRequest();
+				xhr.open('POST', '/api/attachments');
+				xhr.upload.onprogress = (e) => {
+					if (e.lengthComputable) {
+						uploadProgress = Math.round((e.loaded / e.total) * 100);
+					}
+				};
+				xhr.onload = () => {
+					if (xhr.status === 201) {
+						const data = JSON.parse(xhr.responseText);
+						resolve(data.url);
+					} else {
+						reject(new Error('Upload failed: ' + xhr.status));
+					}
+				};
+				xhr.onerror = () => reject(new Error('Network error'));
+				xhr.send(formData);
+			});
+
+			return url;
+		} catch (err) {
+			console.error('Image upload error:', err);
+			alert('画像のアップロードに失敗しました。');
+			return null;
+		} finally {
+			isUploading = false;
+			uploadProgress = 0;
+		}
+	}
+
+	async function insertImageFromFile(file: File) {
+		const url = await uploadImageFile(file);
+		if (url && editor) {
+			editor.chain().focus().setImage({ src: url, alt: file.name }).run();
+		}
+	}
+
+	function handleImageButtonClick() {
+		fileInputEl?.click();
+	}
+
+	async function handleFileInputChange(e: Event) {
+		const input = e.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (file) {
+			await insertImageFromFile(file);
+			input.value = ''; // リセット
+		}
 	}
 
 	// --- WikiLink サジェスト ---
@@ -181,8 +253,8 @@
 				extensions: [
 					StarterKit.configure({
 						codeBlock: false,
-						// If StarterKit happens to include something that conflicts, we could disable it here.
-						// Note: In newer Tiptap, some bundles might include link, but ours shouldn't.
+						// StarterKit includes Link internally - disable it to avoid duplicate extension warning
+						link: false
 					}),
 					Placeholder.configure({
 						placeholder: placeholder
@@ -244,6 +316,37 @@
 							}
 						}
 						return false;
+					},
+					// 画像ペースト対応
+					handlePaste(view, event) {
+						if (!editable) return false;
+						const items = event.clipboardData?.items;
+						if (!items) return false;
+
+						for (const item of Array.from(items)) {
+							if (item.type.startsWith('image/')) {
+								event.preventDefault();
+								const file = item.getAsFile();
+								if (file) {
+									insertImageFromFile(file);
+									return true;
+								}
+							}
+						}
+						return false;
+					},
+					// 画像ドロップ対応
+					handleDrop(view, event) {
+						if (!editable) return false;
+						const files = event.dataTransfer?.files;
+						if (!files || files.length === 0) return false;
+
+						const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'));
+						if (imageFiles.length === 0) return false;
+
+						event.preventDefault();
+						imageFiles.forEach((file) => insertImageFromFile(file));
+						return true;
 					}
 				},
 				onTransaction: ({ editor: e }) => {
@@ -324,6 +427,54 @@
 <div
 	class="focus-within:border-primary focus-within:ring-primary bg-base-100 border-base-300 relative rounded-md border shadow-sm focus-within:ring-1"
 >
+	<!-- 画像アップロードボタン（編集モードのみ表示） -->
+	{#if editable}
+		<div class="border-base-300 flex items-center gap-1 border-b px-2 py-1">
+			<button
+				type="button"
+				onclick={handleImageButtonClick}
+				disabled={isUploading}
+				class="btn btn-ghost btn-xs tooltip tooltip-bottom gap-1"
+				data-tip="画像を挿入"
+				title="画像をアップロード"
+			>
+				{#if isUploading}
+					<span class="loading loading-spinner loading-xs"></span>
+					<span class="text-xs">{uploadProgress}%</span>
+				{:else}
+					<!-- Image icon -->
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+						/>
+					</svg>
+					<span class="hidden text-xs sm:inline">画像</span>
+				{/if}
+			</button>
+
+			<span class="text-base-content/40 text-xs">
+				画像のペースト・ドロップも対応
+			</span>
+		</div>
+		<!-- ファイル選択（非表示） -->
+		<input
+			bind:this={fileInputEl}
+			type="file"
+			accept="image/*"
+			class="hidden"
+			onchange={handleFileInputChange}
+		/>
+	{/if}
+
 	<div bind:this={element} class="w-full"></div>
 
 	{#if showSuggestions && suggestions.length > 0}
@@ -406,5 +557,18 @@
 		bottom: 0;
 		background: rgba(200, 200, 255, 0.4);
 		pointer-events: none;
+	}
+
+	/* 挿入された画像のスタイル */
+	:global(.tiptap img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: 0.375rem;
+		cursor: pointer;
+	}
+
+	:global(.tiptap img.ProseMirror-selectednode) {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 </style>

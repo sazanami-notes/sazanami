@@ -1,11 +1,12 @@
-// static/sw.js
+// src/service-worker.ts
+// SvelteKitの標準のService Workerファイル。
+// $service-workerの仮想モジュールはここでしか使えない。
 
-// SvelteKitのビルド成果物と、手動でキャッシュしたい静的ファイルを取得
-import { build, files } from '$service-worker';
+import { build, files, version } from '$service-worker';
 
 // キャッシュ名とバージョンを定義
-const CACHE_NAME = 'sazanami-cache-v2';
-const API_CACHE_NAME = 'sazanami-api-cache-v2';
+const CACHE_NAME = `sazanami-cache-${version}`;
+const API_CACHE_NAME = `sazanami-api-cache-${version}`;
 
 // キャッシュするアセットのリストを動的に生成
 // build: SvelteKitが生成した全ファイル（JS, CSSなど）
@@ -20,13 +21,16 @@ self.addEventListener('install', (event) => {
 		caches
 			.open(CACHE_NAME)
 			.then((cache) => {
-				console.log('[Service Worker] Caching static assets:', ASSETS_TO_CACHE);
+				console.log('[Service Worker] Caching static assets');
 				return cache.addAll(ASSETS_TO_CACHE);
 			})
 			.catch((error) => {
 				console.error('[Service Worker] Failed to cache static assets:', error);
 			})
 	);
+
+	// 新しいService Workerを即座にアクティベートする
+	(self as unknown as ServiceWorkerGlobalScope).skipWaiting();
 });
 
 /**
@@ -48,64 +52,61 @@ self.addEventListener('activate', (event) => {
 			);
 		})
 	);
-	self.clients.claim();
+	(self as unknown as ServiceWorkerGlobalScope).clients.claim();
 });
 
 /**
  * Service Workerのフェッチイベントハンドラ
  */
 self.addEventListener('fetch', (event) => {
-	const requestUrl = new URL(event.request.url);
+	const requestUrl = new URL((event as FetchEvent).request.url);
 
 	// APIリクエストの場合 (Network First)
 	if (requestUrl.pathname.startsWith('/api/')) {
-		event.respondWith(
-			fetch(event.request)
+		(event as FetchEvent).respondWith(
+			fetch((event as FetchEvent).request)
 				.then((response) => {
 					if (response.status === 200) {
 						const responseToCache = response.clone();
 						caches.open(API_CACHE_NAME).then((cache) => {
-							console.log(`[Service Worker] Caching API response: ${requestUrl.pathname}`);
-							cache.put(event.request, responseToCache);
+							cache.put((event as FetchEvent).request, responseToCache);
 						});
 					}
 					return response;
 				})
 				.catch(() => {
-					console.log(
-						`[Service Worker] Network failed, trying API cache for: ${requestUrl.pathname}`
-					);
-					return caches.match(event.request).then((cachedResponse) => {
-						if (cachedResponse) {
-							return cachedResponse;
-						}
-						return new Response('API is offline', {
-							status: 503,
-							statusText: 'Service Unavailable'
+					return caches
+						.match((event as FetchEvent).request)
+						.then((cachedResponse) => {
+							if (cachedResponse) {
+								return cachedResponse;
+							}
+							return new Response('API is offline', {
+								status: 503,
+								statusText: 'Service Unavailable'
+							});
 						});
-					});
 				})
 		);
 	} else {
 		// その他の静的アセットの場合 (Cache First)
-		event.respondWith(
-			caches.match(event.request).then((cachedResponse) => {
+		(event as FetchEvent).respondWith(
+			caches.match((event as FetchEvent).request).then((cachedResponse) => {
 				// キャッシュにあればそれを返す
 				if (cachedResponse) {
 					return cachedResponse;
 				}
 
 				// キャッシュになければネットワークから取得し、キャッシュにも保存する
-				return fetch(event.request).then((response) => {
+				return fetch((event as FetchEvent).request).then((response) => {
 					// `basic` タイプのレスポンスのみキャッシュする
-					// (Chrome拡張機能などが原因で `opaque` レスポンスが返ってくることがあるため)
 					if (!response || response.status !== 200 || response.type !== 'basic') {
 						return response;
 					}
 
 					const responseToCache = response.clone();
 					caches.open(CACHE_NAME).then((cache) => {
-						cache.put(event.request, responseToCache);
+						cache.put((event as FetchEvent).request, responseToCache);
 					});
 
 					return response;
