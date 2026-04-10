@@ -16,38 +16,29 @@ export const GET: RequestHandler = async ({ url, request }) => {
     }
 
     const q = url.searchParams.get('q') || '';
+    const scope = url.searchParams.get('scope') || 'box';
     const limit = 10;
 
     try {
-        let results;
-        if (q) {
-            results = await db
-                .select({ id: notes.id, title: notes.title, slug: notes.slug })
-                .from(notes)
-                .where(
-                    and(
-                        eq(notes.userId, session.session.userId),
-                        eq(notes.status, 'box'),
-                        ne(notes.title, ''),
-                        like(notes.title, `%${q}%`)
-                    )
-                )
-                .orderBy(desc(notes.updatedAt))
-                .limit(limit);
-        } else {
-            results = await db
-                .select({ id: notes.id, title: notes.title, slug: notes.slug })
-                .from(notes)
-                .where(
-                    and(
-                        eq(notes.userId, session.session.userId),
-                        eq(notes.status, 'box'),
-                        ne(notes.title, '')
-                    )
-                )
-                .orderBy(desc(notes.updatedAt))
-                .limit(limit);
+        const conditions: any[] = [
+            eq(notes.userId, session.session.userId),
+            ne(notes.title, '')
+        ];
+
+        if (scope === 'box') {
+            conditions.push(eq(notes.status, 'box'));
         }
+
+        if (q) {
+            conditions.push(like(notes.title, `%${q}%`));
+        }
+
+        const results = await db
+            .select({ id: notes.id, title: notes.title, slug: notes.slug, status: notes.status })
+            .from(notes)
+            .where(and(...conditions))
+            .orderBy(desc(notes.updatedAt))
+            .limit(limit);
 
         return json(results);
     } catch (error) {

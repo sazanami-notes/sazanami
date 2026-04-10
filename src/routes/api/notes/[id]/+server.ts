@@ -84,35 +84,33 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		const now = new Date();
-		const updatedTitle = title !== undefined ? title : existingNote[0].title;
-		const updatedSlug = generateSlug(updatedTitle); // スラッグを再生成
+		const titleChanged = title !== undefined && title !== existingNote[0].title;
+		const contentChanged = content !== undefined && content !== existingNote[0].content;
+		const tagsProvided = Array.isArray(tagNames);
 
-		const updatedFields: Record<string, unknown> = {
-			updatedAt: now,
-			slug: updatedSlug
-		};
+		const updatedFields: Record<string, unknown> = {};
 		const metadata: {
 			changes: Record<string, unknown>;
 		} = {
 			changes: {}
 		};
 
-		if (title !== undefined && title !== existingNote[0].title) {
+		if (titleChanged) {
 			updatedFields.title = title;
+			updatedFields.slug = generateSlug(title);
 			metadata.changes.title = { before: existingNote[0].title, after: title };
 		}
-		if (content !== undefined && content !== existingNote[0].content) {
+		if (contentChanged) {
 			updatedFields.content = content;
 			metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
+		if (titleChanged || contentChanged) {
+			updatedFields.updatedAt = now;
+		}
+
 		// Boxノートのタイトル変更時に一意性チェック
-		if (
-			title !== undefined &&
-			title !== existingNote[0].title &&
-			existingNote[0].status === 'box' &&
-			title.trim() !== ''
-		) {
+		if (titleChanged && existingNote[0].status === 'box' && title.trim() !== '') {
 			const duplicate = await db
 				.select({ id: notes.id })
 				.from(notes)
@@ -133,11 +131,27 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
+		if (!titleChanged && !contentChanged && !tagsProvided) {
+			const noteTagsList = await db
+				.select({ name: tags.name })
+				.from(noteTags)
+				.leftJoin(tags, eq(noteTags.tagId, tags.id))
+				.where(eq(noteTags.noteId, noteId));
+
+			return json({
+				...existingNote[0],
+				tags: noteTagsList.map((nt) => nt.name).filter(Boolean),
+				resolvedLinks: existingNote[0].resolvedLinks
+			});
+		}
+
 		// ノートを更新
-		await db
-			.update(notes)
-			.set(updatedFields)
-			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+		if (Object.keys(updatedFields).length > 0) {
+			await db
+				.update(notes)
+				.set(updatedFields)
+				.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+		}
 
 		// タイムラインイベントを記録
 		if (Object.keys(metadata.changes).length > 0) {
@@ -151,7 +165,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		// タグの変更を検知してタイムラインに記録
-		if (tagNames && Array.isArray(tagNames)) {
+		let tagsChanged = false;
+		if (tagsProvided) {
 			const oldTagsResult = await db
 				.select({ name: tags.name })
 				.from(noteTags)
@@ -162,8 +177,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 			const addedTags = [...newTagNames].filter((t) => !oldTagNames.has(t));
 			const removedTags = [...oldTagNames].filter((t) => !newTagNames.has(t));
+			tagsChanged = addedTags.length > 0 || removedTags.length > 0;
 
-			if (addedTags.length > 0 || removedTags.length > 0) {
+			if (tagsChanged) {
 				await db.insert(timeline).values({
 					userId: session.session.userId,
 					noteId: noteId,
@@ -175,49 +191,58 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 					})
 				});
 			}
-		}
 
-		// 既存のタグをクリア
-		await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
+			if (tagsChanged) {
+				await db
+					.update(notes)
+					.set({ updatedAt: now })
+					.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+			}
 
-		// 新しいタグを設定
-		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
-			for (const tagName of tagNames) {
-				if (!tagName || !tagName.trim()) continue;
+			// 既存のタグをクリア
+			await db.delete(noteTags).where(eq(noteTags.noteId, noteId));
 
-				const trimmedTagName = tagName.trim();
+			// 新しいタグを設定
+			if (tagNames.length > 0) {
+				for (const tagName of tagNames) {
+					if (!tagName || !tagName.trim()) continue;
 
-				// タグが存在するか確認
-				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
+					const trimmedTagName = tagName.trim();
 
-				let tagId: string;
+					// タグが存在するか確認
+					const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
 
-				if (existingTag.length === 0) {
-					// 新規タグを作成
-					tagId = ulid();
-					await db.insert(tags).values({
-						id: tagId,
-						name: trimmedTagName,
-						createdAt: now
+					let tagId: string;
+
+					if (existingTag.length === 0) {
+						// 新規タグを作成
+						tagId = ulid();
+						await db.insert(tags).values({
+							id: tagId,
+							name: trimmedTagName,
+							createdAt: now
+						});
+					} else {
+						tagId = existingTag[0].id;
+					}
+
+					// ノートとタグの関連付け
+					await db.insert(noteTags).values({
+						noteId,
+						tagId
 					});
-				} else {
-					tagId = existingTag[0].id;
 				}
-
-				// ノートとタグの関連付け
-				await db.insert(noteTags).values({
-					noteId,
-					tagId
-				});
 			}
 		}
 
 		// After updating the note, update its links
-		const finalContent = content !== undefined ? content : existingNote[0].content;
-		await updateNoteLinks(noteId, finalContent || '', session.session.userId);
+		if (contentChanged) {
+			const finalContent = content !== undefined ? content : existingNote[0].content;
+			await updateNoteLinks(noteId, finalContent || '', session.session.userId);
+		}
 
 		// タイトルが変更された場合、他のノートからのWikiLink（バックリンク）を更新
-		if (title !== undefined && title !== existingNote[0].title && existingNote[0].title) {
+		if (titleChanged && existingNote[0].title) {
 			await updateBacklinksOnTitleChange(noteId, existingNote[0].title, title, session.session.userId);
 		}
 

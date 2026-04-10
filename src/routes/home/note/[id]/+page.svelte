@@ -1,31 +1,45 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
-	import { page } from '$app/stores';
+	import { onDestroy } from 'svelte';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 	import { format } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 
 	let { data }: { data: PageData } = $props();
 
-	let content = $state(data.note.content);
-	let title = $state(data.note.title);
+	let content = $state('');
+	let title = $state('');
 	let saveTimeout: ReturnType<typeof setTimeout>;
 	let isSaving = $state(false);
 	let copySuccess = $state(false);
 	let titleError = $state('');
 	let lastSavedTitle = '';
 	let lastSavedContent = '';
-	let hasInitializedLastSaved = false;
+	let currentNoteId = $state('');
+	let editorKey = $state(0);
 
 	let isCopying = $state(false);
 
 	$effect(() => {
-		if (!hasInitializedLastSaved) {
-			lastSavedTitle = title ?? '';
-			lastSavedContent = content ?? '';
-			hasInitializedLastSaved = true;
+		const nextNoteId = data.note.id;
+
+		if (nextNoteId !== currentNoteId) {
+			clearTimeout(saveTimeout);
+			currentNoteId = nextNoteId;
+			editorKey += 1;
 		}
+
+		content = data.note.content ?? '';
+		title = data.note.title ?? '';
+		titleError = '';
+		isMenuOpen = false;
+		copySuccess = false;
+		isSaving = false;
+		isCopying = false;
+
+		lastSavedTitle = title;
+		lastSavedContent = content;
 	});
 
 	function normalizeMarkdownForClipboard(markdown: string) {
@@ -86,7 +100,12 @@
 
 	function triggerAutoSave() {
 		clearTimeout(saveTimeout);
+		const targetNoteId = data.note.id;
 		saveTimeout = setTimeout(async () => {
+			if (targetNoteId !== data.note.id) {
+				return;
+			}
+
 			if (title === lastSavedTitle && content === lastSavedContent) {
 				return;
 			}
@@ -122,6 +141,10 @@
 			}
 		}, 1000);
 	}
+
+	onDestroy(() => {
+		clearTimeout(saveTimeout);
+	});
 
 	const handleContentChange = (event: { markdown: string }) => {
 		content = event.markdown;
@@ -309,7 +332,7 @@
 
 	<div class="mb-4">
 		<div class="min-h-[400px] w-full">
-			{#key data.note.id}
+			{#key editorKey}
 				<TiptapEditor content={content ?? ''} onchange={handleContentChange} />
 			{/key}
 		</div>
