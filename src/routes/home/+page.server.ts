@@ -17,7 +17,7 @@ export const load: ServerLoad = async ({ request, url }) => {
 		.select({
 			id: notes.id,
 			title: notes.title,
-			content: notes.content,
+			contentHtml: notes.contentHtml,
 			updatedAt: notes.updatedAt,
 			isPinned: notes.isPinned,
 			userId: notes.userId,
@@ -38,7 +38,7 @@ export const load: ServerLoad = async ({ request, url }) => {
 	const notesWithTags = notesResult.map((note) => ({
 		...note,
 		title: note.title ?? '',
-		content: note.content ?? '',
+		contentHtml: note.contentHtml ?? '',
 		tags: note.tags ? note.tags.split(',') : []
 	}));
 

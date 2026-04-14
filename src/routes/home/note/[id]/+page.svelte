@@ -9,6 +9,9 @@
 	let { data }: { data: PageData } = $props();
 
 	let content = $state('');
+	let yjsUpdateBase64 = $state('');
+	let currentHtml = $state('');
+	let currentMd = $state('');
 	let title = $state('');
 	let saveTimeout: ReturnType<typeof setTimeout>;
 	let isSaving = $state(false);
@@ -30,7 +33,8 @@
 			editorKey += 1;
 		}
 
-		content = data.note.content ?? '';
+		content = data.note.contentHtml ?? '';
+		yjsUpdateBase64 = data.note.contentBin ?? '';
 		title = data.note.title ?? '';
 		titleError = '';
 		isMenuOpen = false;
@@ -63,7 +67,7 @@
 				const res = await fetch(`/api/notes/embed?title=${encodeURIComponent(embedTitle)}`);
 				if (res.ok) {
 					const data = await res.json();
-					const text = (data.content || '').trim();
+					const text = (data.contentHtml || '').trim();
 					expandedMarkdown = expandedMarkdown.replace(match[0], text);
 				}
 			} catch (err) {
@@ -77,7 +81,7 @@
 	async function copyAsMarkdown(options?: { expandEmbeds?: boolean }) {
 		isCopying = true;
 		try {
-			let markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
+			let markdownContent = `# ${title}\n\n---\n\n${currentMd || content || ''}`;
 
 			if (options?.expandEmbeds) {
 				markdownContent = await expandEmbedsInMarkdown(markdownContent);
@@ -125,7 +129,7 @@
 					titleError = '';
 					const updatedNote = await response.json();
 					lastSavedTitle = updatedNote.title ?? title;
-					lastSavedContent = updatedNote.content ?? content;
+					lastSavedContent = updatedNote.contentHtml ?? content;
 					// タイトル、更新日時だけでなく、resolvedLinksなども含めて更新する
 					Object.assign(data.note, updatedNote);
 					// 下のLinkExplorerなどを最新にするためにデータを再取得

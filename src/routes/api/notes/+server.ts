@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.where(
 					and(
 						eq(notes.userId, session.session.userId),
-						or(like(notes.title, `%${search}%`), like(notes.content, `%${search}%`))
+						or(like(notes.title, `%${search}%`), like(notes.contentHtml, `%${search}%`))
 					)
 				)
 				.orderBy(desc(notes.updatedAt))
@@ -70,7 +70,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.where(
 					and(
 						eq(notes.userId, session.session.userId),
-						or(like(notes.title, `%${search}%`), like(notes.content, `%${search}%`))
+						or(like(notes.title, `%${search}%`), like(notes.contentHtml, `%${search}%`))
 					)
 				);
 		} else {
@@ -119,11 +119,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		const {
 			id,
 			title,
-			content,
+			contentHtml,
+			contentBin,
 			tags: tagNames,
 			skipTimeline,
 			status
-		} = body as { id?: string; title?: string; content?: string; tags?: string[]; skipTimeline?: boolean; status?: string };
+		} = body as { id?: string; title?: string; contentHtml?: string; contentBin?: string; tags?: string[]; skipTimeline?: boolean; status?: string };
 
 		// IDのバリデーション
 		let noteId: string;
@@ -141,7 +142,15 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const now = new Date();
 		let noteTitle = title;
-		const noteContent = content || '';
+		const noteContentHtml = contentHtml || '';
+		let noteContentBin: Buffer | null = null;
+		if (contentBin) {
+			try {
+				noteContentBin = Buffer.from(contentBin, 'base64');
+			} catch (e) {
+				console.error('Failed to parse contentBin base64', e);
+			}
+		}
 
 		// タイムラインや新規作成からのポストの場合、タイトルが未指定（undefined または空文字）であれば自動生成...しない
 		if (title === undefined || title.trim() === '') {
@@ -184,7 +193,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			userId: session.session.userId,
 			title: noteTitle,
 			slug: noteSlug, // スラッグを保存
-			content: noteContent,
+			contentHtml: noteContentHtml,
+			contentBin: noteContentBin,
 			createdAt: now,
 			updatedAt: now,
 			isPublic: false,
@@ -234,7 +244,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// After creating the note, update its links
-		await updateNoteLinks(noteId, content || '', session.session.userId);
+		await updateNoteLinks(noteId, noteContentHtml, session.session.userId);
 
 		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
 

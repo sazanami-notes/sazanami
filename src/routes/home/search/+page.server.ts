@@ -21,14 +21,14 @@ export const load: PageServerLoad = async ({ request, url }) => {
 
 	const conditions: any[] = [eq(notes.userId, sessionData.user.id)];
 	if (q) {
-		conditions.push(or(like(notes.title, `%${q}%`), like(notes.content, `%${q}%`)));
+		conditions.push(or(like(notes.title, `%${q}%`), like(notes.contentHtml, `%${q}%`)));
 	}
 
 	const notesResult = await db
 		.select({
 			id: notes.id,
 			title: notes.title,
-			content: notes.content,
+			contentHtml: notes.contentHtml,
 			updatedAt: notes.updatedAt,
 			isPinned: notes.isPinned,
 			userId: notes.userId,
@@ -58,7 +58,7 @@ export const load: PageServerLoad = async ({ request, url }) => {
 	const notesWithTags = notesResult.map((note) => ({
 		...note,
 		title: note.title ?? '',
-		content: note.content ?? '',
+		contentHtml: note.contentHtml ?? '',
 		tags: note.tags ? note.tags.split(',') : []
 	}));
 

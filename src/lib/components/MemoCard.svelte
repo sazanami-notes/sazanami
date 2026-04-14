@@ -84,7 +84,7 @@
 		return value.replace(/\\/g, '\\\\').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 	}
 
-	function protectNoteEmbeds(content: string) {
+	function protectNoteEmbeds(contentHtml: string) {
 		const embeds: EmbedPlaceholder[] = [];
 		const protectedContent = content.replace(/!\[\[(.*?)\]\]/g, (_match, title) => {
 			const placeholder = `__SAZANAMI_NOTE_EMBED_${embeds.length}__`;
@@ -92,10 +92,10 @@
 			return placeholder;
 		});
 
-		return { content: protectedContent, embeds };
+		return { contentHtml: protectedContent, embeds };
 	}
 
-	function restoreNoteEmbeds(content: string, embeds: EmbedPlaceholder[]) {
+	function restoreNoteEmbeds(contentHtml: string, embeds: EmbedPlaceholder[]) {
 		let restored = content;
 		for (const embed of embeds) {
 			const linkText = `埋め込み: ${escapeMarkdownText(embed.title)}`;
@@ -111,13 +111,13 @@
 		}
 	}
 
-	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
+	$: noteEmbedsProtected = protectNoteEmbeds(note.contentHtml || '');
 	$: processedContent = renderWikiLinks(noteEmbedsProtected.content, note.resolvedLinks);
 	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(contentWithEmbeds || '');
 	$: renderedContent = isHtmlContent ? contentWithEmbeds || '' : customMarked.parse(contentWithEmbeds || '', { breaks: true });
 
-	function enhanceProseContent(node: HTMLElement, _content: string) {
+	function enhanceProseContent(node: HTMLElement, _contentHtml: string) {
 		const applyEnhancements = () => {
 			if (!node) return;
 			node.querySelectorAll('pre').forEach((pre) => {
@@ -204,7 +204,7 @@
 						return res.json();
 					})
 					.then((data) => {
-						content.innerHTML = customMarked.parse(data.content || '', { breaks: true }) as string;
+						content.innerHTML = customMarked.parse(data.contentHtml || '', { breaks: true }) as string;
 					})
 					.catch(() => {
 						content.textContent = `ノート「${title}」が見つかりませんでした。`;

@@ -39,7 +39,7 @@
 				},
 				body: JSON.stringify({
 					title,
-					content: '',
+					contentHtml: '',
 					status: 'box',
 					skipTimeline: true
 				})

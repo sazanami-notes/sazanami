@@ -8,7 +8,7 @@ describe('MemoCard', () => {
 		const note = {
 			id: 'test-id',
 			title: 'Test Note',
-			content: 'Test content',
+			contentHtml: 'Test content',
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			isPublic: false,
@@ -23,7 +23,7 @@ describe('MemoCard', () => {
 		const note = {
 			id: 'test-id',
 			title: 'テストノート',
-			content: 'テストコンテンツ',
+			contentHtml: 'テストコンテンツ',
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			isPublic: false,
@@ -38,7 +38,7 @@ describe('MemoCard', () => {
 		const note = {
 			id: 'test-id',
 			title: '',
-			content: 'Test content',
+			contentHtml: 'Test content',
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			isPublic: false,

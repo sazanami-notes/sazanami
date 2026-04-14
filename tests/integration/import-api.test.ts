@@ -93,8 +93,8 @@ describe('POST /api/notes/import', () => {
 
 		expect(note1).toBeDefined();
 		expect(note2).toBeDefined();
-		expect(note1?.content).toBe(file1Content);
-		expect(note2?.content).toBe(file2Content);
+		expect(note1?.contentHtml).toBe(file1Content);
+		expect(note2?.contentHtml).toBe(file2Content);
 
 		// 7. Verify link was created in DB
 		if (!note1 || !note2) {

@@ -37,8 +37,24 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			.leftJoin(tags, eq(noteTags.tagId, tags.id))
 			.where(eq(noteTags.noteId, noteId));
 
+		let contentBinBase64: string | undefined;
+		if (note[0].contentBin) {
+			try {
+				contentBinBase64 = Buffer.from(note[0].contentBin).toString('base64');
+			} catch(e) {}
+		}
+
+		let contentBinBase64: string | undefined;
+		if (note[0].contentBin) {
+			try {
+				contentBinBase64 = Buffer.from(note[0].contentBin).toString('base64');
+			} catch(e) {}
+		}
+
 		const noteWithTags = {
 			...note[0],
+			contentBin: contentBinBase64,
+			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
@@ -68,9 +84,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 		const {
 			title,
-			content,
+			contentHtml,
+			contentBin,
 			tags: tagNames
-		} = body as { title?: string; content?: string; tags?: string[] };
+		} = body as { title?: string; contentHtml?: string; contentBin?: string; tags?: string[] };
 
 		// ノートが存在するか確認
 		const existingNote = await db
@@ -85,7 +102,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		const now = new Date();
 		const titleChanged = title !== undefined && title !== existingNote[0].title;
-		const contentChanged = content !== undefined && content !== existingNote[0].content;
+		const contentHtmlChanged = contentHtml !== undefined && contentHtml !== existingNote[0].contentHtml;
+		const contentBinChanged = contentBin !== undefined;
 		const tagsProvided = Array.isArray(tagNames);
 
 		const updatedFields: Record<string, unknown> = {};
@@ -100,12 +118,24 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedFields.slug = generateSlug(title);
 			metadata.changes.title = { before: existingNote[0].title, after: title };
 		}
-		if (contentChanged) {
-			updatedFields.content = content;
-			metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
+		if (contentHtmlChanged) {
+			updatedFields.contentHtml = contentHtml;
+			// metadata.changes.contentHtml = true;
+		}
+		if (contentBinChanged) {
+			try {
+				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
+				metadata.changes.contentBin = true;
+			} catch(e) {
+				console.error('Failed to parse contentBin base64', e);
+			}
+		}
+		if (contentHtmlChanged) {
+			// updatedFields.contentHtml = contentHtml; handled above
+			// metadata.changes.contentHtml = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		if (titleChanged || contentChanged) {
+		if (titleChanged || contentHtmlChanged || contentBinChanged) {
 			updatedFields.updatedAt = now;
 		}
 
@@ -131,7 +161,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
-		if (!titleChanged && !contentChanged && !tagsProvided) {
+		if (!titleChanged && !contentHtmlChanged && !contentBinChanged && !tagsProvided) {
 			const noteTagsList = await db
 				.select({ name: tags.name })
 				.from(noteTags)
@@ -236,8 +266,20 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		// After updating the note, update its links
-		if (contentChanged) {
-			const finalContent = content !== undefined ? content : existingNote[0].content;
+		if (contentHtmlChanged) {
+			updatedFields.contentHtml = contentHtml;
+			// metadata.changes.contentHtml = true;
+		}
+		if (contentBinChanged) {
+			try {
+				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
+				metadata.changes.contentBin = true;
+			} catch(e) {
+				console.error('Failed to parse contentBin base64', e);
+			}
+		}
+		if (contentHtmlChanged) {
+			const finalContent = contentHtml !== undefined ? contentHtml : existingNote[0].contentHtml;
 			await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 		}
 
@@ -259,8 +301,16 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			.leftJoin(tags, eq(noteTags.tagId, tags.id))
 			.where(eq(noteTags.noteId, noteId));
 
+		let contentBinBase64: string | undefined;
+		if (updatedNote[0].contentBin) {
+			try {
+				contentBinBase64 = Buffer.from(updatedNote[0].contentBin).toString('base64');
+			} catch(e) {}
+		}
+
 		const noteWithTags = {
 			...updatedNote[0],
+			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean),
 			resolvedLinks: updatedNote[0].resolvedLinks // ここで明示的に含める（select * なので本来含まれるが確認用）
 		};

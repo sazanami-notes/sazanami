@@ -67,7 +67,7 @@
 			if (res.ok) {
 				const note = await res.json();
 				title = note.title || '';
-				content = note.content || '';
+				content = note.contentHtml || '';
 				showTitleInput = !!note.title;
 				// 読み込み完了後にinitializedをセット（読み込み自体の変更で保存が走らないように）
 				setTimeout(() => {
@@ -90,7 +90,7 @@
 			const response = await fetch(`/api/notes/${noteId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title: currentTitle, content: currentContent })
+				body: JSON.stringify({ title: currentTitle, contentHtml: currentContent })
 			});
 
 			if (response.ok) {

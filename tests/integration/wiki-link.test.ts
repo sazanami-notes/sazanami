@@ -62,7 +62,7 @@ describe('Wiki Link Resolution', () => {
 					id: ulid(),
 					userId: testUserId,
 					title: 'Existing Note',
-					content: 'Content of existing note.',
+					contentHtml: 'Content of existing note.',
 					isPublic: false,
 					createdAt: new Date(2023, 0, 1, 10, 0, 0),
 					updatedAt: new Date(2023, 0, 1, 10, 0, 0),

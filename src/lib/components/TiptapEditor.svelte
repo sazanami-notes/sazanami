@@ -15,6 +15,9 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
+		import * as Y from 'yjs';
+	import { IndexeddbPersistence } from 'y-indexeddb';
+	import Collaboration from '@tiptap/extension-collaboration';
 	import { Markdown } from '@tiptap/markdown';
 	import { goto } from '$app/navigation';
 
@@ -22,17 +25,24 @@
 
 	type Props = {
 		content?: string;
+		noteId?: string; // For IndexedDB and Yjs room sync
+		initialContentBinBase64?: string; // Optional: Initial Yjs binary update from server
 		editable?: boolean;
 		placeholder?: string;
-		onchange?: (event: { markdown: string }) => void;
+		onchange?: (event: { markdown: string; html: string; yjsUpdateBase64: string }) => void;
 	};
 
 	let {
 		content = $bindable(''),
+		noteId,
+		initialContentBinBase64,
 		editable = true,
 		placeholder = 'Write something...',
 		onchange
 	}: Props = $props();
+
+	let ydoc: Y.Doc | null = null;
+	let provider: IndexeddbPersistence | null = null;
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
@@ -247,6 +257,26 @@
 
 	onMount(() => {
 		try {
+			ydoc = new Y.Doc();
+
+			// If we have initial binary content from server, apply it
+			if (initialContentBinBase64) {
+				try {
+					const uint8Array = Uint8Array.from(atob(initialContentBinBase64), c => c.charCodeAt(0));
+					Y.applyUpdate(ydoc, uint8Array);
+				} catch(e) {
+					console.error("Failed to parse initial Yjs update", e);
+				}
+			}
+
+			// Configure IndexedDB persistence if a valid noteId is provided
+			if (noteId) {
+				provider = new IndexeddbPersistence(noteId, ydoc);
+				provider.on('synced', () => {
+					console.log('Yjs document synced from IndexedDB');
+				});
+			}
+
 			editor = new Editor({
 				element: element,
 				editable,
@@ -254,8 +284,13 @@
 					StarterKit.configure({
 						codeBlock: false,
 						// StarterKit includes Link internally - disable it to avoid duplicate extension warning
-						link: false
+						link: false,
+						history: false // disable history because of Collaboration extension
 					}),
+					Collaboration.configure({
+						document: ydoc,
+					}),
+
 					Placeholder.configure({
 						placeholder: placeholder
 					}),
@@ -281,7 +316,7 @@
 					NoteEmbedNode,
 					Markdown
 				],
-				content: normalizeMarkdown(content || ''),
+				contentHtml: normalizeMarkdown(content || ''),
 				contentType: 'markdown',
 				editorProps: {
 					attributes: {
@@ -374,8 +409,13 @@
 					const md = normalizeMarkdown(e.getMarkdown());
 					lastSyncedMarkdown = md;
 					content = md; // コンポーネント外の `bind:content` に変更を通知する
-					if (onchange) {
-						onchange({ markdown: md });
+
+					if (onchange && ydoc) {
+						const html = e.getHTML();
+						const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
+						// Convert uint8array to base64
+						const yjsUpdateBase64 = btoa(String.fromCharCode.apply(null, Array.from(yjsUpdate)));
+						onchange({ markdown: md, html, yjsUpdateBase64 });
 					}
 				}
 			});
@@ -391,9 +431,25 @@
 		return editor ? editor.getMarkdown() : content;
 	}
 
+	export function getHTMLContent() {
+		return editor ? editor.getHTML() : '';
+	}
+
+	export function getYjsUpdateBase64() {
+		if (!ydoc) return '';
+		const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
+		return btoa(String.fromCharCode.apply(null, Array.from(yjsUpdate)));
+	}
+
 	onDestroy(() => {
 		if (editor) {
 			editor.destroy();
+		}
+		if (provider) {
+			provider.destroy();
+		}
+		if (ydoc) {
+			ydoc.destroy();
 		}
 		clearTimeout(debounceTimer);
 	});
