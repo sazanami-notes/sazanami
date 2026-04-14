@@ -108,7 +108,7 @@ export const NoteEmbedNode = Node.create({
                     })
                     .then((data) => {
                         // WikiLinkを再帰的に解決するかは一旦スキップし、そのままマークダウンパース
-                        content.innerHTML = marked.parse(data.contentHtml || '') as string;
+                        content.innerHTML = marked.parse(data.content || '') as string;
                     })
                     .catch(() => {
                         content.textContent = `ノート「${node.attrs.title}」が見つかりませんでした。`;

@@ -316,7 +316,7 @@
 					NoteEmbedNode,
 					Markdown
 				],
-				contentHtml: normalizeMarkdown(content || ''),
+			content: normalizeMarkdown(content || ''),
 				contentType: 'markdown',
 				editorProps: {
 					attributes: {

@@ -13,11 +13,11 @@ import JSZip from 'jszip';
  */
 async function extractMarkdownFromZip(
 	zipFile: File
-): Promise<{ name: string; contentHtml: string }[]> {
+): Promise<{ name: string; content: string }[]> {
 	const buffer = await zipFile.arrayBuffer();
 	const zip = await JSZip.loadAsync(buffer);
 
-	const results: { name: string; contentHtml: string }[] = [];
+	const results: { name: string; content: string }[] = [];
 	const promises: Promise<void>[] = [];
 
 	zip.forEach((relativePath, zipEntry) => {
@@ -65,7 +65,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const errors: string[] = [];
 
 		// Markdownファイルをまとめるリスト
-		const markdownFiles: { name: string; contentHtml: string }[] = [];
+		const markdownFiles: { name: string; content: string }[] = [];
 
 		for (const file of files) {
 			const lowerName = file.name.toLowerCase();

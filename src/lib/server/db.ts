@@ -91,7 +91,7 @@ export const updateBacklinksOnTitleChange = async (
 					await db
 						.update(notes)
 						.set({
-							contentHtml: newContent,
+							content: newContent,
 							updatedAt: new Date()
 						})
 						.where(eq(notes.id, sourceNote.id));
@@ -143,7 +143,7 @@ export const deleteNote = async (id: string, userId: string) => {
  * @param content The new content of the note.
  * @param userId The ID of the user who owns the note.
  */
-export const updateNoteLinks = async (sourceNoteId: string, contentHtml: string, userId: string) => {
+export const updateNoteLinks = async (sourceNoteId: string, content: string, userId: string) => {
 	// 1. Parse content to extract wiki link titles
 	const linkedTitles = extractWikiLinks(content);
 

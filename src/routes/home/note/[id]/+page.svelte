@@ -33,7 +33,7 @@
 			editorKey += 1;
 		}
 
-		content = data.note.contentHtml ?? '';
+		content = data.note.content ?? '';
 		yjsUpdateBase64 = data.note.contentBin ?? '';
 		title = data.note.title ?? '';
 		titleError = '';
@@ -67,7 +67,7 @@
 				const res = await fetch(`/api/notes/embed?title=${encodeURIComponent(embedTitle)}`);
 				if (res.ok) {
 					const data = await res.json();
-					const text = (data.contentHtml || '').trim();
+					const text = (data.content || '').trim();
 					expandedMarkdown = expandedMarkdown.replace(match[0], text);
 				}
 			} catch (err) {
@@ -129,7 +129,7 @@
 					titleError = '';
 					const updatedNote = await response.json();
 					lastSavedTitle = updatedNote.title ?? title;
-					lastSavedContent = updatedNote.contentHtml ?? content;
+					lastSavedContent = updatedNote.content ?? content;
 					// タイトル、更新日時だけでなく、resolvedLinksなども含めて更新する
 					Object.assign(data.note, updatedNote);
 					// 下のLinkExplorerなどを最新にするためにデータを再取得
