@@ -1,6 +1,7 @@
 import { Node, mergeAttributes, nodeInputRule } from '@tiptap/core';
 import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
+import { sanitizeHtml } from '../../utils/sanitize';
 import hljs from 'highlight.js';
 
 marked.use(
@@ -108,7 +109,8 @@ export const NoteEmbedNode = Node.create({
                     })
                     .then((data) => {
                         // WikiLinkを再帰的に解決するかは一旦スキップし、そのままマークダウンパース
-                        content.innerHTML = marked.parse(data.content || '') as string;
+                        const parsed = marked.parse(data.content || '') as string;
+                        content.innerHTML = sanitizeHtml(parsed);
                     })
                     .catch(() => {
                         content.textContent = `ノート「${node.attrs.title}」が見つかりませんでした。`;
