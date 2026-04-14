@@ -44,16 +44,9 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			} catch(e) {}
 		}
 
-		let contentBinBase64: string | undefined;
-		if (note[0].contentBin) {
-			try {
-				contentBinBase64 = Buffer.from(note[0].contentBin).toString('base64');
-			} catch(e) {}
-		}
 
 		const noteWithTags = {
 			...note[0],
-			contentBin: contentBinBase64,
 			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
