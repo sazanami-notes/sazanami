@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '$env/dynamic/private';
+import { escapeHtml } from '../utils/sanitize';
 
 const SMTP_USER = env.SMTP_USER;
 const SMTP_PASS = env.SMTP_PASS;
@@ -48,6 +49,8 @@ export async function sendEmail(to: string, subject: string, text: string, html:
 
 export async function sendVerificationEmail(user: { name: string; email: string }, url: string) {
 	const username = user.name || '';
+	const safeUsername = escapeHtml(username);
+	const safeUrl = escapeHtml(url);
 	const subject = '【Sazanami】メールアドレスの確認';
 	const text =
 		`こんにちは ${username}。\n` +
@@ -56,17 +59,18 @@ export async function sendVerificationEmail(user: { name: string; email: string 
 		`もしこの操作に心当たりがない場合は、このメールを無視してください。`;
 
 	const html = `
-        <p>こんにちは ${username}。</p>
+        <p>こんにちは ${safeUsername}。</p>
         <p>以下のボタンをクリックしてメールアドレスを確認してください。</p>
-        <p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">メールアドレスを確認する</a></p>
+        <p><a href="${safeUrl}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">メールアドレスを確認する</a></p>
         <p>リンクが機能しない場合はこちらの URL をコピーしてブラウザに貼り付けてください：</p>
-        <p>${url}</p>
+        <p>${safeUrl}</p>
         <p>もしこの操作に心当たりがない場合は、このメールを無視してください。</p>`;
 
 	return sendEmail(user.email, subject, text, html);
 }
 
 export async function sendMagicLink({ email, url }: { email: string; url: string }) {
+	const safeUrl = escapeHtml(url);
 	const subject = '【Sazanami】ログインしてください';
 	const text =
 		`ログインするには、以下のリンクをクリックしてください：\n` +
@@ -75,9 +79,9 @@ export async function sendMagicLink({ email, url }: { email: string; url: string
 
 	const html = `
         <p>以下のボタンをクリックしてログインしてください。</p>
-        <p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">ログインする</a></p>
+        <p><a href="${safeUrl}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">ログインする</a></p>
         <p>リンクが機能しない場合はこちらの URL をコピーしてブラウザに貼り付けてください：</p>
-        <p>${url}</p>
+        <p>${safeUrl}</p>
         <p>もしこの操作に心当たりがない場合は、このメールを無視してください。</p>`;
 
 	return sendEmail(email, subject, text, html);
@@ -85,6 +89,8 @@ export async function sendMagicLink({ email, url }: { email: string; url: string
 
 export async function sendResetPasswordEmail(user: { name: string; email: string }, url: string) {
 	const username = user.name || '';
+	const safeUsername = escapeHtml(username);
+	const safeUrl = escapeHtml(url);
 	const subject = '【Sazanami】パスワードの再設定';
 	const text =
 		`こんにちは ${username}。\n` +
@@ -93,11 +99,11 @@ export async function sendResetPasswordEmail(user: { name: string; email: string
 		`もしこの操作に心当たりがない場合は、このメールを無視してください。`;
 
 	const html = `
-        <p>こんにちは ${username}。</p>
+        <p>こんにちは ${safeUsername}。</p>
         <p>以下のボタンをクリックしてパスワードを再設定してください。</p>
-        <p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">パスワードを再設定する</a></p>
+        <p><a href="${safeUrl}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">パスワードを再設定する</a></p>
         <p>リンクが機能しない場合はこちらの URL をコピーしてブラウザに貼り付けてください：</p>
-        <p>${url}</p>
+        <p>${safeUrl}</p>
         <p>もしこの操作に心当たりがない場合は、このメールを無視してください。</p>`;
 
 	return sendEmail(user.email, subject, text, html);

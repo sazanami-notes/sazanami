@@ -8,6 +8,7 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
+	import { sanitizeHtml } from '$lib/utils/sanitize';
 
 	export let note: Note & { tags: string[] };
 	export let mode: 'timeline' | 'archive' | 'trash' = 'timeline';
@@ -404,9 +405,9 @@
 
 		<div class="prose text-base-content max-w-none" use:enhanceProseContent={processedContent}>
 			{#if isHtmlContent}
-				{@html processedContent}
+				{@html sanitizeHtml(processedContent || '')}
 			{:else}
-				{@html customMarked.parse(processedContent || '', { breaks: true })}
+				{@html sanitizeHtml(customMarked.parse(processedContent || '', { breaks: true }) as string)}
 			{/if}
 		</div>
 

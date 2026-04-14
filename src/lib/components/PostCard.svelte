@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Note } from '$lib/types';
 	import { createEventDispatcher } from 'svelte';
+	import { sanitizeHtml } from '$lib/utils/sanitize';
 
 	export let note: Note;
 
@@ -70,9 +71,11 @@
 			<a href="/home/note/{note.id}" class="flex-grow">
 				<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
 				<div class="text-base-content/70 mb-3 line-clamp-3 text-sm">
-					{@html note.content
-						? note.content.substring(0, 200) + (note.content.length > 200 ? '...' : '')
-						: ''}
+					{@html sanitizeHtml(
+						note.content
+							? note.content.substring(0, 200) + (note.content.length > 200 ? '...' : '')
+							: ''
+					)}
 				</div>
 			</a>
 			<button

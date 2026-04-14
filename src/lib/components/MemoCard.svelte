@@ -6,6 +6,7 @@
 	import { markedHighlight } from 'marked-highlight';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
+	import { sanitizeHtml, escapeHtml } from '$lib/utils/sanitize';
 
 	export let note: Note;
 	export let linkToDetail = false; // Default to false for modal behavior
@@ -71,15 +72,6 @@
 
 	customMarked.use({ gfm: true, renderer });
 
-	function escapeHtml(value: string) {
-		return value
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
-	}
-
 	function escapeMarkdownText(value: string) {
 		return value.replace(/\\/g, '\\\\').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 	}
@@ -115,7 +107,9 @@
 	$: processedContent = renderWikiLinks(noteEmbedsProtected.contentHtml, note.resolvedLinks);
 	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(contentWithEmbeds || '');
-	$: renderedContent = isHtmlContent ? contentWithEmbeds || '' : customMarked.parse(contentWithEmbeds || '', { breaks: true });
+	$: renderedContent = isHtmlContent
+		? sanitizeHtml(contentWithEmbeds || '')
+		: sanitizeHtml(customMarked.parse(contentWithEmbeds || '', { breaks: true }) as string);
 
 	function enhanceProseContent(node: HTMLElement, _contentHtml: string) {
 		const applyEnhancements = () => {
@@ -204,7 +198,8 @@
 						return res.json();
 					})
 					.then((data) => {
-						content.innerHTML = customMarked.parse(data.content || '', { breaks: true }) as string;
+						const parsed = customMarked.parse(data.content || '', { breaks: true }) as string;
+						content.innerHTML = sanitizeHtml(parsed);
 					})
 					.catch(() => {
 						content.textContent = `ノート「${title}」が見つかりませんでした。`;
