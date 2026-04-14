@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `notes_user_title_box_unique` ON `notes` (`user_id`,`title`) WHERE "notes"."status" = 'box' AND "notes"."title" != '';

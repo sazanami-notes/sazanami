@@ -55,18 +55,15 @@ CREATE TABLE `notes` (
 	`user_id` text NOT NULL,
 	`title` text DEFAULT 'Untitled Note' NOT NULL,
 	`slug` text NOT NULL,
-	`content_html` text,
-	`content_bin` blob,
+	`content` text,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
 	`is_public` integer DEFAULT false NOT NULL,
 	`is_pinned` integer DEFAULT false NOT NULL,
 	`status` text DEFAULT 'inbox' NOT NULL,
-	`resolved_links` text,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `notes_user_title_box_unique` ON `notes` (`user_id`,`title`) WHERE "notes"."status" = 'box' AND "notes"."title" != '';--> statement-breakpoint
 CREATE TABLE `passkey` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text,

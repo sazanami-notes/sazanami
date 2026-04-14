@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "bbb06c47-a33e-4aaf-a83e-015b07b04c53",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "563a77a5-fbdf-4844-bb65-db20a78879c2",
+  "prevId": "8a8c0527-8580-4d12-a881-519beecd80d8",
   "tables": {
     "account": {
       "name": "account",
@@ -444,9 +444,26 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'inbox'"
+        },
+        "resolved_links": {
+          "name": "resolved_links",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "notes_user_title_box_unique": {
+          "name": "notes_user_title_box_unique",
+          "columns": [
+            "user_id",
+            "title"
+          ],
+          "isUnique": true,
+          "where": "\"notes\".\"status\" = 'box' AND \"notes\".\"title\" != ''"
+        }
+      },
       "foreignKeys": {
         "notes_user_id_user_id_fk": {
           "name": "notes_user_id_user_id_fk",
