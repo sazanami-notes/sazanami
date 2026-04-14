@@ -17,7 +17,7 @@ export const load: ServerLoad = async ({ request, url }) => {
         .select({
             id: notes.id,
             title: notes.title,
-            content: notes.content,
+            contentHtml: notes.contentHtml,
             updatedAt: notes.updatedAt,
             isPinned: notes.isPinned,
             userId: notes.userId,
@@ -35,17 +35,17 @@ export const load: ServerLoad = async ({ request, url }) => {
                 eq(notes.userId, sessionData.user.id),
                 eq(notes.status, 'inbox'),
                 or(
-                    like(notes.content, '%data-type="taskList"%'),
-                    like(notes.content, '%data-type="taskItem"%'),
-                    like(notes.content, '%- [ ] %'),
-                    like(notes.content, '%- [x] %'),
-                    like(notes.content, '%- [X] %'),
-                    like(notes.content, '%* [ ] %'),
-                    like(notes.content, '%* [x] %'),
-                    like(notes.content, '%* [X] %'),
-                    like(notes.content, '%+ [ ] %'),
-                    like(notes.content, '%+ [x] %'),
-                    like(notes.content, '%+ [X] %')
+                    like(notes.contentHtml, '%data-type="taskList"%'),
+                    like(notes.contentHtml, '%data-type="taskItem"%'),
+                    like(notes.contentHtml, '%- [ ] %'),
+                    like(notes.contentHtml, '%- [x] %'),
+                    like(notes.contentHtml, '%- [X] %'),
+                    like(notes.contentHtml, '%* [ ] %'),
+                    like(notes.contentHtml, '%* [x] %'),
+                    like(notes.contentHtml, '%* [X] %'),
+                    like(notes.contentHtml, '%+ [ ] %'),
+                    like(notes.contentHtml, '%+ [x] %'),
+                    like(notes.contentHtml, '%+ [X] %')
                 )
             )
         )
@@ -56,7 +56,7 @@ export const load: ServerLoad = async ({ request, url }) => {
     const notesWithTags = notesResult.map((note) => ({
         ...note,
         title: note.title ?? '',
-        content: note.content ?? '',
+        contentHtml: note.contentHtml ?? '',
         tags: note.tags ? note.tags.split(',') : []
     }));
 

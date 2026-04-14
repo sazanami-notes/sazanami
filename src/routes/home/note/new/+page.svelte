@@ -9,6 +9,8 @@
 
 	let title = $state('');
 	let content = $state('');
+	let currentHtml = $state('');
+	let yjsUpdateBase64 = $state('');
 	let isPublic = $state(false);
 	let titleError = $state('');
 
@@ -18,9 +20,10 @@
 	let urlStatus = $page.url.searchParams.get('status') || 'inbox';
 	let isBoxNote = urlStatus === 'box';
 
-	const handleContentChange = (value: { markdown: string }) => {
-		// handleContentChangeはMarkdownを受け取るようにすでにTiptapEditorが修正されている
+	const handleContentChange = (value: { markdown: string; html: string; yjsUpdateBase64: string }) => {
 		content = value.markdown;
+		currentHtml = value.html;
+		yjsUpdateBase64 = value.yjsUpdateBase64;
 	};
 
 	// ユーザーが入力し始めたら自動で新規作成して編集画面へ遷移する
@@ -47,7 +50,7 @@
 						// 新規作成時、タイムラインには載せる設定（skipTimeline: false はデフォルト）
 						body: JSON.stringify({
 							title: currentTitle || 'Untitled Note',
-							content: currentContent,
+							contentHtml: currentContent,
 							isPublic,
 							skipTimeline: urlStatus === 'box',
 							status: urlStatus
@@ -166,7 +169,8 @@
 				/>
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
-			<textarea id="content" name="content" class="hidden">{content}</textarea>
+			<textarea id="content" name="contentHtml" class="hidden">{currentHtml}</textarea>
+			<input type="hidden" name="contentBin" value={yjsUpdateBase64} />
 		</div>
 
 		<div class="flex items-center">

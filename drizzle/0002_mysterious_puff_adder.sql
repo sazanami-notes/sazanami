@@ -1,1 +1,0 @@
-ALTER TABLE `notes` ADD `resolved_links` text;

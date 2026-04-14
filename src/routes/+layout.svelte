@@ -46,7 +46,7 @@
 			const response = await fetch('/api/notes', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title: '', content: '', skipTimeline, status })
+				body: JSON.stringify({ title: '', contentHtml: '', skipTimeline, status })
 			});
 
 			if (response.ok) {
@@ -194,7 +194,7 @@
 				--color-secondary: {themeInfo.custom.secondaryColor} !important;
 				--color-accent: {themeInfo.custom.accentColor} !important;
 				--color-base-100: {themeInfo.custom.backgroundColor} !important;
-				--color-base-content: {themeInfo.custom.textColor} !important;
+				--color-base-contentHtml: {themeInfo.custom.textColor} !important;
 			}
 		</style>
 	{/if}

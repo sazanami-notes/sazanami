@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, uniqueIndex, blob } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
@@ -30,7 +30,8 @@ export const notes = sqliteTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		title: text('title').notNull().default('Untitled Note'),
 		slug: text('slug').notNull(), // スラッグを追加 (デフォルト値はマイグレーションで処理)
-		content: text('content'), // Markdown本文
+		contentHtml: text('content_html'), // SSRおよびSEO用のプレーンHTML
+		contentBin: blob('content_bin', { mode: 'buffer' }), // Yjsドキュメントのバイナリデータ
 		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(), // 作成日時 (MSタイムスタンプ)
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)
 		isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),

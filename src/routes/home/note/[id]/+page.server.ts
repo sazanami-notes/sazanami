@@ -43,7 +43,8 @@ export const actions: Actions = {
 			// Get form data
 			const formData = await request.formData();
 			const title = formData.get('title')?.toString() || '';
-			const content = formData.get('content')?.toString() || '';
+			const contentHtml = formData.get('contentHtml')?.toString() || '';
+			const contentBin = formData.get('contentBin')?.toString() || '';
 
 			// Get existing note
 			const existingNote = await getNoteById(locals.user.id, params.id);
@@ -54,12 +55,13 @@ export const actions: Actions = {
 			// Update note
 			await updateNote(existingNote.id, locals.user.id, {
 				title,
-				content
+				contentHtml,
+				contentBin: contentBin ? Buffer.from(contentBin, 'base64') : null
 			});
 
 			try {
 				// After updating the note, update its links
-				await updateNoteLinks(existingNote.id, content, locals.user.id);
+				await updateNoteLinks(existingNote.id, contentHtml, locals.user.id);
 			} catch (linkError) {
 				console.error('Failed to update note links, but note was saved:', linkError);
 				// We don't throw here to allow the note save to succeed even if link parsing fails

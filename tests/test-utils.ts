@@ -31,7 +31,7 @@ export async function setupTestDB() {
 				id: ulid(),
 				userId: testUserId, // 生成したIDを使用
 				title: 'Test Note 1',
-				content: 'This is the content of test note 1.',
+				contentHtml: 'This is the content of test note 1.',
 				isPublic: false,
 				createdAt: new Date(2023, 0, 1, 10, 0, 0), // 2023/01/01 10:00:00
 				updatedAt: new Date(2023, 0, 1, 10, 0, 0),
@@ -41,7 +41,7 @@ export async function setupTestDB() {
 				id: ulid(),
 				userId: testUserId,
 				title: 'Test Note 2',
-				content: 'This is the content of test note 2.',
+				contentHtml: 'This is the content of test note 2.',
 				isPublic: false,
 				createdAt: new Date(2023, 0, 2, 10, 0, 0), // 2023/01/02 10:00:00
 				updatedAt: new Date(2023, 0, 2, 10, 0, 0),
@@ -51,7 +51,7 @@ export async function setupTestDB() {
 				id: ulid(),
 				userId: testUserId,
 				title: 'Duplicate Title',
-				content: 'Content for duplicate title note A.',
+				contentHtml: 'Content for duplicate title note A.',
 				isPublic: false,
 				createdAt: new Date(2023, 0, 3, 10, 0, 0),
 				updatedAt: new Date(2023, 0, 3, 10, 0, 0), // Oldest
@@ -61,7 +61,7 @@ export async function setupTestDB() {
 				id: ulid(),
 				userId: testUserId,
 				title: 'Duplicate Title',
-				content: 'Content for duplicate title note B.',
+				contentHtml: 'Content for duplicate title note B.',
 				isPublic: false,
 				createdAt: new Date(2023, 0, 4, 10, 0, 0),
 				updatedAt: new Date(2023, 0, 4, 10, 0, 0), // Middle
@@ -71,7 +71,7 @@ export async function setupTestDB() {
 				id: ulid(),
 				userId: testUserId,
 				title: 'Duplicate Title',
-				content: 'Content for duplicate title note C.',
+				contentHtml: 'Content for duplicate title note C.',
 				isPublic: false,
 				createdAt: new Date(2023, 0, 5, 10, 0, 0),
 				updatedAt: new Date(2023, 0, 5, 10, 0, 0), // Newest

@@ -112,7 +112,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	let createdNoteId = '';
 	const noteData = {
 		title: 'My First Note',
-		content: 'This is a test of wiki links. Link to [[Test Page]].'
+		contentHtml: 'This is a test of wiki links. Link to [[Test Page]].'
 	};
 
 	it('2.1: Creates a new note', async () => {
@@ -129,7 +129,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		const newNote = newNotes[0];
 		expect(newNote).toBeDefined();
 		expect(newNote?.title).toBe(noteData.title);
-		expect(newNote?.content).toBe(noteData.content);
+		expect(newNote?.contentHtml).toBe(noteData.contentHtml);
 		createdNoteId = newNote?.id || '';
 		expect(createdNoteId).not.toBe('');
 	});
@@ -159,7 +159,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		const { actions } = await import('../../src/routes/home/note/[id]/+page.server');
 		const updatedNoteData = {
 			title: 'Updated Note',
-			content: 'Content has been updated.'
+			contentHtml: 'Content has been updated.'
 		};
 		const event = await createMockFormRequestEvent(
 			{ user: mockSession.user, session: mockSession.session, auth: authModule.auth },
@@ -177,7 +177,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 
 		expect(updatedNote).toBeDefined();
 		expect(updatedNote?.title).toBe(updatedNoteData.title);
-		expect(updatedNote?.content).toBe(updatedNoteData.content);
+		expect(updatedNote?.contentHtml).toBe(updatedNoteData.contentHtml);
 	});
 
 	it('2.4: Deletes the note', async () => {
@@ -213,7 +213,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 	it('2.5: Loads a note with a Japanese title successfully', async () => {
 		const japaneseNoteData = {
 			title: '日本語のノート',
-			content: 'これはテストです。'
+			contentHtml: 'これはテストです。'
 		};
 
 		// 1. Create the note
@@ -253,7 +253,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 		// 3. Assert correct data was loaded
 		expect(pageData.note).toBeDefined();
 		expect(pageData.note.title).toBe(japaneseNoteData.title);
-		expect(pageData.note.content).toBe(japaneseNoteData.content);
+		expect(pageData.note.contentHtml).toBe(japaneseNoteData.contentHtml);
 
 		await db.delete(notesSchema).where(eq(notesSchema.id, pageData.note.id));
 	});
@@ -268,7 +268,7 @@ describe('Scenario 2: Note Management (CRUD)', () => {
 			id: ulid(),
 			userId: testUser.id,
 			title: inboxNoteTitle,
-			content: 'content',
+			contentHtml: 'content',
 			slug: 'inbox-note',
 			status: 'inbox', // <-- Important
 			createdAt: new Date(),
@@ -300,15 +300,15 @@ describe('Scenario 3: Search and Wiki Link API', () => {
 	const notesToCreate = [
 		{
 			title: 'About SvelteKit',
-			content: 'A web framework',
+			contentHtml: 'A web framework',
 			tags: ['Svelte']
 		},
 		{
 			title: 'Intro to Tailwind CSS',
-			content: 'A CSS framework',
+			contentHtml: 'A CSS framework',
 			tags: ['CSS']
 		},
-		{ title: 'Test Page', content: 'This is the link target', tags: ['Test'] }
+		{ title: 'Test Page', contentHtml: 'This is the link target', tags: ['Test'] }
 	];
 
 	beforeAll(async () => {
@@ -318,7 +318,7 @@ describe('Scenario 3: Search and Wiki Link API', () => {
 				id: noteId,
 				userId: testUser.id,
 				title: note.title,
-				content: note.content,
+				contentHtml: note.contentHtml,
 				slug: generateSlug(note.title),
 				createdAt: new Date(),
 				updatedAt: new Date(),

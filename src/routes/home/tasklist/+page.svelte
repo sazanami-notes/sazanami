@@ -11,7 +11,7 @@
 
 	const notes = $derived(data.notes || []);
 
-	function countTasks(content: string) {
+	function countTasks(contentHtml: string) {
 		const htmlTaskItems = (content.match(/data-type=["']taskItem["']/g) || []).length;
 		const htmlCompleted = (content.match(/data-checked=["']true["']/g) || []).length;
 
@@ -27,7 +27,7 @@
 	// Filter notes into those that have at least one uncompleted task, and those that only have completed tasks
 	const incompleteNotes = $derived(
 		notes.filter((note) => {
-			const content = note.content || '';
+			const content = note.contentHtml || '';
 			const { total: totalTasks, completed: completedTasks } = countTasks(content);
 			return totalTasks > completedTasks;
 		})
@@ -35,7 +35,7 @@
 
 	const completedNotes = $derived(
 		notes.filter((note) => {
-			const content = note.content || '';
+			const content = note.contentHtml || '';
 			const { total: totalTasks, completed: completedTasks } = countTasks(content);
 			return totalTasks > 0 && totalTasks === completedTasks;
 		})

@@ -77,7 +77,7 @@ interface NoteResponse {
 	id: string;
 	userId: string;
 	title: string;
-	content: string;
+	contentHtml: string;
 	createdAt: string;
 	updatedAt: string;
 	isPublic: boolean;
@@ -118,7 +118,7 @@ describe('POST /api/notes', () => {
 			'http://localhost/api/notes',
 			'POST',
 			null,
-			{ title: 'Test', content: 'Test' }
+			{ title: 'Test', contentHtml: 'Test' }
 		);
 		const response = await createNote(params);
 		expect(response.status).toBe(401);
@@ -163,7 +163,7 @@ describe('POST /api/notes', () => {
 			'http://localhost/api/notes',
 			'POST',
 			mockSession,
-			{ title: noteTitle, content: 'Some content' }
+			{ title: noteTitle, contentHtml: 'Some content' }
 		);
 		const response = await createNote(params);
 		expect(response.status).toBe(201);
@@ -188,7 +188,7 @@ describe('POST /api/notes', () => {
 			'http://localhost/api/notes',
 			'POST',
 			mockSession,
-			{ title: noteTitle, content: 'Some content in Japanese' }
+			{ title: noteTitle, contentHtml: 'Some content in Japanese' }
 		);
 		const response = await createNote(params);
 		expect(response.status).toBe(201);
@@ -236,7 +236,7 @@ describe('PUT /api/notes/{id}', () => {
 			id: existingNoteId,
 			userId: testUserId,
 			title: initialTitle,
-			content: 'Original content',
+			contentHtml: 'Original content',
 			isPublic: false,
 			createdAt: new Date(),
 			updatedAt: new Date(),
@@ -299,7 +299,7 @@ describe('PUT /api/notes/{id}', () => {
 			`http://localhost/api/notes/${existingNoteId}`,
 			'PUT',
 			mockSession,
-			{ title: updatedTitle, content: 'Updated content' },
+			{ title: updatedTitle, contentHtml: 'Updated content' },
 			{ id: existingNoteId }
 		);
 		const response = await updateNote(params);
@@ -325,7 +325,7 @@ describe('PUT /api/notes/{id}', () => {
 			`http://localhost/api/notes/${existingNoteId}`,
 			'PUT',
 			mockSession,
-			{ title: updatedTitle, content: 'Updated content in Japanese' },
+			{ title: updatedTitle, contentHtml: 'Updated content in Japanese' },
 			{ id: existingNoteId }
 		);
 		const response = await updateNote(params);

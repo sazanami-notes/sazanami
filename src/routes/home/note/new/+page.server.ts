@@ -22,12 +22,13 @@ export const actions: Actions = {
 		try {
 			const formData = await request.formData();
 			let title = formData.get('title')?.toString();
-			const content = formData.get('content')?.toString() || '';
+			const contentHtml = formData.get('contentHtml')?.toString() || '';
+			const contentBin = formData.get('contentBin')?.toString() || '';
 			const isPublic = formData.get('isPublic') === 'on';
 			const status = formData.get('status')?.toString() || 'inbox';
 
 			if (title === undefined || title.trim() === '') {
-				const firstLine = content.split('\n')[0] || '';
+				const firstLine = contentHtml.split('\n')[0] || '';
 				const plainTextFirstLine = firstLine.replace(/<[^>]*>/g, '').trim();
 				title = plainTextFirstLine.substring(0, 50) || 'Untitled Note';
 			} else {
@@ -47,7 +48,8 @@ export const actions: Actions = {
 				id: noteId,
 				userId: locals.user.id,
 				title,
-				content,
+				contentHtml,
+				contentBin: contentBin ? Buffer.from(contentBin, 'base64') : null,
 				slug,
 				createdAt: now,
 				updatedAt: now,
@@ -64,7 +66,8 @@ export const actions: Actions = {
 				});
 			}
 
-			await updateNoteLinks(noteId, content, locals.user.id);
+			await updateNoteLinks(noteId, contentHtml,
+				contentBin: contentBin ? Buffer.from(contentBin, 'base64') : null, locals.user.id);
 
 			throw redirect(303, `/home/note/${noteId}`);
 		} catch (err) {
