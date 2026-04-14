@@ -29,11 +29,11 @@ export function getNoteDetailUrl(note: Note, username: string): string {
 }
 
 // ノートのコンテンツからWikiリンク（例: [[Page Title]]）を抽出する関数
-export const extractWikiLinks = (contentHtml: string | null | undefined): string[] => {
-	if (!contentHtml) return [];
+export const extractWikiLinks = (content: string | null | undefined): string[] => {
+	if (!content) return [];
 	// エスケープされた \[\[ も考慮する
 	const regex = /\\?\[\\?\[(.*?)\\?\]\\?\]/g;
-	const matches = [...contentHtml.matchAll(regex)];
+	const matches = [...content.matchAll(regex)];
 	if (!matches.length) return [];
 	// グループ1 (タイトル部分) を抽出
 	return matches.map((match) => match[1]);
@@ -45,7 +45,7 @@ export const extractWikiLinks = (contentHtml: string | null | undefined): string
  * @param resolvedLinks 解決済みリンクのマップ (JSON文字列またはオブジェクト)
  * @returns 変換後のHTML文字列
  */
-export function renderWikiLinks(contentHtml: string | null | undefined, resolvedLinks: any): string {
+export function renderWikiLinks(content: string | null | undefined, resolvedLinks: any): string {
 	if (!content) return '';
 
 	let linksMap: Record<string, string> = {};

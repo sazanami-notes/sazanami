@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.where(
 					and(
 						eq(notes.userId, session.session.userId),
-						or(like(notes.title, `%${search}%`), like(notes.contentHtml, `%${search}%`))
+						or(like(notes.title, `%${search}%`), like(notes.content, `%${search}%`))
 					)
 				)
 				.orderBy(desc(notes.updatedAt))
@@ -70,7 +70,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.where(
 					and(
 						eq(notes.userId, session.session.userId),
-						or(like(notes.title, `%${search}%`), like(notes.contentHtml, `%${search}%`))
+						or(like(notes.title, `%${search}%`), like(notes.content, `%${search}%`))
 					)
 				);
 		} else {
@@ -119,12 +119,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		const {
 			id,
 			title,
-			contentHtml,
+			content,
 			contentBin,
 			tags: tagNames,
 			skipTimeline,
 			status
-		} = body as { id?: string; title?: string; contentHtml?: string; contentBin?: string; tags?: string[]; skipTimeline?: boolean; status?: string };
+		} = body as { id?: string; title?: string; content?: string; contentBin?: string; tags?: string[]; skipTimeline?: boolean; status?: string };
 
 		// IDのバリデーション
 		let noteId: string;
@@ -142,7 +142,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const now = new Date();
 		let noteTitle = title;
-		const noteContentHtml = contentHtml || '';
+		const noteContent = content || '';
 		let noteContentBin: Buffer | null = null;
 		if (contentBin) {
 			try {
@@ -193,7 +193,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			userId: session.session.userId,
 			title: noteTitle,
 			slug: noteSlug, // スラッグを保存
-			contentHtml: noteContentHtml,
+			content: noteContent,
 			contentBin: noteContentBin,
 			createdAt: now,
 			updatedAt: now,
@@ -244,7 +244,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// After creating the note, update its links
-		await updateNoteLinks(noteId, noteContentHtml, session.session.userId);
+		await updateNoteLinks(noteId, noteContent, session.session.userId);
 
 		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
 

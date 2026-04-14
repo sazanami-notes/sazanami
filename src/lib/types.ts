@@ -2,7 +2,7 @@ export interface Note {
 	id: string;
 	userId: string;
 	title: string;
-	contentHtml?: string | null;
+	content?: string | null;
 	contentBin?: Buffer | null;
 	createdAt: Date;
 	updatedAt: Date;
@@ -11,8 +11,6 @@ export interface Note {
 	status: string; // 'inbox' | 'box' | 'archived' | 'trash'
 	tags: string[];
 	slug: string;
-	contentHtml?: string | null;
-	contentBin?: Buffer | null;
 	resolvedLinks?: string | Record<string, string>;
 }
 

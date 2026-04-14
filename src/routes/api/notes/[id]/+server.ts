@@ -84,10 +84,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 		const {
 			title,
-			contentHtml,
+			content,
 			contentBin,
 			tags: tagNames
-		} = body as { title?: string; contentHtml?: string; contentBin?: string; tags?: string[] };
+		} = body as { title?: string; content?: string; contentBin?: string; tags?: string[] };
 
 		// ノートが存在するか確認
 		const existingNote = await db
@@ -102,7 +102,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		const now = new Date();
 		const titleChanged = title !== undefined && title !== existingNote[0].title;
-		const contentHtmlChanged = contentHtml !== undefined && contentHtml !== existingNote[0].contentHtml;
+		const contentChanged = content !== undefined && content !== existingNote[0].content;
 		const contentBinChanged = contentBin !== undefined;
 		const tagsProvided = Array.isArray(tagNames);
 
@@ -118,9 +118,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedFields.slug = generateSlug(title);
 			metadata.changes.title = { before: existingNote[0].title, after: title };
 		}
-		if (contentHtmlChanged) {
-			updatedFields.contentHtml = contentHtml;
-			// metadata.changes.contentHtml = true;
+		if (contentChanged) {
+			updatedFields.content = content;
+			// metadata.changes.content = true;
 		}
 		if (contentBinChanged) {
 			try {
@@ -130,12 +130,12 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				console.error('Failed to parse contentBin base64', e);
 			}
 		}
-		if (contentHtmlChanged) {
-			// updatedFields.contentHtml = contentHtml; handled above
-			// metadata.changes.contentHtml = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
+		if (contentChanged) {
+			// updatedFields.content = content; handled above
+			// metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		if (titleChanged || contentHtmlChanged || contentBinChanged) {
+		if (titleChanged || contentChanged || contentBinChanged) {
 			updatedFields.updatedAt = now;
 		}
 
@@ -161,7 +161,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
-		if (!titleChanged && !contentHtmlChanged && !contentBinChanged && !tagsProvided) {
+		if (!titleChanged && !contentChanged && !contentBinChanged && !tagsProvided) {
 			const noteTagsList = await db
 				.select({ name: tags.name })
 				.from(noteTags)
@@ -266,9 +266,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		// After updating the note, update its links
-		if (contentHtmlChanged) {
-			updatedFields.contentHtml = contentHtml;
-			// metadata.changes.contentHtml = true;
+		if (contentChanged) {
+			updatedFields.content = content;
+			// metadata.changes.content = true;
 		}
 		if (contentBinChanged) {
 			try {
@@ -278,8 +278,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				console.error('Failed to parse contentBin base64', e);
 			}
 		}
-		if (contentHtmlChanged) {
-			const finalContent = contentHtml !== undefined ? contentHtml : existingNote[0].contentHtml;
+		if (contentChanged) {
+			const finalContent = content !== undefined ? content : existingNote[0].content;
 			await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 		}
 

@@ -50,7 +50,7 @@
 						// 新規作成時、タイムラインには載せる設定（skipTimeline: false はデフォルト）
 						body: JSON.stringify({
 							title: currentTitle || 'Untitled Note',
-							contentHtml: currentContent,
+							content: currentContent,
 							isPublic,
 							skipTimeline: urlStatus === 'box',
 							status: urlStatus
@@ -169,7 +169,7 @@
 				/>
 			</div>
 			<!-- Hidden textarea to maintain compatibility with the form -->
-			<textarea id="content" name="contentHtml" class="hidden">{currentHtml}</textarea>
+			<textarea id="content" name="content" class="hidden">{content}</textarea>
 			<input type="hidden" name="contentBin" value={yjsUpdateBase64} />
 		</div>
 

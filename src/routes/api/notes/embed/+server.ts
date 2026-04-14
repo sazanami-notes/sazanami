@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
     try {
         // ユーザーのすべてのノートを取得してタイトルを大文字小文字無視で検索
         const userNotes = await db
-            .select({ id: notes.id, title: notes.title, contentHtml: notes.contentHtml })
+            .select({ id: notes.id, title: notes.title, content: notes.content })
             .from(notes)
             .where(eq(notes.userId, session.user.id));
 
@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
             return json({ message: 'Note not found' }, { status: 404 });
         }
 
-        return json({ id: note.id, title: note.title, contentHtml: note.contentHtml });
+        return json({ id: note.id, title: note.title, content: note.content });
     } catch (error) {
         console.error('Error fetching embed note:', error);
         return json({ message: 'Internal Server Error' }, { status: 500 });
