@@ -1,6 +1,6 @@
 name = "sazanami-websocket"
 main = "src/index.ts"
-compatibility_date = "2026-04-15"
+compatibility_date = "2025-07-18"
 compatibility_flags = ["nodejs_compat"]
 
 [[durable_objects.bindings]]

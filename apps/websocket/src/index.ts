@@ -1,5 +1,6 @@
-import { Hocuspocus } from '@hocuspocus/server';
-import { applyUpdate, encodeStateAsUpdate } from 'yjs';
+import { Hocuspocus } from '../../../node_modules/@hocuspocus/server/src/index';
+import type { ClientConnection } from '../../../node_modules/@hocuspocus/server/src/ClientConnection';
+import { encodeStateAsUpdate } from 'yjs';
 
 type Env = {
 	ROOM_SYNC: DurableObjectNamespace;
@@ -38,26 +39,37 @@ export default {
 
 export class RealtimeRoom {
 	private readonly hocuspocus: Hocuspocus;
-	private readonly connections = new Map<WebSocket, ReturnType<Hocuspocus['handleConnection']>>();
+	private readonly connections = new Map<WebSocket, ClientConnection>();
 
 	constructor(private readonly state: DurableObjectState) {
 		this.hocuspocus = new Hocuspocus({
 			name: 'sazanami-realtime',
 			quiet: true,
-			async onLoadDocument({ document, documentName }) {
+			async onLoadDocument({ documentName }) {
 				const storedDocument = await state.storage.get<ArrayBuffer>(storageKey(documentName));
-				if (storedDocument) {
-					applyUpdate(document, new Uint8Array(storedDocument));
+				if (!storedDocument) {
+					return undefined;
 				}
+
+				return new Uint8Array(storedDocument);
 			},
 			async onStoreDocument({ document, documentName }) {
 				const update = encodeStateAsUpdate(document);
-				await state.storage.put(storageKey(documentName), update.slice().buffer);
+				const stored = update.buffer.slice(update.byteOffset, update.byteOffset + update.byteLength);
+				await state.storage.put(storageKey(documentName), stored);
 			}
 		});
 	}
 
 	async fetch(request: Request): Promise<Response> {
+		const upgrade = request.headers.get('Upgrade')?.toLowerCase();
+
+		if (upgrade !== 'websocket') {
+			return new Response('WebSocket endpoint only', {
+				status: 426
+			});
+		}
+
 		const pair = new WebSocketPair();
 		const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
 		this.state.acceptWebSocket(server);
@@ -82,7 +94,7 @@ export class RealtimeRoom {
 
 	webSocketClose(webSocket: WebSocket, code: number, reason: string, wasClean: boolean) {
 		const connection = this.connections.get(webSocket);
-		connection?.handleClose({ code, reason, wasClean } as never);
+		connection?.handleClose({ code, reason });
 		this.connections.delete(webSocket);
 	}
 
