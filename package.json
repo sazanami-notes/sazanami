@@ -1,0 +1,13 @@
+{
+  "name": "sazanami",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev -w apps/web\" \"npm run dev -w apps/websocket\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

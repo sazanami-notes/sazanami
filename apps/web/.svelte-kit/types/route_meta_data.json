@@ -1,0 +1,133 @@
+{
+	"/": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/api/attachments": [
+		"src/routes/api/attachments/+server.ts"
+	],
+	"/api/notes": [
+		"src/routes/api/notes/+server.ts"
+	],
+	"/api/notes/embed": [
+		"src/routes/api/notes/embed/+server.ts"
+	],
+	"/api/notes/import": [
+		"src/routes/api/notes/import/+server.ts"
+	],
+	"/api/notes/resolve-link": [
+		"src/routes/api/notes/resolve-link/+server.ts"
+	],
+	"/api/notes/suggestions": [
+		"src/routes/api/notes/suggestions/+server.ts"
+	],
+	"/api/notes/[id]": [
+		"src/routes/api/notes/[id]/+server.ts"
+	],
+	"/api/notes/[id]/links": [
+		"src/routes/api/notes/[id]/links/+server.ts"
+	],
+	"/api/notes/[id]/pin": [
+		"src/routes/api/notes/[id]/pin/+server.ts"
+	],
+	"/api/notes/[id]/status": [
+		"src/routes/api/notes/[id]/status/+server.ts"
+	],
+	"/home": [
+		"src/routes/home/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/archive": [
+		"src/routes/home/archive/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/box": [
+		"src/routes/home/box/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/box/archived": [
+		"src/routes/home/box/archived/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/box/deleted": [
+		"src/routes/home/box/deleted/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/media": [
+		"src/routes/home/media/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/note/new": [
+		"src/routes/home/note/new/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/note/[id]": [
+		"src/routes/home/note/[id]/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/search": [
+		"src/routes/home/search/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/tasklist": [
+		"src/routes/home/tasklist/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/home/trash": [
+		"src/routes/home/trash/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/login": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/login/two-factor": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/reset-password": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/settings": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/settings/account": [
+		"src/routes/settings/account/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/settings/appearance": [
+		"src/routes/settings/appearance/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/settings/import": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/[username]": [
+		"src/routes/[username]/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/[username]/edit": [
+		"src/routes/[username]/edit/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	]
+}

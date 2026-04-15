@@ -1,0 +1,17 @@
+{
+  "name": "sazanami-websocket",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@hocuspocus/server": "next",
+    "yjs": "^13.6.14"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
