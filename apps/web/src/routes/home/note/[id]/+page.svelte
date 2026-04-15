@@ -1,12 +1,24 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
+	import type { Note } from '$lib/types';
 	import { onDestroy } from 'svelte';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 	import { format } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 
-	let { data }: { data: PageData } = $props();
+	type NoteLinks = {
+	oneHopLinks: Note[];
+	backlinks: Note[];
+	twoHopLinks: Note[];
+	};
+
+	type NotePageData = Omit<PageData, 'note' | 'links'> & {
+		note: Omit<PageData['note'], 'contentBin'> & { contentBin: string };
+		links: NoteLinks;
+	};
+
+	let { data }: { data: NotePageData } = $props();
 
 	let content = $state('');
 	let yjsUpdateBase64 = $state('');
@@ -66,7 +78,7 @@
 			try {
 				const res = await fetch(`/api/notes/embed?title=${encodeURIComponent(embedTitle)}`);
 				if (res.ok) {
-					const data = await res.json();
+					const data = (await res.json()) as { content?: string };
 					const text = (data.content || '').trim();
 					expandedMarkdown = expandedMarkdown.replace(match[0], text);
 				}
@@ -123,11 +135,11 @@
 				});
 
 				if (response.status === 409) {
-					const err = await response.json();
+					const err = (await response.json()) as { message?: string };
 					titleError = err.message || '同じタイトルのノートが既に存在します';
 				} else if (response.ok) {
 					titleError = '';
-					const updatedNote = await response.json();
+					const updatedNote = (await response.json()) as { title?: string; content?: string };
 					lastSavedTitle = updatedNote.title ?? title;
 					lastSavedContent = updatedNote.content ?? content;
 					// タイトル、更新日時だけでなく、resolvedLinksなども含めて更新する
@@ -181,7 +193,7 @@
 			});
 
 			if (!response.ok) {
-				const error = await response.json();
+				const error = (await response.json()) as { message?: string };
 				console.error('Failed to update note status:', error);
 				throw new Error(error.message || 'Failed to update note status');
 			}
@@ -248,7 +260,7 @@
 				⋮
 			</button>
 			{#if isMenuOpen}
-				<ul class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+				<ul class="dropdown-content z-1 menu p-2 shadow bg-base-100 rounded-box w-52">
 					<li>
 						<button
 							onclick={async () => {
@@ -335,9 +347,9 @@
 	<hr class="border-base-300 my-4" />
 
 	<div class="mb-4">
-		<div class="min-h-[400px] w-full">
+		<div class="min-h-100 w-full">
 			{#key editorKey}
-				<TiptapEditor content={content ?? ''} onchange={handleContentChange} />
+				<TiptapEditor content={content ?? ''} noteId={data.note.id} onchange={handleContentChange} />
 			{/key}
 		</div>
 	</div>

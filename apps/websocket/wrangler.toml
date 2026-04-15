@@ -1,0 +1,12 @@
+name = "sazanami-websocket"
+main = "src/index.ts"
+compatibility_date = "2026-04-15"
+compatibility_flags = ["nodejs_compat"]
+
+[[durable_objects.bindings]]
+name = "ROOM_SYNC"
+class_name = "RealtimeRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RealtimeRoom"]

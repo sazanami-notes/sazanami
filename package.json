@@ -5,7 +5,14 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev -w apps/web\" \"npm run dev -w apps/websocket\""
+    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev -w apps/web\" \"npm run dev -w apps/websocket\"",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:web:cloudflare": "npm run dev:cloudflare -w apps/web",
+    "dev:ws": "npm run dev -w apps/websocket",
+    "build:web": "npm run build -w apps/web",
+    "deploy:web": "npm run deploy -w apps/web",
+    "deploy:ws": "npm run deploy -w apps/websocket",
+    "deploy": "npm run deploy:web && npm run deploy:ws"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

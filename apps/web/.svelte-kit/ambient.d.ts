@@ -60,6 +60,10 @@ declare module '$env/static/private' {
 	export const EMC_AUTOPLAY: string;
 	export const EXEPATH: string;
 	export const GIT_ASKPASS: string;
+	export const GIT_EDITOR: string;
+	export const GIT_MERGE_AUTOEDIT: string;
+	export const GIT_PAGER: string;
+	export const HISTCONTROL: string;
 	export const HOME: string;
 	export const HOMEDRIVE: string;
 	export const HOMEPATH: string;
@@ -261,6 +265,10 @@ declare module '$env/dynamic/private' {
 		EMC_AUTOPLAY: string;
 		EXEPATH: string;
 		GIT_ASKPASS: string;
+		GIT_EDITOR: string;
+		GIT_MERGE_AUTOEDIT: string;
+		GIT_PAGER: string;
+		HISTCONTROL: string;
 		HOME: string;
 		HOMEDRIVE: string;
 		HOMEPATH: string;

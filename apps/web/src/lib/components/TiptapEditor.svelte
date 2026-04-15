@@ -15,11 +15,13 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
-		import * as Y from 'yjs';
+	import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider';
+	import * as Y from 'yjs';
 	import { IndexeddbPersistence } from 'y-indexeddb';
 	import Collaboration from '@tiptap/extension-collaboration';
 	import { Markdown } from '@tiptap/markdown';
 	import { goto } from '$app/navigation';
+	import { getWebsocketUrl } from '$lib/realtime';
 
 	const lowlight = createLowlight(all);
 
@@ -42,7 +44,10 @@
 	}: Props = $props();
 
 	let ydoc: Y.Doc | null = null;
-	let provider: IndexeddbPersistence | null = null;
+	let indexeddbProvider: IndexeddbPersistence | null = null;
+	let realtimeProvider: HocuspocusProvider | null = null;
+	let realtimeWebsocket: HocuspocusProviderWebsocket | null = null;
+	let activeRealtimeRoom: string | null = null;
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
@@ -51,7 +56,7 @@
 	// 画像アップロード関連
 	let isUploading = $state(false);
 	let uploadProgress = $state(0);
-	let fileInputEl: HTMLInputElement;
+	let fileInputEl = $state<HTMLInputElement | null>(null);
 
 	function normalizeMarkdown(markdown: string) {
 		return markdown
@@ -116,6 +121,35 @@
 
 	function handleImageButtonClick() {
 		fileInputEl?.click();
+	}
+
+	function destroyRealtimeConnection() {
+		realtimeProvider?.detach();
+		realtimeProvider?.destroy();
+		realtimeWebsocket?.destroy();
+		realtimeProvider = null;
+		realtimeWebsocket = null;
+		activeRealtimeRoom = null;
+	}
+
+	function connectRealtime(roomName: string) {
+		if (!ydoc || !roomName) return;
+		if (activeRealtimeRoom === roomName && realtimeProvider && realtimeWebsocket) return;
+
+		destroyRealtimeConnection();
+
+		realtimeWebsocket = new HocuspocusProviderWebsocket({
+			url: getWebsocketUrl()
+		});
+
+		realtimeProvider = new HocuspocusProvider({
+			document: ydoc,
+			name: roomName,
+				websocketProvider: realtimeWebsocket
+		});
+
+		realtimeProvider.attach();
+		activeRealtimeRoom = roomName;
 	}
 
 	async function handleFileInputChange(e: Event) {
@@ -271,10 +305,11 @@
 
 			// Configure IndexedDB persistence if a valid noteId is provided
 			if (noteId) {
-				provider = new IndexeddbPersistence(noteId, ydoc);
-				provider.on('synced', () => {
+				indexeddbProvider = new IndexeddbPersistence(noteId, ydoc);
+				indexeddbProvider.on('synced', () => {
 					console.log('Yjs document synced from IndexedDB');
 				});
+				connectRealtime(noteId);
 			}
 
 			editor = new Editor({
@@ -284,8 +319,7 @@
 					StarterKit.configure({
 						codeBlock: false,
 						// StarterKit includes Link internally - disable it to avoid duplicate extension warning
-						link: false,
-						history: false // disable history because of Collaboration extension
+						link: false
 					}),
 					Collaboration.configure({
 						document: ydoc,
@@ -341,8 +375,8 @@
 											throw new Error('Not found');
 										})
 										.then((data) => {
-											if (data && data.id) {
-												goto(`/home/note/${data.id}`);
+											if (data && typeof data === 'object' && 'id' in data) {
+												goto(`/home/note/${(data as { id: string }).id}`);
 											}
 										})
 										.catch((err) => console.error('Failed to open Note:', err));
@@ -445,9 +479,10 @@
 		if (editor) {
 			editor.destroy();
 		}
-		if (provider) {
-			provider.destroy();
+		if (indexeddbProvider) {
+			indexeddbProvider.destroy();
 		}
+		destroyRealtimeConnection();
 		if (ydoc) {
 			ydoc.destroy();
 		}

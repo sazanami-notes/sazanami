@@ -6,6 +6,7 @@ node_modules
 .netlify
 .wrangler
 /.svelte-kit
+/apps/*/.svelte-kit
 /build
 
 # OS

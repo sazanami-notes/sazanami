@@ -14,19 +14,28 @@ export const load = async ({ params, locals, fetch }: Parameters<PageServerLoad>
 			throw error(404, 'Note not found');
 		}
 
+		const serializedNote = {
+			...note,
+			contentBin: note.contentBin ? Buffer.from(note.contentBin).toString('base64') : ''
+		};
+
 		// Fetch link data
 		const linksResponse = await fetch(`/api/notes/${note.id}/links`);
 		if (!linksResponse.ok) {
 			// Don't fail the whole page, just log the error and return empty links
 			console.error('Failed to fetch links:', await linksResponse.text());
 			return {
-				note,
+				note: serializedNote,
 				links: { oneHopLinks: [], backlinks: [], twoHopLinks: [] }
 			};
 		}
-		const links = await linksResponse.json();
+		const links = (await linksResponse.json()) as {
+			oneHopLinks: unknown[];
+			backlinks: unknown[];
+			twoHopLinks: unknown[];
+		};
 
-		return { note, links };
+		return { note: serializedNote, links };
 	} catch (err) {
 		// If the note itself fails to load, we should still throw an error
 		console.error('Failed to load note or links:', err);
