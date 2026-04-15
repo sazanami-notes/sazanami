@@ -10,6 +10,9 @@
     "dev:web:cloudflare": "npm run dev:cloudflare -w apps/web",
     "dev:ws": "npm run dev -w apps/websocket",
     "build:web": "npm run build -w apps/web",
+    "db:generate": "npm run db:generate -w apps/web",
+    "db:migrate": "npm run db:migrate -w apps/web",
+    "db:studio": "npm run db:studio -w apps/web",
     "deploy:web": "npm run deploy -w apps/web",
     "deploy:ws": "npm run deploy -w apps/websocket",
     "deploy": "npm run deploy:web && npm run deploy:ws"

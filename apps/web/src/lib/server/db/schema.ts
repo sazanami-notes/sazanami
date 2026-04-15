@@ -30,7 +30,7 @@ export const notes = sqliteTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		title: text('title').notNull().default('Untitled Note'),
 		slug: text('slug').notNull(), // スラッグを追加 (デフォルト値はマイグレーションで処理)
-		content: text('content'), // Markdownコンテンツ
+		content: text('content_html'), // 既存コード互換のためプロパティ名はcontentを維持
 		contentBin: blob('content_bin', { mode: 'buffer' }), // Yjsドキュメントのバイナリデータ
 		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(), // 作成日時 (MSタイムスタンプ)
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)

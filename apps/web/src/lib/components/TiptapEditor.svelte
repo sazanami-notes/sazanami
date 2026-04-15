@@ -17,7 +17,7 @@
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
 	import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider';
 	import * as Y from 'yjs';
-	import { IndexeddbPersistence } from 'y-indexeddb';
+	import { IndexeddbPersistence, storeState } from 'y-indexeddb';
 	import Collaboration from '@tiptap/extension-collaboration';
 	import { Markdown } from '@tiptap/markdown';
 	import { goto } from '$app/navigation';
@@ -44,10 +44,12 @@
 	}: Props = $props();
 
 	let ydoc: Y.Doc | null = null;
-	let indexeddbProvider: IndexeddbPersistence | null = null;
+	let indexeddbProvider = $state<IndexeddbPersistence | null>(null);
 	let realtimeProvider: HocuspocusProvider | null = null;
 	let realtimeWebsocket: HocuspocusProviderWebsocket | null = null;
 	let activeRealtimeRoom: string | null = null;
+	let isLocalSyncing = $state(false);
+	let localSyncStatus = $state('');
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
@@ -121,6 +123,24 @@
 
 	function handleImageButtonClick() {
 		fileInputEl?.click();
+	}
+
+	async function syncToLocalIndexedDb() {
+		if (!indexeddbProvider) return;
+
+		isLocalSyncing = true;
+		localSyncStatus = 'ローカルに同期中...';
+
+		try {
+			await indexeddbProvider.whenSynced;
+			await storeState(indexeddbProvider, true);
+			localSyncStatus = 'ローカルに保存しました';
+		} catch (error) {
+			console.error('Failed to sync to IndexedDB:', error);
+			localSyncStatus = 'ローカル同期に失敗しました';
+		} finally {
+			isLocalSyncing = false;
+		}
 	}
 
 	function destroyRealtimeConnection() {
@@ -552,9 +572,43 @@
 				{/if}
 			</button>
 
+			<button
+				type="button"
+				onclick={syncToLocalIndexedDb}
+				disabled={!indexeddbProvider || isLocalSyncing}
+				class="btn btn-ghost btn-xs tooltip tooltip-bottom gap-1"
+				data-tip="ローカルIndexedDBに保存"
+				title="ローカルIndexedDBに同期"
+			>
+				{#if isLocalSyncing}
+					<span class="loading loading-spinner loading-xs"></span>
+					<span class="hidden text-xs sm:inline">同期中</span>
+				{:else}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M4 4v5h.582m15.356 2A8 8 0 004.582 9m0 0H9m11 11v-5h-.581m0 0A8.003 8.003 0 0162.6 13.4M19.418 15H15"
+						/>
+					</svg>
+					<span class="hidden text-xs sm:inline">ローカル同期</span>
+				{/if}
+			</button>
+
 			<span class="text-base-content/40 text-xs">
 				画像のペースト・ドロップも対応
 			</span>
+
+			{#if localSyncStatus}
+				<span class="text-base-content/40 text-xs">{localSyncStatus}</span>
+			{/if}
 		</div>
 		<!-- ファイル選択（非表示） -->
 		<input
