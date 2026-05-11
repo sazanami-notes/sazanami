@@ -27,3 +27,8 @@ vite.config.ts.timestamp-*
 
 # Local uploads (use S3 or similar in production)
 /static/uploads/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
