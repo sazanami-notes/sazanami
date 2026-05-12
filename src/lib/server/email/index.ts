@@ -1,7 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { escapeHtml } from '../../utils/sanitize';
 import type { EmailDriver } from './types';
-import { createSmtpDriver } from './smtp';
 import { createResendDriver } from './resend';
 import { createCloudflareDriver } from './cloudflare';
 
@@ -32,24 +31,27 @@ let driverPromise: Promise<EmailDriver> | null = null;
 async function getEmailDriver(): Promise<EmailDriver> {
 	if (driverPromise) return driverPromise;
 
-	driverPromise = (async () => {
-		const driverName = env.EMAIL_DRIVER || 'auto';
-		const envRecord = env as unknown as Record<string, string | undefined>;
+		driverPromise = (async () => {
+			const driverName = env.EMAIL_DRIVER || 'auto';
+			const envRecord = env as unknown as Record<string, string | undefined>;
 
-		if (driverName === 'smtp' || driverName === 'auto') {
-			const driver = await createSmtpDriver(envRecord);
-			if (driver) return driver;
-		}
-		if (driverName === 'resend' || driverName === 'auto') {
-			const driver = await createResendDriver(envRecord);
-			if (driver) return driver;
-		}
-		if (driverName === 'cloudflare') {
-			const driver = await createCloudflareDriver(envRecord);
-			if (driver) return driver;
-		}
-		return createNoopDriver();
-	})();
+			if (driverName === 'smtp' || driverName === 'auto') {
+				const { createSmtpDriver } = await import('./smtp.js').catch(() => ({ createSmtpDriver: null }));
+				if (createSmtpDriver) {
+					const driver = await createSmtpDriver(envRecord);
+					if (driver) return driver;
+				}
+			}
+			if (driverName === 'resend' || driverName === 'auto') {
+				const driver = await createResendDriver(envRecord);
+				if (driver) return driver;
+			}
+			if (driverName === 'cloudflare') {
+				const driver = await createCloudflareDriver(envRecord);
+				if (driver) return driver;
+			}
+			return createNoopDriver();
+		})();
 
 	return driverPromise;
 }

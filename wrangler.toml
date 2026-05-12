@@ -7,12 +7,3 @@ STORAGE_DRIVER = "local"
 
 # Node.js compatibility
 compatibility_flags = ["nodejs_compat"]
-
-# Durable Objects (for future Yjs/WebSocket support)
-# [[durable_objects.bindings]]
-# name = "ROOM_SYNC"
-# class_name = "RealtimeRoom"
-
-# [[migrations]]
-# tag = "v1"
-# new_classes = ["RealtimeRoom"]
