@@ -10,8 +10,15 @@ import { env } from '$env/dynamic/private';
 import { db } from './db/connection';
 import * as schema from './db/auth-schema';
 import { getRequestEvent } from '$app/server';
+import { building } from '$app/environment';
 
 export function createAuth(platformEnv?: Record<string, string>) {
+	// During build, env vars are unavailable - return a minimal placeholder.
+	// The real auth instance is created at request time in hooks.server.ts.
+	if (building) {
+		return {} as ReturnType<typeof betterAuth>;
+	}
+
 	const authUrl = platformEnv?.BETTER_AUTH_URL || env.BETTER_AUTH_URL || 'http://localhost:5173';
 	const authSecret = platformEnv?.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET;
 	const googleClientId = platformEnv?.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID;
