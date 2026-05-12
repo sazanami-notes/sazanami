@@ -5,6 +5,12 @@ import { building } from '$app/environment';
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// During build/analysis, environment variables are unavailable.
+	// Defer auth initialization to runtime.
+	if (building) {
+		return resolve(event);
+	}
+
 	const auth = createAuth(event.platform?.env);
 
 	console.log(`Request: ${event.request.method} ${event.url.pathname}`);
