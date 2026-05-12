@@ -8,6 +8,11 @@ export default defineConfig({
 	ssr: {
 		external: ['nodemailer']
 	},
+	build: {
+		rollupOptions: {
+			external: ['nodemailer']
+		}
+	},
 	server: {
 		host: '0.0.0.0',
 		port: 5173,
