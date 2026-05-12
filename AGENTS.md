@@ -47,7 +47,7 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
 
 - 新しいテーブルやカラムを追加する場合は、原則として `src/lib/server/db/schema.ts` を更新してください。
 - **【注意】認証関連のデータベーススキーマに関しては、Better Authの自動生成スキーマ（`src/lib/server/db/auth-schema.ts`）が存在します。データベースやスキーマの変更・マイグレーションを行う際は、このファイルとの競合や破壊が起きないよう十分に注意してください。**
-- スキーマ変更後は、エージェントはユーザーに `npm run db:generate` および `npm run db:migrate` の実行を促すか、自動タスクとして実行する提案を行ってください。
+- スキーマ変更後は、エージェントはユーザーに `bun run db:generate` および `bun run db:migrate` の実行を促すか、自動タスクとして実行する提案を行ってください。
 - クエリを記述する際は、DrizzleのクエリビルダーAPI（`db.select().from(...)` または Relational Queries）を使用してください。
 
 ### スタイリング (Tailwind CSS + DaisyUI)
@@ -65,13 +65,13 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
 
 AIエージェントがタスクを実行・提案する際は、以下のコマンドを参考にしてください。
 
-- 開発サーバー起動: `npm run dev`
-- コードフォーマット: `npm run format`
-- 静的解析・Lint: `npm run lint`, `npm run check`
-- テスト実行: `npm run test`
-- DBマイグレーション生成: `npm run db:generate`
-- DBマイグレーション適用: `npm run db:migrate`
-- DB閲覧スタジオ: `npm run db:studio`
+- 開発サーバー起動: `bun run dev`
+- コードフォーマット: `bun run format`
+- 静的解析・Lint: `bun run lint`, `bun run check`
+- テスト実行: `bun run test`
+- DBマイグレーション生成: `bun run db:generate`
+- DBマイグレーション適用: `bun run db:migrate`
+- DB閲覧スタジオ: `bun run db:studio`
 
 テストユーザーには
 email: test@test.com
