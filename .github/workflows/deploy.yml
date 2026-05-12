@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy-web:
-    name: Deploy sazanami-web
+    name: Deploy sazanami
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
@@ -18,11 +18,10 @@ jobs:
       - name: Install dependencies
         run: bun install
       - name: Build
-        run: bun run --filter sazanami-web build
+        run: bun run build
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/web
           command: deploy
