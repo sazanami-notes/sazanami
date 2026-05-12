@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "build:cf": "vite build",
+    "build:cf": "vite build && echo 'Checking for unsafe nodemailer imports...' && ! grep -E 'await import\\(\"nodemailer\"\\)' .svelte-kit/cloudflare/_worker.js && echo '✓ Worker bundle looks good'",
     "dev:cf": "wrangler pages dev .svelte-kit/cloudflare -- bun run build --watch",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",

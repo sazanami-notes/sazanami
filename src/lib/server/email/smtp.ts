@@ -7,7 +7,8 @@ export async function createSmtpDriver(env: Record<string, string | undefined>):
 
 	if (!user || !pass || !from) return null;
 
-	const nodemailer = await import('nodemailer');
+	const nodemailer = await import('nodemailer').catch(() => null);
+	if (!nodemailer) return null;
 	const transporter = nodemailer.default.createTransport({
 		host: env.SMTP_HOST || 'smtp.gmail.com',
 		port: Number(env.SMTP_PORT) || 465,
