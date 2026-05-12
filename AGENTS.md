@@ -16,8 +16,9 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
 - **ORM**: Drizzle ORM (`@libsql/client` 経由)
 - **Authentication**: Better Auth
 - **Editor**: Tiptap (Markdownサポート拡張)
-- **Testing**: Vitest, Svelte Testing Library
-- **Package Manager**: npm
+- **Collaboration**: Yjs (CRDT) + y-indexeddb (オフライン永続化) + Hocuspocus (リアルタイム共同編集、オプショナル)
+- **Testing**: Vitest, Svelte Testing Library, Playwright (E2E)
+- **Package Manager**: bun
 
 ## 3. ディレクトリ構造と責務
 
