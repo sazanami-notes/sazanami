@@ -15,11 +15,13 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
-		import * as Y from 'yjs';
-	import { IndexeddbPersistence } from 'y-indexeddb';
-	import Collaboration from '@tiptap/extension-collaboration';
-	import { Markdown } from '@tiptap/markdown';
-	import { goto } from '$app/navigation';
+	import * as Y from 'yjs';
+import { IndexeddbPersistence } from 'y-indexeddb';
+import { HocuspocusProvider } from '@hocuspocus/provider';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import { Markdown } from '@tiptap/markdown';
+import { goto } from '$app/navigation';
 
 	const lowlight = createLowlight(all);
 
@@ -42,7 +44,8 @@
 	}: Props = $props();
 
 	let ydoc: Y.Doc | null = null;
-	let provider: IndexeddbPersistence | null = null;
+	let indexedDBProvider: IndexeddbPersistence | null = null;
+	let hocuspocusProvider: HocuspocusProvider | null = null;
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
@@ -271,52 +274,67 @@
 
 			// Configure IndexedDB persistence if a valid noteId is provided
 			if (noteId) {
-				provider = new IndexeddbPersistence(noteId, ydoc);
-				provider.on('synced', () => {
+				indexedDBProvider = new IndexeddbPersistence(noteId, ydoc);
+				indexedDBProvider.on('synced', () => {
 					console.log('Yjs document synced from IndexedDB');
 				});
+
+				// Hocuspocus real-time collaboration provider
+				hocuspocusProvider = new HocuspocusProvider({
+					url: import.meta.env.PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234',
+					name: noteId,
+					document: ydoc,
+				});
+			}
+
+			// Build extensions array (CollaborationCursor is conditional on Hocuspocus)
+			const extensions: any[] = [
+				StarterKit.configure({
+					codeBlock: false,
+					link: false,
+					history: false // disable history because of Collaboration extension
+				}),
+				Collaboration.configure({
+					document: ydoc,
+				}),
+				Placeholder.configure({
+					placeholder: placeholder
+				}),
+				Link.configure({
+					openOnClick: false,
+					autolink: true
+				}),
+				Image,
+				Table.configure({
+					resizable: true
+				}),
+				TableRow,
+				TableHeader,
+				TableCell,
+				TaskList,
+				TaskItem.configure({
+					nested: true
+				}),
+				CodeBlockWithLanguage.configure({
+					lowlight
+				}),
+				WikiLinkMark,
+				NoteEmbedNode,
+				Markdown
+			];
+
+			// Only add cursor awareness when Hocuspocus is connected
+			if (hocuspocusProvider) {
+				extensions.splice(2, 0, CollaborationCursor.configure({
+					provider: hocuspocusProvider,
+				}));
 			}
 
 			editor = new Editor({
 				element: element,
 				editable,
-				extensions: [
-					StarterKit.configure({
-						codeBlock: false,
-						// StarterKit includes Link internally - disable it to avoid duplicate extension warning
-						link: false,
-						history: false // disable history because of Collaboration extension
-					}),
-					Collaboration.configure({
-						document: ydoc,
-					}),
-
-					Placeholder.configure({
-						placeholder: placeholder
-					}),
-					Link.configure({
-						openOnClick: false,
-						autolink: true
-					}),
-					Image,
-					Table.configure({
-						resizable: true
-					}),
-					TableRow,
-					TableHeader,
-					TableCell,
-					TaskList,
-					TaskItem.configure({
-						nested: true
-					}),
-					CodeBlockWithLanguage.configure({
-						lowlight
-					}),
-					WikiLinkMark,
-					NoteEmbedNode,
-					Markdown
-				],
-			content: normalizeMarkdown(content || ''),
+				extensions,
+				content: normalizeMarkdown(content || ''),
 				contentType: 'markdown',
 				editorProps: {
 					attributes: {
@@ -445,8 +463,11 @@
 		if (editor) {
 			editor.destroy();
 		}
-		if (provider) {
-			provider.destroy();
+		if (indexedDBProvider) {
+			indexedDBProvider.destroy();
+		}
+		if (hocuspocusProvider) {
+			hocuspocusProvider.destroy();
 		}
 		if (ydoc) {
 			ydoc.destroy();

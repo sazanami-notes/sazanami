@@ -1,5 +1,10 @@
 # Sazanami Cloudflare移行計画
 
+> **このドキュメントは過去の移行計画の記録です。**
+> 実際の移行は完了していますが、その後リポジトリ構造はモノレポからフラット構造に変更され、
+> WebSocket サーバーは削除され Hocuspocus に置き換えられました。
+> 最新の構成については [README.md](../README.md) を参照してください。
+
 ## 概要
 
 SazanamiプロジェクトをVercelからCloudflare Workersへ移行する計画です。
