@@ -7,7 +7,3 @@ STORAGE_DRIVER = "local"
 
 # Node.js compatibility
 compatibility_flags = ["nodejs_compat"]
-
-# Externalize non-Workers-compatible packages
-[build]
-external = ["nodemailer"]
