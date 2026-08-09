@@ -167,7 +167,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'box' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(401);
 	});
 
@@ -181,7 +181,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'box' },
 			{ id: nonExistentId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(404);
 	});
 
@@ -194,7 +194,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'invalid-status' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(400);
 		const body: { message: string } = await response.json();
 		expect(body.message).toBe('Invalid status provided');
@@ -218,7 +218,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'box' },
 			{ id: otherUserNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(404);
 
 		// 別ユーザーのノートは変更されていないことを確認
@@ -240,7 +240,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'box' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; message: string } = await response.json();
 		expect(body.success).toBe(true);
@@ -264,7 +264,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'archived' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; message: string } = await response.json();
 		expect(body.success).toBe(true);
@@ -288,7 +288,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'trash' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; message: string } = await response.json();
 		expect(body.success).toBe(true);
@@ -312,7 +312,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'inbox' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; message: string } = await response.json();
 		expect(body.success).toBe(true);
@@ -336,7 +336,7 @@ describe('POST /api/notes/{id}/status', () => {
 			{ status: 'inbox' },
 			{ id: testNoteId }
 		);
-		const response = await changeNoteStatus(params);
+		const response = await changeNoteStatus(params as Parameters<typeof changeNoteStatus>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; message: string } = await response.json();
 		expect(body.success).toBe(true);
@@ -435,7 +435,7 @@ describe('POST /api/notes/{id}/pin', () => {
 			{ pinned: true },
 			{ id: testNoteId }
 		);
-		const response = await toggleNotePin(params);
+		const response = await toggleNotePin(params as Parameters<typeof toggleNotePin>[0]);
 		expect(response.status).toBe(401);
 	});
 
@@ -449,7 +449,7 @@ describe('POST /api/notes/{id}/pin', () => {
 			{ pinned: true },
 			{ id: nonExistentId }
 		);
-		const response = await toggleNotePin(params);
+		const response = await toggleNotePin(params as Parameters<typeof toggleNotePin>[0]);
 		expect(response.status).toBe(404);
 	});
 
@@ -462,7 +462,7 @@ describe('POST /api/notes/{id}/pin', () => {
 			{ pinned: true },
 			{ id: otherUserNoteId }
 		);
-		const response = await toggleNotePin(params);
+		const response = await toggleNotePin(params as Parameters<typeof toggleNotePin>[0]);
 		expect(response.status).toBe(404);
 
 		// 別ユーザーのノートは変更されていないことを確認
@@ -484,7 +484,7 @@ describe('POST /api/notes/{id}/pin', () => {
 			{ pinned: true },
 			{ id: testNoteId }
 		);
-		const response = await toggleNotePin(params);
+		const response = await toggleNotePin(params as Parameters<typeof toggleNotePin>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; isPinned: boolean } = await response.json();
 		expect(body.success).toBe(true);
@@ -508,7 +508,7 @@ describe('POST /api/notes/{id}/pin', () => {
 			{ pinned: false },
 			{ id: testNoteId }
 		);
-		const response = await toggleNotePin(params);
+		const response = await toggleNotePin(params as Parameters<typeof toggleNotePin>[0]);
 		expect(response.status).toBe(200);
 		const body: { success: boolean; isPinned: boolean } = await response.json();
 		expect(body.success).toBe(true);

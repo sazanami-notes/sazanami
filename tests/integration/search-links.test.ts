@@ -218,7 +218,7 @@ describe('GET /api/notes (search + pagination)', () => {
 			'GET',
 			null
 		);
-		const response = await searchNotes(params);
+		const response = await searchNotes(params as Parameters<typeof searchNotes>[0]);
 		expect(response.status).toBe(401);
 	});
 
@@ -229,7 +229,7 @@ describe('GET /api/notes (search + pagination)', () => {
 			'GET',
 			mockSession
 		);
-		const response = await searchNotes(params);
+		const response = await searchNotes(params as Parameters<typeof searchNotes>[0]);
 		expect(response.status).toBe(200);
 		const body: NotesListResponse = await response.json();
 		expect(body.notes).toHaveLength(1);
@@ -246,7 +246,7 @@ describe('GET /api/notes (search + pagination)', () => {
 			'GET',
 			mockSession
 		);
-		const response = await searchNotes(params);
+		const response = await searchNotes(params as Parameters<typeof searchNotes>[0]);
 		expect(response.status).toBe(200);
 		const body: NotesListResponse = await response.json();
 		expect(body.notes).toHaveLength(1);
@@ -261,7 +261,7 @@ describe('GET /api/notes (search + pagination)', () => {
 			'GET',
 			mockSession
 		);
-		const response = await searchNotes(params);
+		const response = await searchNotes(params as Parameters<typeof searchNotes>[0]);
 		expect(response.status).toBe(200);
 		const body: NotesListResponse = await response.json();
 		expect(body.notes).toEqual([]);
@@ -382,7 +382,7 @@ describe('GET /api/notes/[id]/links', () => {
 			null,
 			{ id: noteIds['Source Note'] }
 		);
-		const response = await getNoteLinks(params);
+		const response = await getNoteLinks(params as Parameters<typeof getNoteLinks>[0]);
 		expect(response.status).toBe(401);
 	});
 
@@ -394,7 +394,7 @@ describe('GET /api/notes/[id]/links', () => {
 			mockSession,
 			{ id: noteIds['Source Note'] }
 		);
-		const response = await getNoteLinks(params);
+		const response = await getNoteLinks(params as Parameters<typeof getNoteLinks>[0]);
 		expect(response.status).toBe(200);
 		const body: LinksResponse = await response.json();
 
@@ -417,7 +417,7 @@ describe('GET /api/notes/[id]/links', () => {
 			mockSession,
 			{ id: noteIds['Isolated Note'] }
 		);
-		const response = await getNoteLinks(params);
+		const response = await getNoteLinks(params as Parameters<typeof getNoteLinks>[0]);
 		expect(response.status).toBe(200);
 		const body: LinksResponse = await response.json();
 		expect(body.oneHopLinks).toEqual([]);
@@ -498,7 +498,7 @@ describe('GET /api/notes/suggestions', () => {
 			'GET',
 			null
 		);
-		const response = await getSuggestions(params);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
 		expect(response.status).toBe(401);
 	});
 
@@ -509,7 +509,7 @@ describe('GET /api/notes/suggestions', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getSuggestions(params);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
 		expect(response.status).toBe(200);
 		const body: SuggestionResponse[] = await response.json();
 		expect(body).toHaveLength(1);
@@ -525,7 +525,7 @@ describe('GET /api/notes/suggestions', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getSuggestions(params);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
 		expect(response.status).toBe(200);
 		const body: SuggestionResponse[] = await response.json();
 		// Suggest Gamma は inbox のため、box スコープでは候補に出ない
@@ -539,7 +539,7 @@ describe('GET /api/notes/suggestions', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getSuggestions(params);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
 		expect(response.status).toBe(200);
 		const body: SuggestionResponse[] = await response.json();
 		expect(body).toEqual([]);
@@ -552,7 +552,7 @@ describe('GET /api/notes/suggestions', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getSuggestions(params);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
 		expect(response.status).toBe(200);
 		const body: SuggestionResponse[] = await response.json();
 		expect(body).toHaveLength(2);
@@ -611,7 +611,7 @@ describe('GET /api/notes/embed', () => {
 			'GET',
 			null
 		);
-		const response = await getEmbedNote(params);
+		const response = await getEmbedNote(params as Parameters<typeof getEmbedNote>[0]);
 		expect(response.status).toBe(401);
 	});
 
@@ -622,7 +622,7 @@ describe('GET /api/notes/embed', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getEmbedNote(params);
+		const response = await getEmbedNote(params as Parameters<typeof getEmbedNote>[0]);
 		expect(response.status).toBe(200);
 		const body: EmbedResponse = await response.json();
 		expect(body.id).toBe(noteIds['Embed Target']);
@@ -637,7 +637,7 @@ describe('GET /api/notes/embed', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getEmbedNote(params);
+		const response = await getEmbedNote(params as Parameters<typeof getEmbedNote>[0]);
 		expect(response.status).toBe(404);
 		const body: EmbedResponse = await response.json();
 		expect(body.message).toBe('Note not found');
@@ -650,7 +650,7 @@ describe('GET /api/notes/embed', () => {
 			'GET',
 			mockSession
 		);
-		const response = await getEmbedNote(params);
+		const response = await getEmbedNote(params as Parameters<typeof getEmbedNote>[0]);
 		expect(response.status).toBe(400);
 		const body: EmbedResponse = await response.json();
 		expect(body.message).toBe('Title is required');
