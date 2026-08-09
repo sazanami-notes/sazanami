@@ -18,6 +18,13 @@ vi.mock('$lib/server/db/connection', () => {
 	};
 });
 
+// Mock $env/dynamic/private so app modules read process.env directly
+// (vitest does not resolve SvelteKit's env module the same way as the dev server,
+// and $env/dynamic/private would otherwise return undefined for keys set at runtime)
+vi.mock('$env/dynamic/private', () => {
+	return { env: process.env };
+});
+
 beforeAll(async () => {
 	await createTables();
 });
