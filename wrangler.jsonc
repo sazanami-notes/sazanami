@@ -12,5 +12,15 @@
 		"directory": ".svelte-kit/cloudflare",
 		"binding": "ASSETS",
 		"run_worker_first": true
+	},
+	"env": {
+		"dev": {
+			"name": "sazanami-dev",
+			"vars": {
+				"STORAGE_DRIVER": "local",
+				"BETTER_AUTH_URL": "https://sazanami-dev.mizuki-sazanami.workers.dev",
+				"EMAIL_DRIVER": "noop"
+			}
+		}
 	}
 }
