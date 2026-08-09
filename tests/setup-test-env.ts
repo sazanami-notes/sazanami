@@ -1,6 +1,11 @@
 import { beforeAll, afterAll, vi } from 'vitest';
 import { createTables, dropTables, db } from './setup-test-db';
 
+// テストではローカルストレージとnoopメールを使用
+// （CI環境には.envがないため、デフォルトのs3ドライバーになるとBucket未設定で失敗する）
+process.env.STORAGE_DRIVER = 'local';
+process.env.EMAIL_DRIVER = 'noop';
+
 // Mock the database connection for all tests
 // This ensures that any import of the db connection in the app's source
 // will get the in-memory test database instance.
