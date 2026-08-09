@@ -18,7 +18,7 @@
 			"name": "sazanami-dev",
 			"vars": {
 				"STORAGE_DRIVER": "local",
-				"BETTER_AUTH_URL": "https://sazanami-dev.mizuki-sazanami.workers.dev",
+				"BETTER_AUTH_URL": "https://sazanami-dev.214kaedesato.workers.dev",
 				"EMAIL_DRIVER": "noop"
 			}
 		}
