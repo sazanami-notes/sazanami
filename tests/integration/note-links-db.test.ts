@@ -2,9 +2,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { notes as notesSchema, user as userSchema, noteLinks } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createNote, updateNote, updateNoteLinks } from '$lib/server/db'; // Using db functions directly
-import { generateSlug } from '$lib/utils/slug';
 
 // Test User
 const testUser = {
@@ -13,7 +12,7 @@ const testUser = {
 	email: 'notelinkdb@example.com'
 };
 
-let noteIds: Record<string, string> = {};
+const noteIds: Record<string, string> = {};
 
 beforeAll(async () => {
 	// Create user
@@ -28,7 +27,7 @@ beforeAll(async () => {
 	const noteA = await createNote({
 		userId: testUser.id,
 		title: 'Target A',
-		contentHtml: '...',
+		content: '...',
 		isPublic: false,
 		isPinned: false,
 		status: 'inbox',
@@ -37,7 +36,7 @@ beforeAll(async () => {
 	const noteB = await createNote({
 		userId: testUser.id,
 		title: 'Target B',
-		contentHtml: '...',
+		content: '...',
 		isPublic: false,
 		isPinned: false,
 		status: 'inbox',
@@ -58,13 +57,13 @@ describe('note_links table update logic', () => {
 		const sourceNote = await createNote({
 			userId: testUser.id,
 			title: 'Source Note 1',
-			contentHtml: 'This links to [[Target A]].',
+			content: 'This links to [[Target A]].',
 			isPublic: false,
 			isPinned: false,
 			status: 'inbox',
 			tags: []
 		});
-		await updateNoteLinks(sourceNote.id, sourceNote.contentHtml || '', testUser.id);
+		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
 
 		const links = await db
 			.select()
@@ -75,22 +74,22 @@ describe('note_links table update logic', () => {
 		expect(links[0].targetNoteId).toBe(noteIds['Target A']);
 	});
 
-	it('should update links when a note.contentHtml is changed', async () => {
+	it('should update links when a note.content is changed', async () => {
 		// First, create a note with a link to A
 		const sourceNote = await createNote({
 			userId: testUser.id,
 			title: 'Source Note 2',
-			contentHtml: 'Initial link to [[Target A]].',
+			content: 'Initial link to [[Target A]].',
 			isPublic: false,
 			isPinned: false,
 			status: 'inbox',
 			tags: []
 		});
-		await updateNoteLinks(sourceNote.id, sourceNote.contentHtml || '', testUser.id);
+		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
 
 		// Now, update the note to link to B instead
 		const newContent = 'Now it links to [[Target B]].';
-		await updateNote(sourceNote.id, testUser.id, { contentHtml: newContent });
+		await updateNote(sourceNote.id, testUser.id, { content: newContent });
 		await updateNoteLinks(sourceNote.id, newContent, testUser.id);
 
 		const links = await db
@@ -107,13 +106,13 @@ describe('note_links table update logic', () => {
 		const sourceNote = await createNote({
 			userId: testUser.id,
 			title: 'Source Note 3',
-			contentHtml: 'This will have its link removed. [[Target A]]',
+			content: 'This will have its link removed. [[Target A]]',
 			isPublic: false,
 			isPinned: false,
 			status: 'inbox',
 			tags: []
 		});
-		await updateNoteLinks(sourceNote.id, sourceNote.contentHtml || '', testUser.id);
+		await updateNoteLinks(sourceNote.id, sourceNote.content || '', testUser.id);
 
 		// Verify the link exists
 		let links = await db.select().from(noteLinks).where(eq(noteLinks.sourceNoteId, sourceNote.id));
@@ -121,7 +120,7 @@ describe('note_links table update logic', () => {
 
 		// Now, update the note to have no links
 		const newContent = 'The link is gone.';
-		await updateNote(sourceNote.id, testUser.id, { contentHtml: newContent });
+		await updateNote(sourceNote.id, testUser.id, { content: newContent });
 		await updateNoteLinks(sourceNote.id, newContent, testUser.id);
 
 		links = await db.select().from(noteLinks).where(eq(noteLinks.sourceNoteId, sourceNote.id));

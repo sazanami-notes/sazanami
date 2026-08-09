@@ -35,10 +35,42 @@ export function sanitizeHtml(html: string): string {
 	const dangerousProtocols = /^(?:javascript|data|vbscript|file):/i;
 
 	const allowedTags = [
-		'p', 'br', 'b', 'i', 'strong', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-		'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'span', 'div',
-		'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'input', 'label',
-		'button', 'del', 's', 'sub', 'sup'
+		'p',
+		'br',
+		'b',
+		'i',
+		'strong',
+		'em',
+		'h1',
+		'h2',
+		'h3',
+		'h4',
+		'h5',
+		'h6',
+		'ul',
+		'ol',
+		'li',
+		'blockquote',
+		'code',
+		'pre',
+		'a',
+		'img',
+		'span',
+		'div',
+		'table',
+		'thead',
+		'tbody',
+		'tr',
+		'th',
+		'td',
+		'hr',
+		'input',
+		'label',
+		'button',
+		'del',
+		's',
+		'sub',
+		'sup'
 	];
 
 	// We'll use a regex to find all tags and their attributes
@@ -58,8 +90,22 @@ export function sanitizeHtml(html: string): string {
 		let attrMatch;
 
 		const allowedAttrs = [
-			'href', 'src', 'alt', 'title', 'class', 'style', 'target', 'rel',
-			'width', 'height', 'type', 'checked', 'disabled', 'data-wiki-link', 'data-type', 'data-checked'
+			'href',
+			'src',
+			'alt',
+			'title',
+			'class',
+			'style',
+			'target',
+			'rel',
+			'width',
+			'height',
+			'type',
+			'checked',
+			'disabled',
+			'data-wiki-link',
+			'data-type',
+			'data-checked'
 		];
 
 		while ((attrMatch = attrRegex.exec(attrs)) !== null) {
@@ -78,7 +124,7 @@ export function sanitizeHtml(html: string): string {
 		const booleanAttrs = ['checked', 'disabled', 'readonly', 'required'];
 		for (const attr of booleanAttrs) {
 			const reg = new RegExp(`\\s${attr}(\\s|$)`, 'i');
-			if (reg.test(attrs) && !sanitizedAttrs.some(a => a.startsWith(attr + '='))) {
+			if (reg.test(attrs) && !sanitizedAttrs.some((a) => a.startsWith(attr + '='))) {
 				sanitizedAttrs.push(attr);
 			}
 		}

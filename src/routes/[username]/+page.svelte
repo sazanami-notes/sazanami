@@ -80,7 +80,7 @@
 			<div class="text-base-content/60 py-10 text-center">ノートがありません。</div>
 		{:else}
 			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-				{#each notes as note}
+				{#each notes as note (note.id)}
 					<div class="card bg-base-100 border-base-200 border shadow-sm">
 						<div class="card-body">
 							<h3 class="card-title truncate text-lg">{note.title || 'Untitled Note'}</h3>

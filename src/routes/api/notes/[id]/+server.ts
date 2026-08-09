@@ -42,9 +42,10 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		if (note[0].contentBin) {
 			try {
 				contentBinBase64 = Buffer.from(note[0].contentBin).toString('base64');
-			} catch(e) {}
+			} catch {
+				// ignore
+			}
 		}
-
 
 		const noteWithTags = {
 			...note[0],
@@ -120,7 +121,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			try {
 				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
 				metadata.changes.contentBin = true;
-			} catch(e) {
+			} catch (e) {
 				console.error('Failed to parse contentBin base64', e);
 			}
 		}
@@ -268,7 +269,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			try {
 				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
 				metadata.changes.contentBin = true;
-			} catch(e) {
+			} catch (e) {
 				console.error('Failed to parse contentBin base64', e);
 			}
 		}
@@ -279,7 +280,12 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// タイトルが変更された場合、他のノートからのWikiLink（バックリンク）を更新
 		if (titleChanged && existingNote[0].title) {
-			await updateBacklinksOnTitleChange(noteId, existingNote[0].title, title, session.session.userId);
+			await updateBacklinksOnTitleChange(
+				noteId,
+				existingNote[0].title,
+				title,
+				session.session.userId
+			);
 		}
 
 		const updatedNote = await db
@@ -299,7 +305,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		if (updatedNote[0].contentBin) {
 			try {
 				contentBinBase64 = Buffer.from(updatedNote[0].contentBin).toString('base64');
-			} catch(e) {}
+			} catch {
+				// ignore
+			}
 		}
 
 		const noteWithTags = {

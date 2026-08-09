@@ -7,7 +7,7 @@ import { ulid } from 'ulid';
 
 // Mock the whole auth-client module
 vi.mock('$lib/auth-client', async () => {
-	const actual = (await vi.importActual('$lib/auth-client')) as any;
+	const actual = (await vi.importActual('$lib/auth-client')) as typeof import('$lib/auth-client');
 	return {
 		...actual,
 		authClient: {
@@ -41,30 +41,32 @@ describe('Sign-up functionality', () => {
 		};
 		createdUserEmail = newUser.email;
 
-		const mockedSignUp = authClient.signUp.email as any;
-		mockedSignUp.mockImplementation(async (data: any) => {
-			const id = ulid();
-			await db.insert(userSchema).values({
-				id,
-				name: data.name,
-				email: data.email,
-				emailVerified: false,
-				twoFactorEnabled: false,
-				createdAt: new Date(),
-				updatedAt: new Date()
-			});
+		const mockedSignUp = vi.mocked(authClient.signUp.email);
+		mockedSignUp.mockImplementation(
+			async (data: { name: string; email: string; password: string }) => {
+				const id = ulid();
+				await db.insert(userSchema).values({
+					id,
+					name: data.name,
+					email: data.email,
+					emailVerified: false,
+					twoFactorEnabled: false,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				});
 
-			return {
-				data: {
-					user: {
-						id,
-						name: data.name,
-						email: data.email
-					}
-				},
-				error: null
-			};
-		});
+				return {
+					data: {
+						user: {
+							id,
+							name: data.name,
+							email: data.email
+						}
+					},
+					error: null
+				};
+			}
+		);
 
 		const { data, error } = await authClient.signUp.email(newUser);
 

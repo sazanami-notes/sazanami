@@ -1,6 +1,11 @@
 import { beforeAll, afterAll, vi } from 'vitest';
 import { createTables, dropTables, db } from './setup-test-db';
 
+// テストではローカルストレージとnoopメールを使用
+// （CI環境には.envがないため、デフォルトのs3ドライバーになるとBucket未設定で失敗する）
+process.env.STORAGE_DRIVER = 'local';
+process.env.EMAIL_DRIVER = 'noop';
+
 // Mock the database connection for all tests
 // This ensures that any import of the db connection in the app's source
 // will get the in-memory test database instance.
@@ -13,6 +18,13 @@ vi.mock('$lib/server/db/connection', () => {
 	};
 });
 
+// Mock $env/dynamic/private so app modules read process.env directly
+// (vitest does not resolve SvelteKit's env module the same way as the dev server,
+// and $env/dynamic/private would otherwise return undefined for keys set at runtime)
+vi.mock('$env/dynamic/private', () => {
+	return { env: process.env };
+});
+
 beforeAll(async () => {
 	await createTables();
 });
@@ -23,9 +35,12 @@ afterAll(async () => {
 
 // Mock location for better-auth client in Node environment
 if (typeof window === 'undefined') {
-	(global as any).window = {
-		location: {
-			origin: 'http://localhost:12000'
-		}
-	};
+	Object.defineProperty(globalThis, 'window', {
+		value: {
+			location: {
+				origin: 'http://localhost:12000'
+			}
+		},
+		configurable: true
+	});
 }

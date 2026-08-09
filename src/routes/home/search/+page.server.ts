@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { and, desc, eq, like, or, sql } from 'drizzle-orm';
+import { and, eq, desc, sql, like, or, type SQL } from 'drizzle-orm';
 import { createAuth } from '$lib/server/auth';
 const auth = createAuth();
 
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ request, url }) => {
 	const limit = 20;
 	const offset = (page - 1) * limit;
 
-	const conditions: any[] = [eq(notes.userId, sessionData.user.id)];
+	const conditions: (SQL | undefined)[] = [eq(notes.userId, sessionData.user.id)];
 	if (q) {
 		conditions.push(or(like(notes.title, `%${q}%`), like(notes.content, `%${q}%`)));
 	}

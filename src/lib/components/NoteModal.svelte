@@ -53,7 +53,9 @@
 	// contentまたはtitleが変更されたら自動保存をトリガー
 	$effect(() => {
 		// titleとcontentの変更を検知するためにアクセスする
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const _t = title;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const _c = content;
 
 		if (!noteId || !initialized) return;
@@ -65,7 +67,7 @@
 		try {
 			const res = await fetch(`/api/notes/${id}`);
 			if (res.ok) {
-				const note = await res.json();
+				const note = (await res.json()) as { title?: string; content?: string };
 				title = note.title || '';
 				content = note.content || '';
 				showTitleInput = !!note.title;
@@ -145,10 +147,6 @@
 		processingClose = true;
 
 		try {
-			// Capture the state BEFORE anything else
-			const currentContent = content;
-			const currentTitle = title;
-
 			// ALWAYS attempt a final save if anything has changed and we were initialized
 			// Or just always try to save to be 100% safe
 			if (initialized) {

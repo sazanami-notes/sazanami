@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getNoteById, updateNote, updateNoteLinks } from '$lib/server/db';
 import { error, redirect, isRedirect } from '@sveltejs/kit';
+import type { Note } from '$lib/types';
 
 export const load: PageServerLoad = async ({ params, locals, fetch }) => {
 	if (!locals.user) {
@@ -23,7 +24,11 @@ export const load: PageServerLoad = async ({ params, locals, fetch }) => {
 				links: { oneHopLinks: [], backlinks: [], twoHopLinks: [] }
 			};
 		}
-		const links = await linksResponse.json();
+		const links = (await linksResponse.json()) as {
+			oneHopLinks: Note[];
+			backlinks: Note[];
+			twoHopLinks: Note[];
+		};
 
 		return { note, links };
 	} catch (err) {

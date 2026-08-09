@@ -11,9 +11,7 @@ import JSZip from 'jszip';
 /**
  * ZIPファイルからMarkdownファイルを再帰的に抽出する
  */
-async function extractMarkdownFromZip(
-	zipFile: File
-): Promise<{ name: string; content: string }[]> {
+async function extractMarkdownFromZip(zipFile: File): Promise<{ name: string; content: string }[]> {
 	const buffer = await zipFile.arrayBuffer();
 	const zip = await JSZip.loadAsync(buffer);
 

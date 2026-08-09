@@ -4,13 +4,13 @@
 	import NoteModal from '$lib/components/NoteModal.svelte';
 	import SortSelector from '$lib/components/SortSelector.svelte';
 	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 
 	type SearchPageData = {
 		notes: Note[];
 		q: string;
 		pagination: {
 			page: number;
-			limit: number;
 			total: number;
 			totalPages: number;
 		};
@@ -40,7 +40,7 @@
 	}
 
 	function buildPageLink(nextPage: number) {
-		const params = new URLSearchParams();
+		const params = new SvelteURLSearchParams();
 		if (data.q) {
 			params.set('q', data.q);
 		}
@@ -67,14 +67,14 @@
 
 		<div class="flex flex-col space-y-4">
 			{#if !hasQuery}
-				<p class="text-base-content text-center text-opacity-60">
+				<p class="text-base-content text-opacity-60 text-center">
 					ヘッダーの検索バーからキーワードを入力すると結果が表示されます。
 				</p>
 			{:else}
 				{#each notes as note (note.id)}
 					<TimelinePost {note} on:edit={handleEdit} />
 				{:else}
-					<p class="text-base-content text-center text-opacity-60">
+					<p class="text-base-content text-opacity-60 text-center">
 						一致するメモは見つかりませんでした。
 					</p>
 				{/each}

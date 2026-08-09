@@ -16,9 +16,9 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	const noteId = params.id;
 
 	try {
-		const attachTags = async (noteRecords: any[]) => {
+		const attachTags = async (noteRecords: (typeof notes.$inferSelect)[]) => {
 			if (noteRecords.length === 0) return [];
-			const noteIds = noteRecords.map(r => r.id);
+			const noteIds = noteRecords.map((r) => r.id);
 			const tagsResult = await db
 				.select({
 					noteId: noteTags.noteId,
@@ -36,7 +36,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				tagsMap.get(row.noteId)!.push(row.tagName);
 			}
 
-			return noteRecords.map(n => ({
+			return noteRecords.map((n) => ({
 				...n,
 				tags: tagsMap.get(n.id) || []
 			}));
@@ -49,7 +49,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			.from(noteLinks)
 			.innerJoin(targetNote, eq(noteLinks.targetNoteId, targetNote.id))
 			.where(eq(noteLinks.sourceNoteId, noteId));
-		const oneHopLinksResult = await attachTags(oneHopLinksData.map(d => d.note));
+		const oneHopLinksResult = await attachTags(oneHopLinksData.map((d) => d.note));
 
 		// 2. Get backlinks
 		const sourceNote = alias(notes, 'sourceNote');
@@ -58,7 +58,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			.from(noteLinks)
 			.innerJoin(sourceNote, eq(noteLinks.sourceNoteId, sourceNote.id))
 			.where(eq(noteLinks.targetNoteId, noteId));
-		const backlinksResult = await attachTags(backlinksData.map(d => d.note));
+		const backlinksResult = await attachTags(backlinksData.map((d) => d.note));
 
 		// 3. Get 2-hop links
 		const oneHopLinkTargetIds = (
@@ -68,7 +68,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				.where(eq(noteLinks.sourceNoteId, noteId))
 		).map((r) => r.id);
 
-		let twoHopLinksData: any[] = [];
+		let twoHopLinksData: { note: typeof notes.$inferSelect }[] = [];
 		if (oneHopLinkTargetIds.length > 0) {
 			const twoHopTargetNote = alias(notes, 'twoHopTargetNote');
 			twoHopLinksData = await db
@@ -84,11 +84,11 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				);
 		}
 
-		const twoHopLinksRaw = await attachTags(twoHopLinksData.map(d => d.note));
+		const twoHopLinksRaw = await attachTags(twoHopLinksData.map((d) => d.note));
 
 		// Deduplicate 2-hop links
 		const uniqueTwoHopLinks = new Map<string, Note>();
-		twoHopLinksRaw.forEach((link: any) => {
+		twoHopLinksRaw.forEach((link) => {
 			uniqueTwoHopLinks.set(link.slug, link);
 		});
 

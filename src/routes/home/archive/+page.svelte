@@ -1,9 +1,7 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import TimelinePost from '$lib/components/TimelinePost.svelte';
 	import type { Note } from '$lib/types';
 	import NoteModal from '$lib/components/NoteModal.svelte';
-	import { invalidateAll } from '$app/navigation';
 	import SortSelector from '$lib/components/SortSelector.svelte';
 	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
 
@@ -38,7 +36,7 @@
 			{#each notes as note (note.id)}
 				<TimelinePost {note} mode="archive" on:edit={handleEdit} />
 			{:else}
-				<p class="text-center text-base-content text-opacity-60">
+				<p class="text-base-content text-opacity-60 text-center">
 					アーカイブされたノートはありません。
 				</p>
 			{/each}

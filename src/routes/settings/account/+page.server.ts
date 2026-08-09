@@ -38,7 +38,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await auth.api.forgetPassword({
+			await (auth.api as unknown as { forgetPassword: (p: { body: { email: string; redirectTo?: string } }) => Promise<unknown> }).forgetPassword({
 				body: {
 					email: sessionData.user.email,
 					redirectTo: '/reset-password'
@@ -58,8 +58,8 @@ export const actions: Actions = {
 			}
 
 			throw redirect(302, `/reset-password?token=${v.value}`);
-		} catch (e: any) {
-			if (e.status === 302) throw e;
+		} catch (e: unknown) {
+			if ((e as { status?: number }).status === 302) throw e;
 			console.error('Reset password direct error:', e);
 			return fail(500, { message: 'エラーが発生しました。' });
 		}
@@ -87,10 +87,10 @@ export const actions: Actions = {
 			return {
 				message: 'パスワードが正常に変更されました。'
 			};
-		} catch (e: any) {
+		} catch (e: unknown) {
 			if (e instanceof APIError) {
 				return fail(e.statusCode, {
-					message: e.body.message
+					message: e.body?.message
 				});
 			}
 			return fail(500, {

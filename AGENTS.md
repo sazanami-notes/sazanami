@@ -19,6 +19,9 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
 - **Collaboration**: Yjs (CRDT) + y-indexeddb (オフライン永続化) + Hocuspocus (リアルタイム共同編集、オプショナル)
 - **Testing**: Vitest, Svelte Testing Library, Playwright (E2E)
 - **Package Manager**: bun
+- **Email**: Plunk (HTTP API — SaaS / self-hosted 両対応。`src/lib/server/email/` にドライバー)
+- **Storage**: S3互換ストレージ (`STORAGE_DRIVER=s3` がデフォルト。Cloudflare R2バインディングにも対応)
+- **Deploy**: Cloudflare Workers (adapter-cloudflare, wrangler)
 
 ## 3. ディレクトリ構造と責務
 
@@ -32,6 +35,8 @@ AIエージェントはコード生成の際、以下の技術スタックとバ
     - `schema.ts`: アプリケーション固有のテーブル定義。
     - **`auth-schema.ts`: Better Auth によって自動生成・管理されるスキーマ。手動での無闇な変更は避けること。**
   - `src/lib/server/auth.ts`: Better Auth の設定とインスタンス。
+  - `src/lib/server/email/`: メール送信ドライバー（Plunk / SMTP / Cloudflare Email）。`index.ts` が統一インターフェースを提供。
+- `src/lib/utils/`: 共通ユーティリティ（slug生成、note-utils 等）。
 - `src/lib/stores/`: グローバルな状態管理。必要に応じてSvelte 5の `$state` を用いた状態クラス・関数として実装すること。
 - `tests/`: Vitestを用いたユニットテスト(`tests/unit/`)およびインテグレーションテスト(`tests/integration/`)。
 
@@ -69,12 +74,15 @@ AIエージェントがタスクを実行・提案する際は、以下のコマ
 - 開発サーバー起動: `bun run dev`
 - コードフォーマット: `bun run format`
 - 静的解析・Lint: `bun run lint`, `bun run check`
-- テスト実行: `bun run test`
+- ユニットテスト: `bun run test:unit`
+- インテグレーションテスト: `bunx vitest tests/integration`
+- 全テスト実行: `bun run test`
 - DBマイグレーション生成: `bun run db:generate`
 - DBマイグレーション適用: `bun run db:migrate`
 - DB閲覧スタジオ: `bun run db:studio`
+- 本番ビルド&デプロイ: `bun run build:cf && wrangler deploy`
 
-テストユーザーには
-email: test@test.com
-password: test0000
-ではいれます。
+## 6. 開発用テストユーザー
+
+- email: `test@test.com`
+- password: `test0000`

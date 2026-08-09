@@ -56,7 +56,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
 			})
 			.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
 
-		if (result.rowCount > 0) {
+		if (result.rowsAffected > 0) {
 			// タイムラインイベントを記録
 			await db.insert(timeline).values({
 				userId: session.session.userId,

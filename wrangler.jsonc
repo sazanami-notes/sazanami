@@ -3,12 +3,24 @@
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2025-05-12",
 	"vars": {
-		"STORAGE_DRIVER": "local"
+		"STORAGE_DRIVER": "local",
+		"BETTER_AUTH_URL": "https://sazanami.mizuki-sazanami.workers.dev",
+		"EMAIL_DRIVER": "plunk"
 	},
 	"compatibility_flags": ["nodejs_compat"],
 	"assets": {
 		"directory": ".svelte-kit/cloudflare",
 		"binding": "ASSETS",
 		"run_worker_first": true
+	},
+	"env": {
+		"dev": {
+			"name": "sazanami-dev",
+			"vars": {
+				"STORAGE_DRIVER": "local",
+				"BETTER_AUTH_URL": "https://sazanami-dev.214kaedesato.workers.dev",
+				"EMAIL_DRIVER": "noop"
+			}
+		}
 	}
 }

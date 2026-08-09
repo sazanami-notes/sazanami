@@ -19,9 +19,7 @@ export const load: PageServerLoad = async ({ request }) => {
 	const archivedNotes = await db
 		.select()
 		.from(notes)
-		.where(
-			and(eq(notes.userId, sessionData.user.id), eq(notes.status, 'box-archived'))
-		)
+		.where(and(eq(notes.userId, sessionData.user.id), eq(notes.status, 'box-archived')))
 		.orderBy(desc(notes.updatedAt));
 
 	// Fetch all tags for the user

@@ -25,7 +25,12 @@ export interface UploadResult {
 }
 
 export interface StorageDriver {
-	upload(params: { fileId: string; fileName: string; buffer: Buffer; mimeType: string }): Promise<UploadResult>;
+	upload(params: {
+		fileId: string;
+		fileName: string;
+		buffer: Buffer;
+		mimeType: string;
+	}): Promise<UploadResult>;
 	delete(filePath: string): Promise<void>;
 }
 
@@ -92,7 +97,9 @@ async function createS3Driver(): Promise<StorageDriver> {
 	const region = env.S3_REGION ?? 'us-east-1';
 	const bucket = env.S3_BUCKET ?? '';
 	const endpoint = env.S3_ENDPOINT || undefined;
-	const publicUrlBase = env.S3_PUBLIC_URL || (endpoint ? `${endpoint}/${bucket}` : `https://${bucket}.s3.${region}.amazonaws.com`);
+	const publicUrlBase =
+		env.S3_PUBLIC_URL ||
+		(endpoint ? `${endpoint}/${bucket}` : `https://${bucket}.s3.${region}.amazonaws.com`);
 
 	const client = new S3Client({
 		region,
@@ -137,10 +144,14 @@ async function createS3Driver(): Promise<StorageDriver> {
 
 // Minimal R2Bucket interface (full types from @cloudflare/workers-types)
 interface R2Bucket {
-	put(key: string, value: ArrayBuffer | Uint8Array | ReadableStream | string, options?: {
-		httpMetadata?: { contentType?: string };
-		customMetadata?: Record<string, string>;
-	}): Promise<R2Object | null>;
+	put(
+		key: string,
+		value: ArrayBuffer | Uint8Array | ReadableStream | string,
+		options?: {
+			httpMetadata?: { contentType?: string };
+			customMetadata?: Record<string, string>;
+		}
+	): Promise<R2Object | null>;
 	delete(key: string | string[]): Promise<void>;
 }
 
@@ -162,8 +173,16 @@ interface R2Config {
 class R2Driver implements StorageDriver {
 	constructor(private config: R2Config) {}
 
-	async upload({ fileId, fileName, buffer, mimeType }: {
-		fileId: string; fileName: string; buffer: Buffer; mimeType: string
+	async upload({
+		fileId,
+		fileName,
+		buffer,
+		mimeType
+	}: {
+		fileId: string;
+		fileName: string;
+		buffer: Buffer;
+		mimeType: string;
 	}): Promise<UploadResult> {
 		const ext = extractExt(fileName);
 		const key = `uploads/${fileId}${ext}`;
@@ -201,13 +220,15 @@ let driverPromise: Promise<StorageDriver> | null = null;
 export async function getStorageDriver(r2Bucket?: R2Bucket): Promise<StorageDriver> {
 	if (driverPromise) return driverPromise;
 
-	const driverName = (env.STORAGE_DRIVER ?? 'local').toLowerCase();
+	const driverName = (env.STORAGE_DRIVER ?? 's3').toLowerCase();
 
 	if (driverName === 'r2' && r2Bucket) {
-		driverPromise = Promise.resolve(new R2Driver({
-			bucket: r2Bucket,
-			publicUrl: env.S3_PUBLIC_URL
-		}));
+		driverPromise = Promise.resolve(
+			new R2Driver({
+				bucket: r2Bucket,
+				publicUrl: env.S3_PUBLIC_URL
+			})
+		);
 	} else if (driverName === 's3') {
 		driverPromise = createS3Driver();
 	} else {
@@ -219,5 +240,5 @@ export async function getStorageDriver(r2Bucket?: R2Bucket): Promise<StorageDriv
 
 /** Check if STORAGE_DRIVER is set to 'r2' */
 export function isR2Configured(): boolean {
-	return (env.STORAGE_DRIVER ?? 'local').toLowerCase() === 'r2';
+	return (env.STORAGE_DRIVER ?? 's3').toLowerCase() === 'r2';
 }

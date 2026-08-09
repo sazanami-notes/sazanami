@@ -264,9 +264,7 @@
 						<div class="bg-base-300 relative aspect-square overflow-hidden">
 							{#if item.mimeType.startsWith('image/')}
 								<img
-									src={item.filePath.startsWith('http')
-										? item.filePath
-										: item.filePath}
+									src={item.filePath.startsWith('http') ? item.filePath : item.filePath}
 									alt={item.fileName}
 									class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
 									loading="lazy"
@@ -295,7 +293,7 @@
 								class="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
 							>
 								<button
-									class="btn btn-circle btn-sm btn-ghost text-white tooltip tooltip-bottom"
+									class="btn btn-circle btn-sm btn-ghost tooltip tooltip-bottom text-white"
 									data-tip="URLをコピー"
 									onclick={() => copyUrl(item)}
 									title="URLをコピー"
@@ -332,7 +330,7 @@
 								</button>
 
 								<button
-									class="btn btn-circle btn-sm btn-ghost text-white tooltip tooltip-bottom"
+									class="btn btn-circle btn-sm btn-ghost tooltip tooltip-bottom text-white"
 									data-tip="Markdownでコピー"
 									onclick={() => copyMarkdown(item)}
 									title="Markdown形式でコピー"
@@ -356,7 +354,7 @@
 								</button>
 
 								<button
-									class="btn btn-circle btn-sm btn-ghost text-white tooltip tooltip-bottom"
+									class="btn btn-circle btn-sm btn-ghost tooltip tooltip-bottom text-white"
 									data-tip="削除"
 									onclick={() => (confirmDeleteId = item.id)}
 									title="削除"
@@ -400,7 +398,8 @@
 			<h3 class="text-lg font-bold">画像を削除</h3>
 			<p class="py-4 text-sm">
 				この画像を削除しますか？<br />
-				<span class="text-warning text-xs">ノート内でこの画像を参照している場合、表示されなくなります。</span
+				<span class="text-warning text-xs"
+					>ノート内でこの画像を参照している場合、表示されなくなります。</span
 				>
 			</p>
 			<div class="modal-action">

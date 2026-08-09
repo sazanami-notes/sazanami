@@ -1,19 +1,33 @@
 import type { Note } from '$lib/types';
 import { generateSlug } from '$lib/utils/slug';
 
-export type SortKey = 'updatedAt_desc' | 'updatedAt_asc' | 'createdAt_desc' | 'createdAt_asc' | 'title_asc' | 'title_desc';
+export type SortKey =
+	| 'updatedAt_desc'
+	| 'updatedAt_asc'
+	| 'createdAt_desc'
+	| 'createdAt_asc'
+	| 'title_asc'
+	| 'title_desc';
 
 export function sortNotes(notes: Note[], sortKey: SortKey): Note[] {
 	const sorted = [...notes];
 	switch (sortKey) {
 		case 'updatedAt_desc':
-			return sorted.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+			return sorted.sort(
+				(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+			);
 		case 'updatedAt_asc':
-			return sorted.sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+			return sorted.sort(
+				(a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+			);
 		case 'createdAt_desc':
-			return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+			return sorted.sort(
+				(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+			);
 		case 'createdAt_asc':
-			return sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+			return sorted.sort(
+				(a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+			);
 		case 'title_asc':
 			return sorted.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ja'));
 		case 'title_desc':
@@ -45,7 +59,10 @@ export const extractWikiLinks = (content: string | null | undefined): string[] =
  * @param resolvedLinks 解決済みリンクのマップ (JSON文字列またはオブジェクト)
  * @returns 変換後のHTML文字列
  */
-export function renderWikiLinks(content: string | null | undefined, resolvedLinks: any): string {
+export function renderWikiLinks(
+	content: string | null | undefined,
+	resolvedLinks: string | Record<string, string> | null | undefined
+): string {
 	if (!content) return '';
 
 	let linksMap: Record<string, string> = {};

@@ -1,13 +1,25 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { setupTestDB, teardownTestDB } from '../test-utils';
 import { GET } from '../../src/routes/api/notes/resolve-link/+server';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { notes, user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import * as authModule from '$lib/server/auth';
 import { generateSlug } from '$lib/utils/slug';
 import type { RequestEvent } from '@sveltejs/kit';
+
+// Mock the auth module: routes call createAuth() at module load time and use
+// auth.api.getSession({ headers }) to authenticate.
+const { mockAuth } = vi.hoisted(() => ({
+	mockAuth: {
+		api: {
+			getSession: vi.fn()
+		}
+	}
+}));
+
+vi.mock('$lib/server/auth', () => ({
+	createAuth: vi.fn(() => mockAuth)
+}));
 
 // モック用の認証セッション
 const mockSession = {
@@ -16,14 +28,14 @@ const mockSession = {
 		email: 'test@example.com',
 		name: 'Test User',
 		emailVerified: false,
-		twoFactorEnabled: false, // 追加
-		createdAt: new Date(), // 追加
-		updatedAt: new Date() // 追加
+		twoFactorEnabled: false,
+		createdAt: new Date(),
+		updatedAt: new Date()
 	},
 	session: {
 		id: ulid(),
 		userId: 'testUser1',
-		expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1時間後
+		expiresAt: new Date(Date.now() + 1000 * 60 * 60),
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		token: 'dummy-token'
@@ -31,7 +43,11 @@ const mockSession = {
 };
 
 // RequestEventのモックを作成するヘルパー関数
-const createMockRequestEvent = (url: string, method: string, session: any): RequestEvent => {
+const createMockRequestEvent = (
+	url: string,
+	method: string,
+	session: typeof mockSession | null
+): RequestEvent => {
 	const request = new Request(url, { method });
 	return {
 		url: new URL(request.url),
@@ -92,7 +108,7 @@ describe('GET /api/notes/resolve-link', () => {
 					id: ulid(),
 					userId: testUserId,
 					title: 'Existing Note',
-					contentHtml: 'Content of existing note.',
+					content: 'Content of existing note.',
 					isPublic: false,
 					createdAt: new Date(2023, 0, 1, 10, 0, 0),
 					updatedAt: new Date(2023, 0, 1, 10, 0, 0),
@@ -102,7 +118,7 @@ describe('GET /api/notes/resolve-link', () => {
 					id: ulid(),
 					userId: testUserId,
 					title: 'Another Note',
-					contentHtml: 'Content of another note.',
+					content: 'Content of another note.',
 					isPublic: false,
 					createdAt: new Date(2023, 0, 2, 10, 0, 0),
 					updatedAt: new Date(2023, 0, 2, 10, 0, 0),
@@ -112,7 +128,7 @@ describe('GET /api/notes/resolve-link', () => {
 					id: ulid(),
 					userId: testUserId,
 					title: 'Test Note for Duplicates A',
-					contentHtml: 'Content A.',
+					content: 'Content A.',
 					isPublic: false,
 					createdAt: new Date(2023, 0, 3, 10, 0, 0),
 					updatedAt: new Date(2023, 0, 3, 10, 0, 0),
@@ -122,7 +138,7 @@ describe('GET /api/notes/resolve-link', () => {
 					id: ulid(),
 					userId: testUserId,
 					title: 'Test Note for Duplicates B',
-					contentHtml: 'Content B.',
+					content: 'Content B.',
 					isPublic: false,
 					createdAt: new Date(2023, 0, 4, 10, 0, 0),
 					updatedAt: new Date(2023, 0, 4, 10, 0, 0),
@@ -132,7 +148,7 @@ describe('GET /api/notes/resolve-link', () => {
 					id: ulid(),
 					userId: testUserId,
 					title: 'Test Note for Duplicates C',
-					contentHtml: 'Content C.',
+					content: 'Content C.',
 					isPublic: false,
 					createdAt: new Date(2023, 0, 5, 10, 0, 0),
 					updatedAt: new Date(2023, 0, 5, 10, 0, 0),
@@ -148,7 +164,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return 401 if unauthorized', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(null);
+		mockAuth.api.getSession.mockResolvedValueOnce(null);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=any',
@@ -162,7 +178,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return 400 if title query parameter is missing', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link',
@@ -176,7 +192,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return correct note for an existing title', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=Existing Note',
@@ -191,7 +207,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return 404 if note not found', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=NonExistent Note',
@@ -205,7 +221,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should return the latest updated note for duplicate titles', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 
 		const event = createMockRequestEvent(
 			'http://localhost/api/notes/resolve-link?title=Test Note for Duplicates',
@@ -219,7 +235,7 @@ describe('GET /api/notes/resolve-link', () => {
 	});
 
 	it('should handle Japanese titles correctly', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 
 		const japaneseNoteId = ulid();
 		const japaneseTitle = '日本語のテストノート';
@@ -231,7 +247,7 @@ describe('GET /api/notes/resolve-link', () => {
 				id: japaneseNoteId,
 				userId: testUserId,
 				title: japaneseTitle,
-				contentHtml: '日本語のコンテンツ',
+				content: '日本語のコンテンツ',
 				isPublic: false,
 				createdAt: new Date(),
 				updatedAt: new Date(),

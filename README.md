@@ -1,5 +1,3 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/72ee93dc-8b78-473a-a461-0b68bed0dca4/deploy-status)](https://app.netlify.com/projects/sazanami/deploys)
-
 # Sazanami
 
 Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした、おひとり様用のノートテイキングアプリです。Obsidianの複雑さ、Notionの動作の遅さ、Scrapboxの独自フォーマットといった課題を解決し、Markdownによるポータビリティと、素早いメモ書きの体験を提供することを目指しています。
@@ -28,7 +26,11 @@ Sazanamiは「Markdownで書けるScrapbox」を基本コンセプトとした�
 - **Database ORM**: [Drizzle ORM](https://orm.drizzle.team/)
 - **Database**: [@libsql/client](https://github.com/tursodatabase/libsql-client-ts) (local, with SQLite), [Turso](https://turso.tech/) (production)
 - **Markdown Editor**: [Tiptap](https://tiptap.dev/) (with Yjs for real-time collaboration)
-- **Testing**: [Vitest](https://vitest.dev/)
+- **Authentication**: [Better Auth](https://www.better-auth.com/)
+- **Email**: [Plunk](https://www.useplunk.com/) (HTTP API — SaaS / self-hosted 両対応)
+- **Storage**: S3互換ストレージ (`STORAGE_DRIVER=s3` がデフォルト。Cloudflare R2バインディングにも対応)
+- **Deploy**: [Cloudflare Workers](https://workers.cloudflare.com/) (adapter-cloudflare, wrangler)
+- **Testing**: [Vitest](https://vitest.dev/), [Playwright](https://playwright.dev/)
 
 ## クイックスタート
 
@@ -73,21 +75,25 @@ Hocuspocus を起動すると、複数ユーザーによるリアルタイム共
 ### セットアップ
 
 1.  **Hocuspocus サーバーをクローン**
+
     ```bash
     git clone <hocuspocus-repo-url> sazanami-hocuspocus
     cd sazanami-hocuspocus
     ```
 
 2.  **依存関係をインストールして起動**
+
     ```bash
     bun install
     bun run dev
     ```
+
     デフォルトでは `ws://localhost:1234` で起動します。
 
 3.  **Sazanami 側の環境変数（デフォルトのままなら不要）**
 
     `.env` に以下を追加：
+
     ```env
     PUBLIC_HOCUSPOCUS_URL=ws://localhost:1234
     ```
@@ -100,6 +106,14 @@ Hocuspocus を起動していない場合、TiptapEditor はローカルの Inde
 
 ```bash
 bun run test:unit
+```
+
+### インテグレーションテスト
+
+DB（in-memory SQLite）を使ったAPI・データ層のテスト。
+
+```bash
+bunx vitest tests/integration
 ```
 
 ### E2Eテスト (Playwright)
@@ -119,6 +133,7 @@ bun run test:e2e:debug
 ```
 
 **テスト対象機能**:
+
 - 認証（ログイン/登録）
 - ノート作成（タイムライン/Box）
 - ノート編集（テキスト入力、タスクリスト、フォーマット）
@@ -132,3 +147,28 @@ bun run test:e2e:debug
 ```bash
 bun run test
 ```
+
+## 本番デプロイ（Cloudflare Workers）
+
+```bash
+bun run build:cf
+wrangler deploy
+```
+
+必要なシークレット（`wrangler secret put <NAME>` で設定）:
+
+| シークレット | 説明 |
+|---|---|
+| `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | Turso DB接続 |
+| `BETTER_AUTH_SECRET` | 認証シークレット |
+| `PLUNK_API_KEY` / `PLUNK_FROM_EMAIL` | メール送信（Plunk。`PLUNK_API_URL` でセルフホスト先を指定可） |
+
+環境変数（`wrangler.jsonc` の `vars` で設定）:
+
+| 変数 | 説明 |
+|---|---|
+| `BETTER_AUTH_URL` | アプリの公開URL |
+| `EMAIL_DRIVER` | メールドライバー（`plunk` 等。未設定なら `auto`） |
+| `STORAGE_DRIVER` | ストレージドライバー（`s3` がデフォルト） |
+
+S3ストレージの設定は環境変数（`S3_REGION`, `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL`）で行います。Cloudflare R2 を使う場合は `STORAGE_DRIVER=r2` でバケットバインディングを利用できます。

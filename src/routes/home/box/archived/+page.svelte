@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import type { Note } from '$lib/types';
@@ -12,7 +11,7 @@
 	let filteredNotes: Note[] = [];
 	let sortKey: SortKey = 'updatedAt_desc';
 
-	$: allTags = (get(page).data.allTags || []) as string[];
+	$: allTags = ($page.data.allTags || []) as string[];
 
 	$: {
 		const notesStore = (get(page).data.notes || []) as Note[];

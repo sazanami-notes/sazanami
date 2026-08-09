@@ -50,7 +50,7 @@
 			});
 
 			if (response.ok) {
-				const newNote = await response.json();
+				const newNote = (await response.json()) as { id: string };
 				createNoteId = newNote.id;
 			} else {
 				console.error('Failed to create draft note', await response.text());

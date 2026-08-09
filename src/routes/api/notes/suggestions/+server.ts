@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes } from '$lib/server/db/schema';
-import { eq, and, like, ne, desc } from 'drizzle-orm';
+import { eq, and, like, ne, desc, type SQL } from 'drizzle-orm';
 import { createAuth } from '$lib/server/auth';
 const auth = createAuth();
 
@@ -11,39 +11,36 @@ const auth = createAuth();
  * Boxノート（タイトル付き）の候補を返す。WikiLink入力補完用。
  */
 export const GET: RequestHandler = async ({ url, request }) => {
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (!session) {
-        return json({ message: 'Unauthorized' }, { status: 401 });
-    }
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session) {
+		return json({ message: 'Unauthorized' }, { status: 401 });
+	}
 
-    const q = url.searchParams.get('q') || '';
-    const scope = url.searchParams.get('scope') || 'box';
-    const limit = 10;
+	const q = url.searchParams.get('q') || '';
+	const scope = url.searchParams.get('scope') || 'box';
+	const limit = 10;
 
-    try {
-        const conditions: any[] = [
-            eq(notes.userId, session.session.userId),
-            ne(notes.title, '')
-        ];
+	try {
+		const conditions: SQL[] = [eq(notes.userId, session.session.userId), ne(notes.title, '')];
 
-        if (scope === 'box') {
-            conditions.push(eq(notes.status, 'box'));
-        }
+		if (scope === 'box') {
+			conditions.push(eq(notes.status, 'box'));
+		}
 
-        if (q) {
-            conditions.push(like(notes.title, `%${q}%`));
-        }
+		if (q) {
+			conditions.push(like(notes.title, `%${q}%`));
+		}
 
-        const results = await db
-            .select({ id: notes.id, title: notes.title, slug: notes.slug, status: notes.status })
-            .from(notes)
-            .where(and(...conditions))
-            .orderBy(desc(notes.updatedAt))
-            .limit(limit);
+		const results = await db
+			.select({ id: notes.id, title: notes.title, slug: notes.slug, status: notes.status })
+			.from(notes)
+			.where(and(...conditions))
+			.orderBy(desc(notes.updatedAt))
+			.limit(limit);
 
-        return json(results);
-    } catch (error) {
-        console.error('Error fetching note suggestions:', error);
-        return json({ message: 'Internal Server Error' }, { status: 500 });
-    }
+		return json(results);
+	} catch (error) {
+		console.error('Error fetching note suggestions:', error);
+		return json({ message: 'Internal Server Error' }, { status: 500 });
+	}
 };

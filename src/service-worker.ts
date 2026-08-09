@@ -75,17 +75,15 @@ self.addEventListener('fetch', (event) => {
 					return response;
 				})
 				.catch(() => {
-					return caches
-						.match((event as FetchEvent).request)
-						.then((cachedResponse) => {
-							if (cachedResponse) {
-								return cachedResponse;
-							}
-							return new Response('API is offline', {
-								status: 503,
-								statusText: 'Service Unavailable'
-							});
+					return caches.match((event as FetchEvent).request).then((cachedResponse) => {
+						if (cachedResponse) {
+							return cachedResponse;
+						}
+						return new Response('API is offline', {
+							status: 503,
+							statusText: 'Service Unavailable'
 						});
+					});
 				})
 		);
 	} else {

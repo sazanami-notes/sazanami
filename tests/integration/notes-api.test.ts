@@ -3,12 +3,24 @@ import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { notes, user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import * as authModule from '$lib/server/auth';
 import { generateSlug } from '$lib/utils/slug';
-import type { RequestHandler, RequestEvent } from '@sveltejs/kit';
-import { POST as createNote, GET as getNotes } from '../../src/routes/api/notes/+server';
+import type { RequestEvent } from '@sveltejs/kit';
+import { POST as createNote } from '../../src/routes/api/notes/+server';
 import { PUT as updateNote } from '../../src/routes/api/notes/[id]/+server';
-import type { User, Session } from 'better-auth';
+
+// Mock the auth module: routes call createAuth() at module load time and use
+// auth.api.getSession({ headers }) to authenticate.
+const { mockAuth } = vi.hoisted(() => ({
+	mockAuth: {
+		api: {
+			getSession: vi.fn()
+		}
+	}
+}));
+
+vi.mock('$lib/server/auth', () => ({
+	createAuth: vi.fn(() => mockAuth)
+}));
 
 // モック用の認証セッション
 const mockSession = {
@@ -36,7 +48,7 @@ const createMockRequestHandlerParams = async (
 	url: string,
 	method: string,
 	session: typeof mockSession | null,
-	body?: any,
+	body?: unknown,
 	params?: Record<string, string>
 ): Promise<RequestEvent> => {
 	const request = new Request(url, {
@@ -61,9 +73,9 @@ const createMockRequestHandlerParams = async (
 		locals: {
 			user: session ? session.user : null,
 			session: session ? session.session : null,
-			auth: authModule.auth.api
+			auth: mockAuth.api
 		},
-		platform: { env: { DB: {} as any } }, // DB プロパティを追加
+		platform: { env: { DB: {} } }, // DB プロパティを追加
 		route: {
 			id: '/api/notes'
 		},
@@ -77,7 +89,7 @@ interface NoteResponse {
 	id: string;
 	userId: string;
 	title: string;
-	contentHtml: string;
+	content: string;
 	createdAt: string;
 	updatedAt: string;
 	isPublic: boolean;
@@ -113,19 +125,19 @@ describe('POST /api/notes', () => {
 	});
 
 	it('should return 401 if unauthorized', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(null);
+		mockAuth.api.getSession.mockResolvedValueOnce(null);
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes',
 			'POST',
 			null,
-			{ title: 'Test', contentHtml: 'Test' }
+			{ title: 'Test', content: 'Test' }
 		);
 		const response = await createNote(params);
 		expect(response.status).toBe(401);
 	});
 
 	it('should return 400 if invalid JSON format', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const request = new Request('http://localhost/api/notes', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -142,9 +154,9 @@ describe('POST /api/notes', () => {
 			locals: {
 				user: mockSession.user,
 				session: mockSession.session,
-				auth: authModule.auth.api
+				auth: mockAuth.api
 			},
-			platform: { env: { DB: {} as any } }, // DB プロパティを追加
+			platform: { env: { DB: {} } }, // DB プロパティを追加
 			route: { id: '/api/notes' },
 			setHeaders: vi.fn(),
 			isDataRequest: false,
@@ -157,13 +169,13 @@ describe('POST /api/notes', () => {
 	});
 
 	it('should create a note and save the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const noteTitle = 'My New Test Note';
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes',
 			'POST',
 			mockSession,
-			{ title: noteTitle, contentHtml: 'Some content' }
+			{ title: noteTitle, content: 'Some content' }
 		);
 		const response = await createNote(params);
 		expect(response.status).toBe(201);
@@ -182,13 +194,13 @@ describe('POST /api/notes', () => {
 	});
 
 	it('should create a note with japanese title and save the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const noteTitle = '日本語の新しいノート';
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes',
 			'POST',
 			mockSession,
-			{ title: noteTitle, contentHtml: 'Some content in Japanese' }
+			{ title: noteTitle, content: 'Some content in Japanese' }
 		);
 		const response = await createNote(params);
 		expect(response.status).toBe(201);
@@ -236,7 +248,7 @@ describe('PUT /api/notes/{id}', () => {
 			id: existingNoteId,
 			userId: testUserId,
 			title: initialTitle,
-			contentHtml: 'Original content',
+			content: 'Original content',
 			isPublic: false,
 			createdAt: new Date(),
 			updatedAt: new Date(),
@@ -250,7 +262,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should return 401 if unauthorized', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(null);
+		mockAuth.api.getSession.mockResolvedValueOnce(null);
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${existingNoteId}`,
 			'PUT',
@@ -263,7 +275,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should return 400 if note ID is missing in params', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const params = await createMockRequestHandlerParams(
 			'http://localhost/api/notes/',
 			'PUT',
@@ -277,7 +289,7 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should return 404 if note not found', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const nonExistentId = ulid();
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${nonExistentId}`,
@@ -293,13 +305,13 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should update a note and re-generate the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const updatedTitle = 'My Updated Test Note';
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${existingNoteId}`,
 			'PUT',
 			mockSession,
-			{ title: updatedTitle, contentHtml: 'Updated content' },
+			{ title: updatedTitle, content: 'Updated content' },
 			{ id: existingNoteId }
 		);
 		const response = await updateNote(params);
@@ -319,13 +331,13 @@ describe('PUT /api/notes/{id}', () => {
 	});
 
 	it('should update a note with japanese title and re-generate the correct slug', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValueOnce(mockSession as any);
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const updatedTitle = '日本語の更新されたノート';
 		const params = await createMockRequestHandlerParams(
 			`http://localhost/api/notes/${existingNoteId}`,
 			'PUT',
 			mockSession,
-			{ title: updatedTitle, contentHtml: 'Updated content in Japanese' },
+			{ title: updatedTitle, content: 'Updated content in Japanese' },
 			{ id: existingNoteId }
 		);
 		const response = await updateNote(params);

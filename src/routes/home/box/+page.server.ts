@@ -7,7 +7,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import { createAuth } from '$lib/server/auth';
 const auth = createAuth();
 
-export const load: PageServerLoad = async ({ request, params }) => {
+export const load: PageServerLoad = async ({ request }) => {
 	const sessionData = await auth.api.getSession({
 		headers: request.headers
 	});

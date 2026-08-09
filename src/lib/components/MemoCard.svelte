@@ -2,11 +2,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { Note } from '$lib/types';
-	import { Marked } from 'marked';
-	import { markedHighlight } from 'marked-highlight';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
 	import { sanitizeHtml, escapeHtml } from '$lib/utils/sanitize';
+	import { customMarked } from '$lib/utils/markdown-renderer';
 
 	export let note: Note;
 	export let linkToDetail = false; // Default to false for modal behavior
@@ -18,62 +17,12 @@
 		title: string;
 	};
 
-	const customMarked = new Marked(
-		markedHighlight({
-			langPrefix: 'hljs language-',
-			highlight(code, lang) {
-				const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-				return hljs.highlight(code, { language }).value;
-			}
-		})
-	);
-
-	const renderer = {
-		code(this: any, { text, lang }: { text: string; lang?: string }) {
-			const language = (lang || '').match(/\S*/)?.[0] || '';
-			const codeStr = text;
-			const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
-
-			return `
-<div class="code-block-wrapper" style="position: relative; margin: 1.5rem 0;">
-	<pre><code${langAttr}>${codeStr}</code></pre>
-</div>
-`;
-		},
-		listitem(this: any, token: any) {
-			const { text, task, checked, tokens } = token;
-			if (task) {
-				const checkbox = `<input type="checkbox" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
-				const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
-				const content = (text || '').replace(/^\[[ xX]\]\s*/, '');
-				return `<li data-type="taskItem" ${checkedAttr} style="display: flex; align-items: flex-start; margin-bottom: 0.25rem; padding-left: 0;"><label style="flex: 0 0 auto; margin-right: 0.5rem; user-select: none; display: flex; align-items: center; padding-top: 0; margin-top: 0.1rem;">${checkbox}</label><div style="flex: 1 1 auto;"><p style="margin: 0 !important;">${content}</p></div></li>\n`;
-			}
-			const content = tokens && tokens.length > 0 ? customMarked.parser(tokens) : text;
-			return `<li>${content}</li>\n`;
-		},
-		list(this: any, token: any) {
-			const items = token.items || [];
-			const bodyHtml = items.map((item: any) => this.listitem(item)).join('');
-			const isTaskList =
-				items.some((item: any) => item.task) || (token.raw || '').includes('data-type="taskItem"');
-
-			if (isTaskList) {
-				return `<ul data-type="taskList" class="contains-task-list" style="list-style: none; padding: 0; margin: 0; list-style-type: none !important; padding-left: 0 !important;">\n${bodyHtml}</ul>\n`;
-			}
-
-			const type = token.ordered ? 'ol' : 'ul';
-			const startAttr =
-				token.ordered && token.start !== 1 && token.start !== undefined
-					? ` start="${token.start}"`
-					: '';
-			return `<${type}${startAttr}>\n${bodyHtml}</${type}>\n`;
-		}
-	};
-
-	customMarked.use({ gfm: true, renderer });
-
 	function escapeMarkdownText(value: string) {
-		return value.replace(/\\/g, '\\\\').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+		return value
+			.replace(/\\/g, '\\\\')
+			.replace(/\]/g, '\\]')
+			.replace(/\(/g, '\\(')
+			.replace(/\)/g, '\\)');
 	}
 
 	function protectNoteEmbeds(content: string) {
@@ -111,7 +60,7 @@
 		? sanitizeHtml(contentWithEmbeds || '')
 		: sanitizeHtml(customMarked.parse(contentWithEmbeds || '', { breaks: true }) as string);
 
-	function enhanceProseContent(node: HTMLElement, _contentHtml: string) {
+	function enhanceProseContent(node: HTMLElement, _options?: unknown) {
 		const applyEnhancements = () => {
 			if (!node) return;
 			node.querySelectorAll('pre').forEach((pre) => {
@@ -195,7 +144,7 @@
 				fetch(`/api/notes/embed?title=${encodeURIComponent(title)}`)
 					.then((res) => {
 						if (!res.ok) throw new Error('Not found');
-						return res.json();
+						return res.json() as Promise<{ content?: string }>;
 					})
 					.then((data) => {
 						const parsed = customMarked.parse(data.content || '', { breaks: true }) as string;
@@ -235,34 +184,36 @@
 			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
 			use:enhanceProseContent={processedContent}
 		>
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html renderedContent}
 		</div>
 		<div class="flex flex-wrap gap-1">
-			{#each note.tags as tag}
+			{#each note.tags as tag (tag)}
 				<span class="badge badge-sm badge-ghost">{tag}</span>
 			{/each}
 		</div>
-	</div>
-{:else}
-	<div
+		</div>
+		{:else}
+		<div
 		class="card bg-base-200 rounded-box max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
 		onclick={handleClick}
 		role="button"
 		tabindex="0"
 		onkeydown={(e) => e.key === 'Enter' && handleClick()}
 		aria-label="メモを編集"
-	>
+		>
 		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
 		<div
 			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
 			use:enhanceProseContent={processedContent}
 		>
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html renderedContent}
 		</div>
 		<div class="flex flex-wrap gap-1">
-			{#each note.tags as tag}
+			{#each note.tags as tag (tag)}
 				<span class="badge badge-sm badge-ghost">{tag}</span>
 			{/each}
 		</div>
-	</div>
-{/if}
+		</div>
+		{/if}

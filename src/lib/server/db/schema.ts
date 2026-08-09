@@ -8,12 +8,7 @@ import {
 	account,
 	verification,
 	passkey,
-	twoFactor,
-	userRelations,
-	sessionRelations,
-	accountRelations,
-	passkeyRelations,
-	twoFactorRelations
+	twoFactor
 } from './auth-schema';
 // generateSlug のインポートは不要なので削除
 
@@ -150,10 +145,10 @@ export const themes = sqliteTable('themes', {
 	textColor: text('text_color'),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' })
 		.notNull()
-		.$defaultFn(() => Date.now()),
+		.$defaultFn(() => new Date()),
 	updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
 		.notNull()
-		.$defaultFn(() => Date.now())
+		.$defaultFn(() => new Date())
 });
 
 // USER SETTINGS テーブル (外観設定など)

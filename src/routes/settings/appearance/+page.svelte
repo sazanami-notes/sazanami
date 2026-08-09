@@ -87,7 +87,7 @@
 						</optgroup>
 						{#if data.userThemes.length > 0}
 							<optgroup label="マイテーマ">
-								{#each data.userThemes as theme}
+								{#each data.userThemes as theme (theme.id)}
 									<option value={theme.id}>{theme.name}</option>
 								{/each}
 							</optgroup>
@@ -111,7 +111,7 @@
 						</optgroup>
 						{#if data.userThemes.length > 0}
 							<optgroup label="マイテーマ">
-								{#each data.userThemes as theme}
+								{#each data.userThemes as theme (theme.id)}
 									<option value={theme.id}>{theme.name}</option>
 								{/each}
 							</optgroup>
@@ -132,7 +132,7 @@
 
 		{#if data.userThemes.length > 0}
 			<div class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{#each data.userThemes as theme}
+				{#each data.userThemes as theme (theme.id)}
 					<div class="card border-base-300 bg-base-100 border shadow-sm">
 						<div class="card-body p-4">
 							<h3 class="card-title text-base font-bold">{theme.name}</h3>

@@ -13,19 +13,16 @@ let _db: ReturnType<typeof drizzle<typeof schema>> | undefined;
  * may not be available. We use a Proxy to defer client creation until the
  * first actual DB access at request time.
  */
-export const db = new Proxy(
-	{} as ReturnType<typeof drizzle<typeof schema>>,
-	{
-		get(_, prop) {
-			if (building) return undefined;
-			if (!_db) {
-				const client = createClient({
-					url: env.TURSO_DATABASE_URL!,
-					authToken: env.TURSO_AUTH_TOKEN!
-				});
-				_db = drizzle(client, { schema });
-			}
-			return Reflect.get(_db, prop, _db);
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+	get(_, prop) {
+		if (building) return undefined;
+		if (!_db) {
+			const client = createClient({
+				url: env.TURSO_DATABASE_URL!,
+				authToken: env.TURSO_AUTH_TOKEN!
+			});
+			_db = drizzle(client, { schema });
 		}
+		return Reflect.get(_db, prop, _db);
 	}
-);
+});

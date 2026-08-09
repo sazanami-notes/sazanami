@@ -3,72 +3,16 @@
 	import { invalidateAll } from '$app/navigation';
 	import { formatDistanceToNow } from 'date-fns';
 	import { ja } from 'date-fns/locale';
-	import { marked, Marked } from 'marked';
-	import { markedHighlight } from 'marked-highlight';
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
 	import { sanitizeHtml } from '$lib/utils/sanitize';
+	import { customMarked } from '$lib/utils/markdown-renderer';
 
 	export let note: Note & { tags: string[] };
 	export let mode: 'timeline' | 'archive' | 'trash' = 'timeline';
 
 	const dispatch = createEventDispatcher<{ edit: Note; delete: Note }>();
-
-	// Create a local instance of Marked to avoid global state issues and ensure v16 compatibility
-	const customMarked = new Marked(
-		markedHighlight({
-			langPrefix: 'hljs language-',
-			highlight(code, lang) {
-				const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-				return hljs.highlight(code, { language }).value;
-			}
-		})
-	);
-
-	const renderer = {
-		code(this: any, { text, lang }: { text: string; lang?: string }) {
-			const language = (lang || '').match(/\S*/)?.[0] || '';
-			const codeStr = text;
-			const langAttr = language ? ` class="hljs language-${language}"` : ' class="hljs"';
-
-			return `
-<div class="code-block-wrapper" style="position: relative; margin: 1.5rem 0;">
-	<pre><code${langAttr}>${codeStr}</code></pre>
-</div>
-`;
-		},
-		listitem(this: any, token: any) {
-			const { text, task, checked, tokens } = token;
-			if (task) {
-				const checkbox = `<input type="checkbox" ${checked ? 'checked="" ' : ''}style="cursor: pointer; width: 1em; height: 1em; accent-color: var(--color-primary); margin: 0;">`;
-				const checkedAttr = checked ? 'data-checked="true"' : 'data-checked="false"';
-				const content = (text || '').replace(/^\[[ xX]\]\s*/, '');
-				return `<li data-type="taskItem" ${checkedAttr} style="display: flex; align-items: flex-start; margin-bottom: 0.25rem; padding-left: 0;"><label style="flex: 0 0 auto; margin-right: 0.5rem; user-select: none; display: flex; align-items: center; padding-top: 0; margin-top: 0.1rem;">${checkbox}</label><div style="flex: 1 1 auto;"><p style="margin: 0 !important;">${content}</p></div></li>\n`;
-			}
-			const content = tokens && tokens.length > 0 ? customMarked.parser(tokens) : text;
-			return `<li>${content}</li>\n`;
-		},
-		list(this: any, token: any) {
-			const items = token.items || [];
-			const bodyHtml = items.map((item: any) => this.listitem(item)).join('');
-			const isTaskList =
-				items.some((item: any) => item.task) || (token.raw || '').includes('data-type="taskItem"');
-
-			if (isTaskList) {
-				return `<ul data-type="taskList" class="contains-task-list" style="list-style: none; padding: 0; margin: 0; list-style-type: none !important; padding-left: 0 !important;">\n${bodyHtml}</ul>\n`;
-			}
-
-			const type = token.ordered ? 'ol' : 'ul';
-			const startAttr =
-				token.ordered && token.start !== 1 && token.start !== undefined
-					? ` start="${token.start}"`
-					: '';
-			return `<${type}${startAttr}>\n${bodyHtml}</${type}>\n`;
-		}
-	};
-
-	customMarked.use({ gfm: true, renderer });
 
 	// Render wiki links before markdown parsing
 	$: processedContent = renderWikiLinks(note.content, note.resolvedLinks);
@@ -84,7 +28,7 @@
 	}
 
 	// Action to manually apply enhancements (highlighting, copy buttons, interactive checkboxes)
-	function enhanceProseContent(node: HTMLElement, _contentHtml: string) {
+	function enhanceProseContent(node: HTMLElement, _options?: unknown) {
 		const applyEnhancements = () => {
 			if (!node) return;
 			node.querySelectorAll('pre').forEach((pre) => {
@@ -194,7 +138,7 @@
 			// Markdown approach
 			let matchCount = 0;
 			// Match a markdown list item with checkbox like "- [ ] " or "* [x] "
-			newContent = newContent.replace(/^(\s*[-*+]\s+)\[([ xX])\]/gm, (match, prefix, state) => {
+			newContent = newContent.replace(/^(\s*[-*+]\s+)\[([ xX])\]/gm, (match, prefix) => {
 				if (matchCount === index) {
 					matchCount++;
 					return `${prefix}[${isChecked ? 'x' : ' '}]`;
@@ -405,8 +349,10 @@
 
 		<div class="prose text-base-content max-w-none" use:enhanceProseContent={processedContent}>
 			{#if isHtmlContent}
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html sanitizeHtml(processedContent || '')}
 			{:else}
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html sanitizeHtml(customMarked.parse(processedContent || '', { breaks: true }) as string)}
 			{/if}
 		</div>

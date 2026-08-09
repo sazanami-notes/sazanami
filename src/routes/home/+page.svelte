@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import TimelinePost from '$lib/components/TimelinePost.svelte';
 	import type { Note } from '$lib/types';
 	import NoteModal from '$lib/components/NoteModal.svelte';
@@ -38,7 +37,7 @@
 			{#each notes as note (note.id)}
 				<TimelinePost {note} on:edit={handleEdit} />
 			{:else}
-				<p class="text-center text-base-content text-opacity-60">
+				<p class="text-base-content text-opacity-60 text-center">
 					タイムラインにはまだ何もありません。
 				</p>
 			{/each}

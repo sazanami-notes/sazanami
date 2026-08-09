@@ -23,6 +23,7 @@ export default defineConfig({
 	},
 	test: {
 		include: [...configDefaults.include, 'tests/**/*.{test,spec}.{js,ts}'], // テストファイルのパターン
+		exclude: [...configDefaults.exclude, 'e2e/**'], // e2eはPlaywright側で実行するため除外
 		alias: {},
 		setupFiles: ['./tests/setup-test-env.ts'] // テスト環境のセットアップファイルを指定
 	}

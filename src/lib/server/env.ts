@@ -31,15 +31,16 @@ export function getAuthEnv(platformEnv?: Record<string, string>): {
 } {
 	if (platformEnv) {
 		return {
-			BETTER_AUTH_URL: platformEnv.BETTER_AUTH_URL || privateEnv.BETTER_AUTH_URL || 'http://localhost:5173',
-			BETTER_AUTH_SECRET: platformEnv.BETTER_AUTH_SECRET || privateEnv.BETTER_AUTH_SECRET,
+			BETTER_AUTH_URL:
+				platformEnv.BETTER_AUTH_URL || privateEnv.BETTER_AUTH_URL || 'http://localhost:5173',
+			BETTER_AUTH_SECRET: platformEnv.BETTER_AUTH_SECRET || privateEnv.BETTER_AUTH_SECRET!,
 			GOOGLE_CLIENT_ID: platformEnv.GOOGLE_CLIENT_ID || privateEnv.GOOGLE_CLIENT_ID,
 			GOOGLE_CLIENT_SECRET: platformEnv.GOOGLE_CLIENT_SECRET || privateEnv.GOOGLE_CLIENT_SECRET
 		};
 	}
 	return {
 		BETTER_AUTH_URL: privateEnv.BETTER_AUTH_URL || 'http://localhost:5173',
-		BETTER_AUTH_SECRET: privateEnv.BETTER_AUTH_SECRET,
+		BETTER_AUTH_SECRET: privateEnv.BETTER_AUTH_SECRET!,
 		GOOGLE_CLIENT_ID: privateEnv.GOOGLE_CLIENT_ID,
 		GOOGLE_CLIENT_SECRET: privateEnv.GOOGLE_CLIENT_SECRET
 	};

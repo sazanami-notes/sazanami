@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// 現在のユーザーが自分自身のページを見ているか判定
-	const isOwner = locals.session?.user?.id === foundUser.id;
+	const isOwner = locals.user?.id === foundUser.id;
 
 	// ユーザーの公開ノート（本人の場合はピン留めなども表示対象にするなど調整可能）
 	// ここではシンプルに「公開されているノート」または「自分が所有するノート（本人の場合）」を取得

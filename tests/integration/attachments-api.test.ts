@@ -3,12 +3,25 @@ import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
 import { attachments, user as userSchema } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import * as authModule from '$lib/server/auth';
 import type { RequestEvent } from '@sveltejs/kit';
 import type { User, Session } from 'better-auth';
 import { POST } from '../../src/routes/api/attachments/+server';
 import fs from 'fs/promises';
 import path from 'path';
+
+// Mock the auth module: routes call createAuth() at module load time and use
+// auth.api.getSession({ headers }) to authenticate.
+const { mockAuth } = vi.hoisted(() => ({
+	mockAuth: {
+		api: {
+			getSession: vi.fn()
+		}
+	}
+}));
+
+vi.mock('$lib/server/auth', () => ({
+	createAuth: vi.fn(() => mockAuth)
+}));
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'static/uploads');
 
@@ -65,10 +78,10 @@ afterAll(async () => {
 
 describe('POST /api/attachments', () => {
 	it('should upload a file, save metadata, and return the URL', async () => {
-		// 1. Create a mock file
+		// 1. Create a mock file (image MIME type is required by the API)
 		const fileContent = 'This is a test file.';
-		const fileName = 'test-file.txt';
-		const file = new File([fileContent], fileName, { type: 'text/plain' });
+		const fileName = 'test-file.png';
+		const file = new File([fileContent], fileName, { type: 'image/png' });
 
 		// 2. Create FormData
 		const formData = new FormData();
@@ -85,16 +98,16 @@ describe('POST /api/attachments', () => {
 			locals: { user: mockSession.user, session: mockSession.session }
 		} as unknown as RequestEvent;
 
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(mockSession);
+		mockAuth.api.getSession.mockResolvedValue(mockSession);
 
 		// 4. Call the endpoint handler
-		const response = await POST(event);
-		const body = await response.json();
+		const response = await POST(event as Parameters<typeof POST>[0]);
+		const body = (await response.json()) as { success: boolean; url: string };
 
 		// 5. Assert response
 		expect(response.status).toBe(201);
 		expect(body.success).toBe(true);
-		expect(body.url).toMatch(/\/uploads\/[0-9A-HJKMNP-TV-Z]{26}\.txt/);
+		expect(body.url).toMatch(/\/uploads\/[0-9A-HJKMNP-TV-Z]{26}\.png/);
 
 		// 6. Verify database record
 		const dbRecord = await db.query.attachments.findFirst({
@@ -103,7 +116,7 @@ describe('POST /api/attachments', () => {
 
 		expect(dbRecord).toBeDefined();
 		expect(dbRecord?.fileName).toBe(fileName);
-		expect(dbRecord?.mimeType).toBe('text/plain');
+		expect(dbRecord?.mimeType).toBe('image/png');
 		expect(dbRecord?.fileSize).toBe(fileContent.length);
 		expect(dbRecord?.userId).toBe(testUser.id);
 
@@ -117,12 +130,12 @@ describe('POST /api/attachments', () => {
 	});
 
 	it('should return 401 if user is not authenticated', async () => {
-		vi.spyOn(authModule.auth.api, 'getSession').mockResolvedValue(null);
+		mockAuth.api.getSession.mockResolvedValue(null);
 
 		const request = new Request('http://localhost/api/attachments', { method: 'POST' });
 		const event = { request } as unknown as RequestEvent;
 
-		const response = await POST(event);
+		const response = await POST(event as Parameters<typeof POST>[0]);
 		expect(response.status).toBe(401);
 	});
 });

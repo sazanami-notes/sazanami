@@ -10,7 +10,7 @@ import { getStorageDriver } from '$lib/server/storage';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const identifier = params.username;
-	const sessionUser = locals.session?.user;
+	const sessionUser = locals.user;
 
 	if (!sessionUser) {
 		throw redirect(302, '/login');
@@ -46,7 +46,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		const sessionUser = event.locals.session?.user;
+		const sessionUser = event.locals.user;
 		if (!sessionUser) {
 			throw error(401, 'Unauthorized');
 		}
@@ -102,7 +102,10 @@ export const actions: Actions = {
 
 			// better-authのUpdateUser APIを利用してユーザー情報を更新
 			// authのcontextを構築して updateUser を呼び出す
-			const updateData: any = { name, username };
+			const updateData: { name: string; username: string | null; image?: string } = {
+				name,
+				username
+			};
 			if (imageUrl) {
 				updateData.image = imageUrl;
 			}
@@ -111,12 +114,12 @@ export const actions: Actions = {
 				headers: event.request.headers,
 				body: updateData
 			});
-		} catch (err: any) {
+		} catch (err) {
 			console.error('Failed to update profile:', err);
 			// unique constraint error for username
 			if (
-				err.message?.includes('UNIQUE constraint failed') ||
-				err.message?.includes('already exists')
+				(err as Error).message?.includes('UNIQUE constraint failed') ||
+				(err as Error).message?.includes('already exists')
 			) {
 				return fail(400, { name, username, bio, error: 'このユーザー名は既に使用されています' });
 			}

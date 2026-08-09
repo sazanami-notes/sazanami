@@ -80,7 +80,12 @@
 				body: formData
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as {
+				importedCount: number;
+				skippedCount?: number;
+				errors?: string[];
+				message?: string;
+			};
 
 			if (response.ok) {
 				result = {
@@ -128,11 +133,11 @@
 	</div>
 
 	<!-- インポート手順 -->
-	<div class="collapse collapse-arrow bg-base-200 rounded-box">
+	<div class="collapse-arrow bg-base-200 rounded-box collapse">
 		<input type="checkbox" />
 		<div class="collapse-title font-medium">Obsidianからのエクスポート手順</div>
 		<div class="collapse-content space-y-1 text-sm">
-			<ol class="list-decimal list-inside space-y-1">
+			<ol class="list-inside list-decimal space-y-1">
 				<li>ObsidianのVaultフォルダを開く</li>
 				<li>フォルダ全体（または必要なフォルダ）を選択してZIPに圧縮</li>
 				<li>できあがったZIPファイルをここにドロップするかファイル選択してインポート</li>
@@ -190,7 +195,7 @@
 				</button>
 			</div>
 			<ul class="bg-base-200 rounded-box divide-base-300 max-h-48 divide-y overflow-y-auto">
-				{#each selectedFiles as file, i}
+				{#each selectedFiles as file, i (file.name)}
 					<li class="flex items-center gap-2 px-3 py-2 text-sm">
 						<span>{getFileIcon(file)}</span>
 						<span class="min-w-0 flex-1 truncate">{file.name}</span>
@@ -251,7 +256,7 @@
 					<div class="w-full">
 						<p class="text-sm font-medium">一部のファイルのインポートに失敗しました:</p>
 						<ul class="mt-1 list-inside list-disc space-y-0.5 text-xs">
-							{#each result.errors as err}
+							{#each result.errors as err (err)}
 								<li>{err}</li>
 							{/each}
 						</ul>

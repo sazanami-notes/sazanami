@@ -19,7 +19,7 @@ async function seedTestUser() {
 				password: TEST_PASSWORD,
 				name: TEST_NAME
 			}
-		} as any);
+		});
 
 		if (error) {
 			console.error('Failed to create test user:', error);

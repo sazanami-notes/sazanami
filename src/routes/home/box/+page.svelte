@@ -14,7 +14,7 @@
 	let sortKey: SortKey = 'updatedAt_desc';
 	let isCreating = false;
 
-	$: allTags = (get(page).data.allTags || []) as string[];
+	$: allTags = ($page.data.allTags || []) as string[];
 
 	$: {
 		const notesStore = (get(page).data.notes || []) as Note[];
@@ -46,12 +46,12 @@
 			});
 
 			if (!response.ok) {
-				const error = await response.json();
+				const error = (await response.json()) as { message?: string };
 				console.error('Failed to create note:', error);
 				throw new Error(error.message || 'Failed to create note');
 			}
 
-			const newNote = await response.json();
+			const newNote = (await response.json()) as { id: string };
 			await goto(`/home/note/${newNote.id}`);
 		} catch (error) {
 			console.error('Error creating new note:', error);
@@ -74,12 +74,8 @@
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-3xl font-bold">ノート一覧</h1>
 		<div class="flex gap-2">
-			<a href="/home/box/archived" class="btn btn-ghost btn-sm">
-				📁 アーカイブ
-			</a>
-			<a href="/home/box/deleted" class="btn btn-ghost btn-sm">
-				🗑️ 削除済み
-			</a>
+			<a href="/home/box/archived" class="btn btn-ghost btn-sm"> 📁 アーカイブ </a>
+			<a href="/home/box/deleted" class="btn btn-ghost btn-sm"> 🗑️ 削除済み </a>
 			<button
 				onclick={createNewNote}
 				disabled={isCreating}

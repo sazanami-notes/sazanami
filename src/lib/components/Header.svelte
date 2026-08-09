@@ -178,7 +178,7 @@
 
 			{#if showSuggestions}
 				<div
-					class="bg-base-100 border-base-300 absolute top-12 z-40 w-full rounded-box border shadow-xl"
+					class="bg-base-100 border-base-300 rounded-box absolute top-12 z-40 w-full border shadow-xl"
 				>
 					{#if isLoadingSuggestions}
 						<div class="text-base-content/70 px-4 py-3 text-sm">検索中...</div>
@@ -210,7 +210,7 @@
 	<div class="flex-none">
 		{#if user}
 			<a
-				href="/{user.username || user.id}"
+				href="/{(user as { username?: string | null }).username || user.id}"
 				class="avatar block transition-transform hover:scale-105 active:scale-95"
 			>
 				<div class="ring-base-300 w-9 rounded-full ring-1">

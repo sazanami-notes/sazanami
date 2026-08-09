@@ -8,12 +8,12 @@ describe('MemoCard', () => {
 		const note = {
 			id: 'test-id',
 			title: 'Test Note',
-			contentHtml: 'Test content',
+			content: 'Test content',
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			isPublic: false,
 			userId: 'test-user-id'
-		} as Note;
+		} as unknown as Note;
 
 		const expectedUrl = `/test-user/${generateSlug(note.title)}`;
 		expect(getNoteDetailUrl(note, 'test-user')).toBe(expectedUrl);
@@ -23,12 +23,12 @@ describe('MemoCard', () => {
 		const note = {
 			id: 'test-id',
 			title: 'テストノート',
-			contentHtml: 'テストコンテンツ',
+			content: 'テストコンテンツ',
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			isPublic: false,
 			userId: 'test-user-id'
-		} as Note;
+		} as unknown as Note;
 
 		const expectedUrl = `/test-user/${generateSlug(note.title)}`;
 		expect(getNoteDetailUrl(note, 'test-user')).toBe(expectedUrl);
@@ -38,12 +38,12 @@ describe('MemoCard', () => {
 		const note = {
 			id: 'test-id',
 			title: '',
-			contentHtml: 'Test content',
+			content: 'Test content',
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			isPublic: false,
 			userId: 'test-user-id'
-		} as Note;
+		} as unknown as Note;
 
 		const expectedUrl = `/test-user/${generateSlug(note.title)}`;
 		expect(getNoteDetailUrl(note, 'test-user')).toBe(expectedUrl);

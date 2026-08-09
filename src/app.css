@@ -2,11 +2,11 @@
 @import 'highlight.js/styles/github-dark.css';
 @plugin '@tailwindcss/typography';
 
-@plugin "daisyui" {
+@plugin 'daisyui' {
 	themes: false;
 }
 
-@plugin "daisyui/theme" {
+@plugin 'daisyui/theme' {
 	name: 'sazanami-days';
 	default: true;
 	prefersdark: false;
@@ -41,7 +41,7 @@
 	--noise: 0;
 }
 
-@plugin "daisyui/theme" {
+@plugin 'daisyui/theme' {
 	name: 'sazanami-night';
 	default: false;
 	prefersdark: false;
@@ -92,8 +92,8 @@ ul[data-type='taskList'] li,
 	padding-left: 0;
 }
 
-ul[data-type='taskList'] li>label,
-.prose ul[data-type='taskList'] li>label {
+ul[data-type='taskList'] li > label,
+.prose ul[data-type='taskList'] li > label {
 	flex: 0 0 auto;
 	margin-right: 0.5rem;
 	user-select: none;
@@ -103,8 +103,8 @@ ul[data-type='taskList'] li>label,
 	margin-top: 0.1rem;
 }
 
-ul[data-type='taskList'] li>div,
-.prose ul[data-type='taskList'] li>div {
+ul[data-type='taskList'] li > div,
+.prose ul[data-type='taskList'] li > div {
 	flex: 1 1 auto;
 }
 
@@ -120,15 +120,15 @@ ul[data-type='taskList'] input[type='checkbox'],
 	/* reset typography margins */
 }
 
-ul[data-type='taskList'] li[data-checked='true']>div>p,
-.prose ul[data-type='taskList'] li[data-checked='true']>div>p {
+ul[data-type='taskList'] li[data-checked='true'] > div > p,
+.prose ul[data-type='taskList'] li[data-checked='true'] > div > p {
 	text-decoration: line-through;
 	opacity: 0.6;
 }
 
 /* Reset margins inside task list items to prevent vertical misalignment */
-.prose ul[data-type='taskList'] li>div>p,
-ul[data-type='taskList'] li>div>p {
+.prose ul[data-type='taskList'] li > div > p,
+ul[data-type='taskList'] li > div > p {
 	margin: 0 !important;
 }
 
@@ -138,8 +138,8 @@ ul[data-type='taskList'] li>div>p {
 	padding-left: 0 !important;
 }
 
-.prose ul[data-type='taskList']>li::before,
-.prose ul[data-type='taskList']>li::marker {
+.prose ul[data-type='taskList'] > li::before,
+.prose ul[data-type='taskList'] > li::marker {
 	content: none !important;
 	display: none !important;
 }

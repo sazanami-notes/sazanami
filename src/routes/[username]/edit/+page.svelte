@@ -6,7 +6,7 @@
 	export let form: ActionData;
 
 	let submitting = false;
-	let imagePreview = data.profile.user?.image || null;
+	let imagePreview = data.profile.image || null;
 
 	function handleImageSelect(event: Event) {
 		const target = event.target as HTMLInputElement;
