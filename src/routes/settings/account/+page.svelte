@@ -9,7 +9,7 @@
 
 	// User Name Update Logic
 	let isEditingName = $state(false);
-	let newName = $state(data.user.name);
+	let newName = $state((() => data.user.name)());
 	let isUpdatingName = $state(false);
 
 	async function updateName() {

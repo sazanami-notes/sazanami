@@ -150,7 +150,7 @@
 
 	<!-- ドロップゾーン -->
 	<div
-		role="region"
+		role="button"
 		aria-label="ファイルドロップエリア"
 		class="border-base-content/20 rounded-box flex min-h-40 cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed p-8 transition-colors {isDragging
 			? 'border-primary bg-primary/10'
