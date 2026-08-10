@@ -81,8 +81,15 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			title,
 			content,
 			contentBin,
-			tags: tagNames
-		} = body as { title?: string; content?: string; contentBin?: string; tags?: string[] };
+			tags: tagNames,
+			context
+		} = body as {
+			title?: string;
+			content?: string;
+			contentBin?: string;
+			tags?: string[];
+			context?: string | null;
+		};
 
 		// ノートが存在するか確認
 		const existingNote = await db
@@ -99,6 +106,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const titleChanged = title !== undefined && title !== existingNote[0].title;
 		const contentChanged = content !== undefined && content !== existingNote[0].content;
 		const contentBinChanged = contentBin !== undefined;
+		const contextChanged = context !== undefined && context !== existingNote[0].context;
 		const tagsProvided = Array.isArray(tagNames);
 
 		const updatedFields: Record<string, unknown> = {};
@@ -117,6 +125,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedFields.content = content;
 			// metadata.changes.content = true;
 		}
+		if (contextChanged) {
+			updatedFields.context = context;
+			metadata.changes.context = { before: existingNote[0].context, after: context };
+		}
 		if (contentBinChanged) {
 			try {
 				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
@@ -130,7 +142,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			// metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		if (titleChanged || contentChanged || contentBinChanged) {
+		if (titleChanged || contentChanged || contentBinChanged || contextChanged) {
 			updatedFields.updatedAt = now;
 		}
 
@@ -156,7 +168,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
-		if (!titleChanged && !contentChanged && !contentBinChanged && !tagsProvided) {
+		if (!titleChanged && !contentChanged && !contentBinChanged && !tagsProvided && !contextChanged) {
 			const noteTagsList = await db
 				.select({ name: tags.name })
 				.from(noteTags)

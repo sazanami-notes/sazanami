@@ -32,7 +32,15 @@ export const notes = sqliteTable(
 		isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
 		isPinned: integer('is_pinned', { mode: 'boolean' }).notNull().default(false),
 		status: text('status').notNull().default('inbox'), // inbox, box, archived, trash
-		resolvedLinks: text('resolved_links') // WikiLink解決用のタイトル->IDマップ (JSON)
+		resolvedLinks: text('resolved_links'), // WikiLink解決用のタイトル->IDマップ (JSON)
+		// Layer 1: 人間が後から追記するコンテキスト（生メモ content とは分離）
+		context: text('context'),
+		// Layer 2: AI生成の提案（JSON: { summary?, tags?, related? }）※BYOKで生成
+		aiSuggestions: text('ai_suggestions'),
+		// 出会い（Encounter）機能用: FSRS式の重み付きランダム再提示
+		lastEncounteredAt: integer('last_encountered_at', { mode: 'timestamp_ms' }), // 最後に出会いとして表示した日時
+		encounterCount: integer('encounter_count').notNull().default(0), // 出会い回数
+		encounterBoost: integer('encounter_boost').notNull().default(0) // フィードバック（また会いたい:+1 / スルー:-1）
 	},
 	(table) => [
 		// Boxノートのタイトルはユーザー内で一意にする（WikiLink解決のため）

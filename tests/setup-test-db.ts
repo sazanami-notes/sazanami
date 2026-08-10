@@ -96,6 +96,9 @@ export async function createTables() {
 			secret TEXT NOT NULL,
 			backup_codes TEXT NOT NULL,
 			user_id TEXT NOT NULL,
+			verified INTEGER DEFAULT 1 NOT NULL,
+			failed_verification_count INTEGER DEFAULT 0 NOT NULL,
+			locked_until INTEGER,
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);
 	`);
@@ -115,6 +118,11 @@ export async function createTables() {
       is_pinned INTEGER DEFAULT 0 NOT NULL,
       status TEXT DEFAULT 'inbox' NOT NULL,
       resolved_links TEXT,
+      last_encountered_at INTEGER,
+      encounter_count INTEGER DEFAULT 0 NOT NULL,
+      encounter_boost INTEGER DEFAULT 0 NOT NULL,
+      context TEXT,
+      ai_suggestions TEXT,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     );
   `);

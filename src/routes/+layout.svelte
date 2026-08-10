@@ -25,7 +25,7 @@
 	let createNoteId: string | null = $state(null);
 
 	// モード切り替えを即時反映するためのローカルステート
-	let currentThemeMode = $state(themeMode);
+	let currentThemeMode = $state((() => themeMode)());
 
 	$effect(() => {
 		// サーバーから渡された値が変わったら同期する（他タブや設定画面での変更用）

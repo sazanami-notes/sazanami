@@ -102,7 +102,6 @@
 						required
 						disabled={isLoading}
 						maxlength={mode === 'totp' ? 6 : undefined}
-						autofocus
 						autocomplete="one-time-code"
 					/>
 				</div>

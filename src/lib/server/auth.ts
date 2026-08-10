@@ -62,7 +62,6 @@ export function createAuth(platformEnv?: Record<string, string>) {
 			path: '/'
 		},
 		plugins: [
-			sveltekitCookies(getRequestEvent),
 			passkey(),
 			twoFactor({
 				issuer: 'Sazanami'
@@ -76,7 +75,9 @@ export function createAuth(platformEnv?: Record<string, string>) {
 					}
 				}
 			}),
-			username()
+			username(),
+			// better-auth 1.6+ の警告対応: cookie統合プラグインは必ず最後に置く
+			sveltekitCookies(getRequestEvent)
 		],
 		database: drizzleAdapter(db, {
 			provider: 'sqlite',

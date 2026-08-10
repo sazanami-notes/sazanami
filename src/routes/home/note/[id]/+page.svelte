@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
+	import ContextSection from '$lib/components/ContextSection.svelte';
 	import { onDestroy } from 'svelte';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
 	import { format } from 'date-fns';
@@ -341,6 +342,9 @@
 	</div>
 
 	<hr class="border-base-300 my-4 border-t-2 border-dashed" />
+
+	<!-- Layer 1: コンテキスト追記（生メモと分離） -->
+	<ContextSection noteId={data.note.id} initialContext={data.note.context ?? null} />
 
 	<div class="flex items-center justify-end space-x-4">
 		{#if isSaving}

@@ -168,6 +168,45 @@ describe('POST /api/notes', () => {
 		expect(body.message).toBe('Invalid JSON format');
 	});
 
+	it('should return 400 if the status is box and title is missing', async () => {
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes',
+			'POST',
+			mockSession,
+			{ content: 'Content without title', status: 'box' }
+		);
+		const response = await createNote(params);
+		expect(response.status).toBe(400);
+		const body: { message: string } = await response.json();
+		expect(body.message).toBe('Boxノートにはタイトルが必要です');
+	});
+
+	it('should create a note with an empty title when only content is provided', async () => {
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes',
+			'POST',
+			mockSession,
+			{ content: 'Content only note' }
+		);
+		const response = await createNote(params);
+		expect(response.status).toBe(201);
+		const newNote: NoteResponse = await response.json();
+		expect(newNote.title).toBe('');
+		expect(newNote.content).toBe('Content only note');
+		expect(newNote.slug).toBe(newNote.id);
+
+		const fetchedNote = await db
+			.select()
+			.from(notes)
+			.where(eq(notes.id, newNote.id))
+			.limit(1)
+			.get();
+		expect(fetchedNote?.title).toBe('');
+		expect(fetchedNote?.slug).toBe(newNote.id);
+	});
+
 	it('should create a note and save the correct slug', async () => {
 		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
 		const noteTitle = 'My New Test Note';

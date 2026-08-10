@@ -305,6 +305,65 @@ describe('GET /api/notes (search + pagination)', () => {
 		expect(page2Body.pagination.total).toBe(4);
 		expect(page2Body.pagination.totalPages).toBe(2);
 	});
+
+	it('should set totalPages equal to total when limit is 1', async () => {
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes?limit=1&page=1',
+			'GET',
+			mockSession
+		);
+		const response = await searchNotes(params as Parameters<typeof searchNotes>[0]);
+		expect(response.status).toBe(200);
+		const body: NotesListResponse = await response.json();
+		expect(body.notes).toHaveLength(1);
+		expect(body.pagination.limit).toBe(1);
+		expect(body.pagination.total).toBe(4);
+		expect(body.pagination.totalPages).toBe(4);
+		expect(body.pagination.totalPages).toBe(body.pagination.total);
+	});
+});
+
+describe('GET /api/notes (empty state)', () => {
+	let testUserId: string;
+
+	beforeAll(async () => {
+		testUserId = ulid();
+		mockSession.user.id = testUserId;
+		mockSession.session.userId = testUserId;
+
+		await db
+			.insert(user)
+			.values({
+				id: testUserId,
+				email: 'search-links-empty@example.com',
+				name: 'Test User',
+				emailVerified: false,
+				twoFactorEnabled: false,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			})
+			.onConflictDoNothing();
+	});
+
+	afterAll(async () => {
+		await db.delete(user).where(eq(user.id, testUserId));
+	});
+
+	it('should return an empty list and zero pagination when the user has no notes', async () => {
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes',
+			'GET',
+			mockSession
+		);
+		const response = await searchNotes(params as Parameters<typeof searchNotes>[0]);
+		expect(response.status).toBe(200);
+		const body: NotesListResponse = await response.json();
+		expect(body.notes).toEqual([]);
+		expect(body.pagination.total).toBe(0);
+		expect(body.pagination.totalPages).toBe(0);
+	});
 });
 
 describe('GET /api/notes/[id]/links', () => {
@@ -530,6 +589,39 @@ describe('GET /api/notes/suggestions', () => {
 		const body: SuggestionResponse[] = await response.json();
 		// Suggest Gamma は inbox のため、box スコープでは候補に出ない
 		expect(body).toEqual([]);
+	});
+
+	it('should return notes of all statuses when scope=all and a query is given', async () => {
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes/suggestions?q=Gamma&scope=all',
+			'GET',
+			mockSession
+		);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
+		expect(response.status).toBe(200);
+		const body: SuggestionResponse[] = await response.json();
+		expect(body).toHaveLength(1);
+		expect(body[0].id).toBe(noteIds['Suggest Gamma']);
+		expect(body[0].title).toBe('Suggest Gamma');
+		expect(body[0].status).toBe('inbox');
+	});
+
+	it('should return notes of all statuses when scope=all and no query is given', async () => {
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			'http://localhost/api/notes/suggestions?scope=all',
+			'GET',
+			mockSession
+		);
+		const response = await getSuggestions(params as Parameters<typeof getSuggestions>[0]);
+		expect(response.status).toBe(200);
+		const body: SuggestionResponse[] = await response.json();
+		expect(body).toHaveLength(3);
+		const titles = body.map((s) => s.title);
+		expect(titles).toContain('Suggest Alpha');
+		expect(titles).toContain('Suggest Beta');
+		expect(titles).toContain('Suggest Gamma');
 	});
 
 	it('should return an empty array when the query matches nothing', async () => {

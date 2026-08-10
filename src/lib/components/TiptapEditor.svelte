@@ -54,7 +54,7 @@
 	// 画像アップロード関連
 	let isUploading = $state(false);
 	let uploadProgress = $state(0);
-	let fileInputEl: HTMLInputElement;
+	let fileInputEl = $state<HTMLInputElement>();
 
 	function normalizeMarkdown(markdown: string) {
 		return markdown
