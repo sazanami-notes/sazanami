@@ -96,6 +96,9 @@ export async function createTables() {
 			secret TEXT NOT NULL,
 			backup_codes TEXT NOT NULL,
 			user_id TEXT NOT NULL,
+			verified INTEGER DEFAULT 1 NOT NULL,
+			failed_verification_count INTEGER DEFAULT 0 NOT NULL,
+			locked_until INTEGER,
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);
 	`);

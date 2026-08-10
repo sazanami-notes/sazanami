@@ -119,7 +119,11 @@ export const twoFactor = sqliteTable(
 		backupCodes: text('backup_codes').notNull(),
 		userId: text('user_id')
 			.notNull()
-			.references(() => user.id, { onDelete: 'cascade' })
+			.references(() => user.id, { onDelete: 'cascade' }),
+		// better-auth 1.6.2+ (unverified TOTP enrollment) / 1.6.22+ (account lockout)
+		verified: integer('verified', { mode: 'boolean' }).default(true).notNull(),
+		failedVerificationCount: integer('failed_verification_count').default(0).notNull(),
+		lockedUntil: integer('locked_until', { mode: 'timestamp_ms' })
 	},
 	(table) => [
 		index('twoFactor_secret_idx').on(table.secret),
