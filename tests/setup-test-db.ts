@@ -118,6 +118,9 @@ export async function createTables() {
       is_pinned INTEGER DEFAULT 0 NOT NULL,
       status TEXT DEFAULT 'inbox' NOT NULL,
       resolved_links TEXT,
+      last_encountered_at INTEGER,
+      encounter_count INTEGER DEFAULT 0 NOT NULL,
+      encounter_boost INTEGER DEFAULT 0 NOT NULL,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     );
   `);
