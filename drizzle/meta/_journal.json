@@ -43,6 +43,13 @@
       "when": 1786333443774,
       "tag": "0005_high_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1786335135495,
+      "tag": "0006_workable_vance_astro",
+      "breakpoints": true
     }
   ]
 }

@@ -121,6 +121,8 @@ export async function createTables() {
       last_encountered_at INTEGER,
       encounter_count INTEGER DEFAULT 0 NOT NULL,
       encounter_boost INTEGER DEFAULT 0 NOT NULL,
+      context TEXT,
+      ai_suggestions TEXT,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     );
   `);
