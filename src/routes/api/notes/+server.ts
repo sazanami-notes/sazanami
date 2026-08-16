@@ -121,7 +121,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			id,
 			title,
 			content,
-			contentBin,
 			tags: tagNames,
 			skipTimeline,
 			status
@@ -129,7 +128,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			id?: string;
 			title?: string;
 			content?: string;
-			contentBin?: string;
 			tags?: string[];
 			skipTimeline?: boolean;
 			status?: string;
@@ -152,14 +150,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		const now = new Date();
 		let noteTitle = title;
 		const noteContent = content || '';
-		let noteContentBin: Buffer | null = null;
-		if (contentBin) {
-			try {
-				noteContentBin = Buffer.from(contentBin, 'base64');
-			} catch (e) {
-				console.error('Failed to parse contentBin base64', e);
-			}
-		}
 
 		// タイムラインや新規作成からのポストの場合、タイトルが未指定（undefined または空文字）であれば自動生成...しない
 		if (title === undefined || title.trim() === '') {
@@ -203,7 +193,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			title: noteTitle,
 			slug: noteSlug, // スラッグを保存
 			content: noteContent,
-			contentBin: noteContentBin,
 			createdAt: now,
 			updatedAt: now,
 			isPublic: false,

@@ -3,7 +3,6 @@ export interface Note {
 	userId: string;
 	title: string;
 	content?: string | null;
-	contentBin?: Buffer | null;
 	createdAt: Date;
 	updatedAt: Date;
 	isPublic: boolean;

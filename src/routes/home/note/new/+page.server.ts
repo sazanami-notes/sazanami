@@ -23,7 +23,6 @@ export const actions: Actions = {
 			const formData = await request.formData();
 			let title = formData.get('title')?.toString();
 			const content = formData.get('content')?.toString() || '';
-			const contentBin = formData.get('contentBin')?.toString() || '';
 			const isPublic = formData.get('isPublic') === 'on';
 			const status = formData.get('status')?.toString() || 'inbox';
 
@@ -49,7 +48,6 @@ export const actions: Actions = {
 				userId: locals.user.id,
 				title,
 				content,
-				contentBin: contentBin ? Buffer.from(contentBin, 'base64') : null,
 				slug,
 				createdAt: now,
 				updatedAt: now,

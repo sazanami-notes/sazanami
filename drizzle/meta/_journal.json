@@ -50,6 +50,13 @@
       "when": 1786335135495,
       "tag": "0006_workable_vance_astro",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1786907112499,
+      "tag": "0007_hot_morg",
+      "breakpoints": true
     }
   ]
 }

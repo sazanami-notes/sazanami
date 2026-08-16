@@ -38,18 +38,8 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			.leftJoin(tags, eq(noteTags.tagId, tags.id))
 			.where(eq(noteTags.noteId, noteId));
 
-		let contentBinBase64: string | undefined;
-		if (note[0].contentBin) {
-			try {
-				contentBinBase64 = Buffer.from(note[0].contentBin).toString('base64');
-			} catch {
-				// ignore
-			}
-		}
-
 		const noteWithTags = {
 			...note[0],
-			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
@@ -80,13 +70,11 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const {
 			title,
 			content,
-			contentBin,
 			tags: tagNames,
 			context
 		} = body as {
 			title?: string;
 			content?: string;
-			contentBin?: string;
 			tags?: string[];
 			context?: string | null;
 		};
@@ -105,7 +93,6 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const now = new Date();
 		const titleChanged = title !== undefined && title !== existingNote[0].title;
 		const contentChanged = content !== undefined && content !== existingNote[0].content;
-		const contentBinChanged = contentBin !== undefined;
 		const contextChanged = context !== undefined && context !== existingNote[0].context;
 		const tagsProvided = Array.isArray(tagNames);
 
@@ -129,20 +116,12 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedFields.context = context;
 			metadata.changes.context = { before: existingNote[0].context, after: context };
 		}
-		if (contentBinChanged) {
-			try {
-				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
-				metadata.changes.contentBin = true;
-			} catch (e) {
-				console.error('Failed to parse contentBin base64', e);
-			}
-		}
 		if (contentChanged) {
 			// updatedFields.content = content; handled above
 			// metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		if (titleChanged || contentChanged || contentBinChanged || contextChanged) {
+		if (titleChanged || contentChanged || contextChanged) {
 			updatedFields.updatedAt = now;
 		}
 
@@ -168,7 +147,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
-		if (!titleChanged && !contentChanged && !contentBinChanged && !tagsProvided && !contextChanged) {
+		if (!titleChanged && !contentChanged && !tagsProvided && !contextChanged) {
 			const noteTagsList = await db
 				.select({ name: tags.name })
 				.from(noteTags)
@@ -274,18 +253,6 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// After updating the note, update its links
 		if (contentChanged) {
-			updatedFields.content = content;
-			// metadata.changes.content = true;
-		}
-		if (contentBinChanged) {
-			try {
-				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
-				metadata.changes.contentBin = true;
-			} catch (e) {
-				console.error('Failed to parse contentBin base64', e);
-			}
-		}
-		if (contentChanged) {
 			const finalContent = content !== undefined ? content : existingNote[0].content;
 			await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 		}
@@ -313,18 +280,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			.leftJoin(tags, eq(noteTags.tagId, tags.id))
 			.where(eq(noteTags.noteId, noteId));
 
-		let contentBinBase64: string | undefined;
-		if (updatedNote[0].contentBin) {
-			try {
-				contentBinBase64 = Buffer.from(updatedNote[0].contentBin).toString('base64');
-			} catch {
-				// ignore
-			}
-		}
-
 		const noteWithTags = {
 			...updatedNote[0],
-			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean),
 			resolvedLinks: updatedNote[0].resolvedLinks // ここで明示的に含める（select * なので本来含まれるが確認用）
 		};
