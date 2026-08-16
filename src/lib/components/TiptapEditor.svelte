@@ -15,11 +15,6 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
-	import * as Y from 'yjs';
-	import { IndexeddbPersistence } from 'y-indexeddb';
-	import { HocuspocusProvider } from '@hocuspocus/provider';
-	import Collaboration from '@tiptap/extension-collaboration';
-	import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 	import { Markdown } from '@tiptap/markdown';
 	import { goto } from '$app/navigation';
 
@@ -27,25 +22,16 @@
 
 	type Props = {
 		content?: string;
-		noteId?: string; // For IndexedDB and Yjs room sync
-		initialContentBinBase64?: string; // Optional: Initial Yjs binary update from server
 		editable?: boolean;
 		placeholder?: string;
-		onchange?: (event: { markdown: string; html: string; yjsUpdateBase64: string }) => void;
+		onchange?: (event: { markdown: string; html: string }) => void;
 	};
 
-	let {
-		content = $bindable(''),
-		noteId,
-		initialContentBinBase64,
-		editable = true,
-		placeholder = 'Write something...',
-		onchange
-	}: Props = $props();
+	let { content = '', editable = true, placeholder = 'Write something...', onchange }: Props = $props();
 
-	let ydoc: Y.Doc | null = null;
-	let indexedDBProvider: IndexeddbPersistence | null = null;
-	let hocuspocusProvider: HocuspocusProvider | null = null;
+	// Yjs/CollaborationはHocuspocusサーバー未設置のため無効化（2026-08-17）。
+	// 共同編集を有効化する場合は、サーバー設置後にCollaboration拡張とYjs初期化を復活させること。
+	// ※Collaboration有効時はYjsドキュメントが空のままProseMirrorを巻き戻す問題を確認済み
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
@@ -234,42 +220,13 @@
 
 	onMount(() => {
 		try {
-			ydoc = new Y.Doc();
+			// Yjs初期化なし（Collaboration無効のため）
 
-			// If we have initial binary content from server, apply it
-			if (initialContentBinBase64) {
-				try {
-					const uint8Array = Uint8Array.from(atob(initialContentBinBase64), (c) => c.charCodeAt(0));
-					Y.applyUpdate(ydoc, uint8Array);
-				} catch (e) {
-					console.error('Failed to parse initial Yjs update', e);
-				}
-			}
-
-			// Configure IndexedDB persistence if a valid noteId is provided
-			if (noteId) {
-				indexedDBProvider = new IndexeddbPersistence(noteId, ydoc);
-				indexedDBProvider.on('synced', () => {
-					console.log('Yjs document synced from IndexedDB');
-				});
-
-				// Hocuspocus real-time collaboration provider
-				hocuspocusProvider = new HocuspocusProvider({
-					url: import.meta.env.PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234',
-					name: noteId,
-					document: ydoc
-				});
-			}
-
-			// Build extensions array (CollaborationCursor is conditional on Hocuspocus)
+			// Build extensions array
 			const extensions: Extensions = [
 				StarterKit.configure({
 					codeBlock: false,
-					link: false,
-					undoRedo: false // disable history because of Collaboration extension
-				}),
-				Collaboration.configure({
-					document: ydoc
+					link: false
 				}),
 				Placeholder.configure({
 					placeholder: placeholder
@@ -296,17 +253,6 @@
 				NoteEmbedNode,
 				Markdown
 			];
-
-			// Only add cursor awareness when Hocuspocus is connected
-			if (hocuspocusProvider) {
-				extensions.splice(
-					2,
-					0,
-					CollaborationCursor.configure({
-						provider: hocuspocusProvider
-					})
-				);
-			}
 
 			editor = new Editor({
 				element: element,
@@ -404,14 +350,11 @@
 					// Use Tiptap Markdown natively to export clean MD
 					const md = normalizeMarkdown(e.getMarkdown());
 					lastSyncedMarkdown = md;
-					content = md; // コンポーネント外の `bind:content` に変更を通知する
+					// 親への通知はonchange経由のみ（contentは読み取り専用prop）
 
-					if (onchange && ydoc) {
+					if (onchange) {
 						const html = e.getHTML();
-						const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
-						// Convert uint8array to base64
-						const yjsUpdateBase64 = btoa(String.fromCharCode.apply(null, Array.from(yjsUpdate)));
-						onchange({ markdown: md, html, yjsUpdateBase64 });
+						onchange({ markdown: md, html });
 					}
 				}
 			});
@@ -431,24 +374,9 @@
 		return editor ? editor.getHTML() : '';
 	}
 
-	export function getYjsUpdateBase64() {
-		if (!ydoc) return '';
-		const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
-		return btoa(String.fromCharCode.apply(null, Array.from(yjsUpdate)));
-	}
-
 	onDestroy(() => {
 		if (editor) {
 			editor.destroy();
-		}
-		if (indexedDBProvider) {
-			indexedDBProvider.destroy();
-		}
-		if (hocuspocusProvider) {
-			hocuspocusProvider.destroy();
-		}
-		if (ydoc) {
-			ydoc.destroy();
 		}
 		clearTimeout(debounceTimer);
 	});

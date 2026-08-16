@@ -10,7 +10,6 @@
 	let { data }: { data: PageData } = $props();
 
 	let content = $state('');
-	let currentMd = $state('');
 	let title = $state('');
 	let saveTimeout: ReturnType<typeof setTimeout>;
 	let isSaving = $state(false);
@@ -26,22 +25,22 @@
 	$effect(() => {
 		const nextNoteId = data.note.id;
 
+		// noteIdが変わったときだけ初期化する（content/titleを監視しない）
 		if (nextNoteId !== currentNoteId) {
 			clearTimeout(saveTimeout);
 			currentNoteId = nextNoteId;
 			editorKey += 1;
+			content = data.note.content ?? '';
+			title = data.note.title ?? '';
+			titleError = '';
+			isMenuOpen = false;
+			copySuccess = false;
+			isSaving = false;
+			isCopying = false;
+
+			lastSavedTitle = data.note.title ?? '';
+			lastSavedContent = data.note.content ?? '';
 		}
-
-		content = data.note.content ?? '';
-		title = data.note.title ?? '';
-		titleError = '';
-		isMenuOpen = false;
-		copySuccess = false;
-		isSaving = false;
-		isCopying = false;
-
-		lastSavedTitle = title;
-		lastSavedContent = content;
 	});
 
 	function normalizeMarkdownForClipboard(markdown: string) {
@@ -81,7 +80,7 @@
 	async function copyAsMarkdown(options?: { expandEmbeds?: boolean }) {
 		isCopying = true;
 		try {
-			let markdownContent = `# ${title}\n\n---\n\n${currentMd || content || ''}`;
+			let markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
 
 			if (options?.expandEmbeds) {
 				markdownContent = await expandEmbedsInMarkdown(markdownContent);
@@ -336,7 +335,7 @@
 	<div class="mb-4">
 		<div class="min-h-[400px] w-full">
 			{#key editorKey}
-				<TiptapEditor content={content ?? ''} onchange={handleContentChange} />
+				<TiptapEditor content={content} onchange={handleContentChange} />
 			{/key}
 		</div>
 	</div>

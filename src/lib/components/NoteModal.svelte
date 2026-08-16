@@ -189,7 +189,7 @@
 		{/if}
 
 		<div class="max-h-[60vh] min-h-[300px] overflow-y-auto">
-			<TiptapEditor bind:content />
+			<TiptapEditor content={content} onchange={(e) => (content = e.markdown)} />
 		</div>
 
 		<div class="modal-action mt-6 flex items-center justify-between">
