@@ -2,7 +2,8 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
-import { and, eq, desc, sql } from 'drizzle-orm';
+import { noteListSelect } from '$lib/server/db/note-list';
+import { and, eq, desc } from 'drizzle-orm';
 import { createAuth } from '$lib/server/auth';
 const auth = createAuth();
 
@@ -16,20 +17,7 @@ export const load: PageServerLoad = async ({ request }) => {
 	}
 
 	const notesResult = await db
-		.select({
-			id: notes.id,
-			title: notes.title,
-			content: notes.content,
-			updatedAt: notes.updatedAt,
-			isPinned: notes.isPinned,
-			userId: notes.userId,
-			createdAt: notes.createdAt,
-			isPublic: notes.isPublic,
-			slug: notes.slug,
-			status: notes.status,
-			resolvedLinks: notes.resolvedLinks,
-			tags: sql<string>`GROUP_CONCAT(${tags.name})`.as('tags')
-		})
+		.select({ ...noteListSelect })
 		.from(notes)
 		.leftJoin(noteTags, eq(notes.id, noteTags.noteId))
 		.leftJoin(tags, eq(noteTags.tagId, tags.id))

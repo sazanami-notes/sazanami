@@ -6,47 +6,15 @@
 	import { createEventDispatcher } from 'svelte';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
+	import { protectNoteEmbeds, restoreNoteEmbeds } from '$lib/utils/note-embeds';
 	import { sanitizeHtml, escapeHtml } from '$lib/utils/sanitize';
 	import { customMarked } from '$lib/utils/markdown-renderer';
+	import { offlineFetch } from '$lib/offline-queue';
 
 	export let note: Note & { tags: string[] };
 	export let mode: 'timeline' | 'archive' | 'trash' = 'timeline';
 
 	const dispatch = createEventDispatcher<{ edit: Note; delete: Note }>();
-
-	type EmbedPlaceholder = {
-		placeholder: string;
-		title: string;
-	};
-
-	function escapeMarkdownText(value: string) {
-		return value
-			.replace(/\\/g, '\\\\')
-			.replace(/\]/g, '\\]')
-			.replace(/\(/g, '\\(')
-			.replace(/\)/g, '\\)');
-	}
-
-	function protectNoteEmbeds(content: string) {
-		const embeds: EmbedPlaceholder[] = [];
-		const protectedContent = content.replace(/!\[\[(.*?)\]\]/g, (_match, title) => {
-			const placeholder = `__SAZANAMI_NOTE_EMBED_${embeds.length}__`;
-			embeds.push({ placeholder, title });
-			return placeholder;
-		});
-
-		return { contentHtml: protectedContent, embeds };
-	}
-
-	function restoreNoteEmbeds(content: string, embeds: EmbedPlaceholder[]) {
-		let restored = content;
-		for (const embed of embeds) {
-			const linkText = `埋め込み: ${escapeMarkdownText(embed.title)}`;
-			const encodedTitle = encodeURIComponent(embed.title);
-			restored = restored.replace(embed.placeholder, `[${linkText}](note-embed:${encodedTitle})`);
-		}
-		return restored;
-	}
 
 	// 埋め込み（![[...]]）を保護してからWikiLinkを解決し、最後にnote-embed:リンクとして復元
 	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
@@ -233,11 +201,15 @@
 			const oldContent = note.content;
 			note.content = newContent; // Optimistic update
 			try {
-				const response = await fetch(`/api/notes/${note.id}`, {
+				const response = await offlineFetch(`/api/notes/${note.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ content: newContent })
 				});
+				if ('queued' in response) {
+					// オフライン: キューに保存（楽観的更新のまま。復帰後に自動再送）
+					return;
+				}
 				if (!response.ok) {
 					console.error('Failed to update check status');
 					note.content = oldContent; // Revert on failure

@@ -4,6 +4,7 @@
 	import type { Note } from '$lib/types';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
+	import { protectNoteEmbeds, restoreNoteEmbeds } from '$lib/utils/note-embeds';
 	import { sanitizeHtml, escapeHtml } from '$lib/utils/sanitize';
 	import { customMarked } from '$lib/utils/markdown-renderer';
 
@@ -12,49 +13,15 @@
 
 	const dispatch = createEventDispatcher<{ edit: Note }>();
 
-	type EmbedPlaceholder = {
-		placeholder: string;
-		title: string;
-	};
-
-	function escapeMarkdownText(value: string) {
-		return value
-			.replace(/\\/g, '\\\\')
-			.replace(/\]/g, '\\]')
-			.replace(/\(/g, '\\(')
-			.replace(/\)/g, '\\)');
-	}
-
-	function protectNoteEmbeds(content: string) {
-		const embeds: EmbedPlaceholder[] = [];
-		const protectedContent = content.replace(/!\[\[(.*?)\]\]/g, (_match, title) => {
-			const placeholder = `__SAZANAMI_NOTE_EMBED_${embeds.length}__`;
-			embeds.push({ placeholder, title });
-			return placeholder;
-		});
-
-		return { contentHtml: protectedContent, embeds };
-	}
-
-	function restoreNoteEmbeds(content: string, embeds: EmbedPlaceholder[]) {
-		let restored = content;
-		for (const embed of embeds) {
-			const linkText = `埋め込み: ${escapeMarkdownText(embed.title)}`;
-			const encodedTitle = encodeURIComponent(embed.title);
-			restored = restored.replace(embed.placeholder, `[${linkText}](note-embed:${encodedTitle})`);
-		}
-		return restored;
-	}
+	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
+	$: processedContent = renderWikiLinks(noteEmbedsProtected.contentHtml, note.resolvedLinks);
+	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
 
 	function handleClick() {
 		if (!linkToDetail && note.id) {
 			dispatch('edit', note);
 		}
 	}
-
-	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
-	$: processedContent = renderWikiLinks(noteEmbedsProtected.contentHtml, note.resolvedLinks);
-	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(contentWithEmbeds || '');
 	$: renderedContent = isHtmlContent
 		? sanitizeHtml(contentWithEmbeds || '')
