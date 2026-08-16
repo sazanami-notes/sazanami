@@ -4,6 +4,7 @@
 	import ContextSection from '$lib/components/ContextSection.svelte';
 	import { onDestroy } from 'svelte';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
+	import { offlineFetch } from '$lib/offline-queue';
 	import { format } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 
@@ -13,6 +14,7 @@
 	let title = $state('');
 	let saveTimeout: ReturnType<typeof setTimeout>;
 	let isSaving = $state(false);
+	let isOfflineQueued = $state(false);
 	let copySuccess = $state(false);
 	let titleError = $state('');
 	let lastSavedTitle = '';
@@ -115,17 +117,21 @@
 
 			isSaving = true;
 			try {
-				const response = await fetch(`/api/notes/${data.note.id}`, {
+				const response = await offlineFetch(`/api/notes/${data.note.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ title, content })
 				});
 
-				if (response.status === 409) {
+				if ('queued' in response) {
+					// オフライン: キューに保存された（オンライン復帰時に自動再送）
+					isOfflineQueued = true;
+				} else if (response.status === 409) {
 					const err = (await response.json()) as { message?: string };
 					titleError = err.message || '同じタイトルのノートが既に存在します';
 				} else if (response.ok) {
 					titleError = '';
+					isOfflineQueued = false;
 					const updatedNote = (await response.json()) as {
 						title?: string;
 						content?: string;
@@ -150,6 +156,18 @@
 
 	onDestroy(() => {
 		clearTimeout(saveTimeout);
+	});
+
+	// オフラインキューが同期完了したら「未同期」表示を解除
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const handler = () => {
+			isOfflineQueued = false;
+		};
+		window.addEventListener('sazanami:sync-complete', handler);
+		return () => {
+			window.removeEventListener('sazanami:sync-complete', handler);
+		};
 	});
 
 	const handleContentChange = (event: { markdown: string }) => {
@@ -348,6 +366,8 @@
 	<div class="flex items-center justify-end space-x-4">
 		{#if isSaving}
 			<span class="text-base-content/60 text-sm">保存中...</span>
+		{:else if isOfflineQueued}
+			<span class="text-warning text-sm">オフライン保存（未同期）</span>
 		{:else}
 			<span class="text-base-content/60 pr-2 text-sm">最終更新: {formattedUpdatedAt}</span>
 		{/if}

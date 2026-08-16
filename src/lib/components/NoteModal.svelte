@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TiptapEditor from './TiptapEditor.svelte';
+	import { offlineFetch } from '$lib/offline-queue';
 	import { invalidateAll } from '$app/navigation';
 
 	let {
@@ -16,7 +17,7 @@
 	let title = $state('');
 	let content = $state('');
 	let showTitleInput = $state(false);
-	let autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error' = $state('idle');
+	let autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error' | 'offline' = $state('idle');
 	let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 	let lastNoteId: string | null = $state(null);
 	let initialized = $state(false);
@@ -87,11 +88,17 @@
 		const currentContent = content;
 
 		try {
-			const response = await fetch(`/api/notes/${noteId}`, {
+			const response = await offlineFetch(`/api/notes/${noteId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ title: currentTitle, content: currentContent })
 			});
+
+			if ('queued' in response) {
+				// オフライン: キューに保存（オンライン復帰時に自動再送）
+				autoSaveStatus = 'offline';
+				return true;
+			}
 
 			if (response.ok) {
 				autoSaveStatus = 'saved';
@@ -214,6 +221,22 @@
 							/>
 						</svg>
 						保存しました
+					</span>
+				{:else if autoSaveStatus === 'offline'}
+					<span class="text-warning flex items-center gap-1">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M2 5a1 1 0 011-1h14a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V5zm3.293 2.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+						オフライン保存（未同期）
 					</span>
 				{:else if autoSaveStatus === 'error'}
 					<span class="text-error flex items-center gap-1">

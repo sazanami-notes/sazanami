@@ -8,6 +8,7 @@
 	import { invalidateAll, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { authClient } from '$lib/auth-client';
+	import { setupOfflineSync } from '$lib/offline-queue';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
@@ -32,6 +33,37 @@
 		untrack(() => {
 			currentThemeMode = themeMode;
 		});
+	});
+
+	// オフライン書き込みキューのセットアップ（オンライン復帰時に自動再送）
+	$effect(() => {
+		setupOfflineSync();
+	});
+
+	// オフライン同期の完了通知（トースト）
+	let syncToast = $state('');
+	let syncToastTimer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const handler = (e: Event) => {
+			const detail = (e as CustomEvent<{ synced: number; failed: number; offline: boolean }>).detail;
+			if (detail.offline) return;
+			if (detail.synced > 0) {
+				syncToast = `オフライン中の変更を ${detail.synced} 件同期しました`;
+			} else if (detail.failed > 0) {
+				syncToast = '同期に失敗した変更があります（再送を待っています）';
+			}
+			clearTimeout(syncToastTimer);
+			syncToastTimer = setTimeout(() => {
+				syncToast = '';
+			}, 5000);
+		};
+		window.addEventListener('sazanami:sync-complete', handler);
+		return () => {
+			window.removeEventListener('sazanami:sync-complete', handler);
+			clearTimeout(syncToastTimer);
+		};
 	});
 
 	async function openCreateModal() {
@@ -215,6 +247,18 @@
 			<main class="relative w-full flex-grow overflow-y-auto">
 				{@render children()}
 			</main>
+
+			{#if syncToast}
+				<div
+					class="toast toast-top toast-center z-50"
+					role="status"
+					aria-live="polite"
+				>
+					<div class="alert alert-success shadow-lg">
+						<span>{syncToast}</span>
+					</div>
+				</div>
+			{/if}
 
 			{#if !hideShell}
 				<Footer />

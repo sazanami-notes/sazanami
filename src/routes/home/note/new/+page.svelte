@@ -39,6 +39,14 @@
 
 				try {
 					console.log('Auto-creating new note...');
+
+					// オフライン時は新規作成できない（IDが返らないため遷移できない）
+					if (typeof navigator !== 'undefined' && !navigator.onLine) {
+						titleError = 'オフラインです。オンライン復帰後に作成してください';
+						isCreating = false;
+						return;
+					}
+
 					const response = await fetch('/api/notes', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
