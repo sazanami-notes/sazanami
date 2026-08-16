@@ -27,6 +27,7 @@ export const load: PageServerLoad = async ({ request }) => {
 			isPublic: notes.isPublic,
 			slug: notes.slug,
 			status: notes.status,
+			resolvedLinks: notes.resolvedLinks,
 			tags: sql<string>`GROUP_CONCAT(${tags.name})`.as('tags')
 		})
 		.from(notes)
