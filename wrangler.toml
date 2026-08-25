@@ -9,7 +9,7 @@ compatibility_date = "2025-08-01"
 compatibility_flags = ["nodejs_compat"]
 
 # 本番用の非機密vars（機密値は wrangler secret put で設定）
-vars = { STORAGE_DRIVER = "s3", S3_PUBLIC_URL = "" }
+vars = { STORAGE_DRIVER = "s3", S3_PUBLIC_URL = "", BETTER_AUTH_URL = "https://sazanami.214kaedesato.workers.dev" }
 
 # 本番環境のルーティング（カスタムドメインがあればここに。なければ *.workers.dev で公開）
 # routes = [ "sazanami.example.com/*" ]
@@ -20,7 +20,7 @@ main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2025-08-01"
 compatibility_flags = ["nodejs_compat"]
 
-vars = { STORAGE_DRIVER = "s3", S3_PUBLIC_URL = "" }
+vars = { STORAGE_DRIVER = "local", S3_PUBLIC_URL = "", BETTER_AUTH_URL = "https://sazanami-dev.214kaedesato.workers.dev", EMAIL_DRIVER = "noop" }
 
 # 観測性（オプション）：本番のみログ取得を有効化したい場合はコメント外す
 # [observability]
