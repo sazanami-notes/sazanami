@@ -1,0 +1,27 @@
+# Sazanami - Cloudflare Workers 設定
+# 本番 = sazanami（default）, 開発 = sazanami-dev（[[env.dev]]）
+# 実際の機密値（TURSO_*, BETTER_AUTH_SECRET, S3_*）は wrangler secret で設定する。
+# このファイルには変数名・非機密な設定のみを書く。
+
+name = "sazanami"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 本番用の非機密vars（機密値は wrangler secret put で設定）
+vars = { STORAGE_DRIVER = "s3", S3_PUBLIC_URL = "" }
+
+# 本番環境のルーティング（カスタムドメインがあればここに。なければ *.workers.dev で公開）
+# routes = [ "sazanami.example.com/*" ]
+
+[[env.dev]]
+name = "sazanami-dev"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+vars = { STORAGE_DRIVER = "s3", S3_PUBLIC_URL = "" }
+
+# 観測性（オプション）：本番のみログ取得を有効化したい場合はコメント外す
+# [observability]
+# enabled = true
