@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 
 	let text = $state('');
 	let busy = $state(false);
@@ -16,7 +16,9 @@
 			});
 			if (res.ok) {
 				text = '';
-				await invalidate('/home');
+				// invalidate('/home') は home の load が url 非依存だと無効化対象にならないため、
+				// 確実に一覧を再取得するには invalidateAll() を使う
+				await invalidateAll();
 			}
 		} catch (e) {
 			console.error('Quick capture error:', e);
