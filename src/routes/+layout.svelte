@@ -289,6 +289,7 @@
 			<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 				{#if data.user}
 					<li><a href="/home">タイムライン</a></li>
+					<li><a href="/home/encounters">🔮 出会い</a></li>
 					<li><a href="/home/box">ノート一覧</a></li>
 					<li><a href="/home/tasklist">タスクリスト</a></li>
 					<li><a href="/home/archive">アーカイブ</a></li>

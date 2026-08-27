@@ -4,7 +4,6 @@ import { notes, noteTags, tags } from '$lib/server/db/schema';
 import { noteListSelect } from '$lib/server/db/note-list';
 import { and, eq, desc } from 'drizzle-orm';
 import { createAuth } from '$lib/server/auth';
-import { pickEncounter } from '$lib/server/encounter';
 const auth = createAuth();
 
 export const load: ServerLoad = async ({ request }) => {
@@ -33,12 +32,9 @@ export const load: ServerLoad = async ({ request }) => {
 		tags: note.tags ? note.tags.split(',') : []
 	}));
 
-	// 今日の出会い（FSRS式の再提示）を1件取得
-	const encounter = await pickEncounter(sessionData.user.id);
-
+	// 今日の出会いは /home/encounters ページで取得する（タイムラインから分離）
 	return {
 		notes: notesWithTags,
-		encounter,
 		user: sessionData.user,
 		session: sessionData.session
 	};

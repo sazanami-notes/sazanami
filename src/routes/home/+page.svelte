@@ -3,14 +3,11 @@
 	import type { Note } from '$lib/types';
 	import NoteModal from '$lib/components/NoteModal.svelte';
 	import SortSelector from '$lib/components/SortSelector.svelte';
-	import EncounterCard from '$lib/components/EncounterCard.svelte';
 	import QuickCapture from '$lib/components/QuickCapture.svelte';
 	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
-	import type { EncounterNote } from '$lib/components/EncounterCard.svelte';
 
 	type HomePageData = {
 		notes: Note[];
-		encounter: EncounterNote | null;
 	};
 
 	let { data }: { data: HomePageData } = $props();
@@ -20,7 +17,6 @@
 
 	const rawNotes = $derived(data.notes || []);
 	const notes = $derived(sortNotes(rawNotes, sortKey));
-	const encounter = $derived(data.encounter);
 
 	function handleEdit(event: CustomEvent<Note>) {
 		editingNoteId = event.detail.id;
@@ -46,11 +42,6 @@
 		<!-- 取るUI: クイックキャプチャ -->
 		<div class="mb-4">
 			<QuickCapture />
-		</div>
-
-		<!-- 出会い: FSRS式の再提示 -->
-		<div class="mb-4">
-			<EncounterCard initial={encounter} />
 		</div>
 
 		<div class="flex flex-col space-y-4">
