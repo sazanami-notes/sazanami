@@ -132,6 +132,12 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
+	// SvelteKitのデータエンドポイント（__data.json）はキャッシュしない
+	// Cache Firstにすると、保存→invalidateAll()しても古いデータを返し続け、一覧に反映されない
+	if (requestUrl.pathname.endsWith('__data.json')) {
+		return;
+	}
+
 	// その他の静的アセット（Cache First）
 	event.respondWith(
 		caches.match(request).then((cachedResponse) => {
