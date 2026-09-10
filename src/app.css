@@ -144,6 +144,20 @@ ul[data-type='taskList'] li > div > p {
 	display: none !important;
 }
 
+/* Tighten bullet/numbered list line spacing in markdown view
+   (prose adds ~8px around li and p inside li, which looks too airy) */
+.prose ul li,
+.prose ol li {
+	margin-top: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.prose ul li > p,
+.prose ol li > p {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
 /* Code block language selector global styles */
 .code-block-wrapper,
 .prose .code-block-wrapper {
