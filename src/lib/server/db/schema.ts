@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, uniqueIndex, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
@@ -39,7 +39,11 @@ export const notes = sqliteTable(
 		// 出会い（Encounter）機能用: FSRS式の重み付きランダム再提示
 		lastEncounteredAt: integer('last_encountered_at', { mode: 'timestamp_ms' }), // 最後に出会いとして表示した日時
 		encounterCount: integer('encounter_count').notNull().default(0), // 出会い回数
-		encounterBoost: integer('encounter_boost').notNull().default(0) // フィードバック（また会いたい:+1 / スルー:-1）
+		encounterBoost: integer('encounter_boost').notNull().default(0), // フィードバック（また会いたい:+1 / スルー:-1）
+		// リプライ（タイムラインのスレッド表示用）: 親ノートへの参照。親が消えてもメモは残す
+		parentId: text('parent_id').references((): AnySQLiteColumn => notes.id, {
+			onDelete: 'set null'
+		})
 	},
 	(table) => [
 		// Boxノートのタイトルはユーザー内で一意にする（WikiLink解決のため）

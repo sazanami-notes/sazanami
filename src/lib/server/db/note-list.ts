@@ -18,5 +18,6 @@ export const noteListSelect = {
 	slug: notes.slug,
 	status: notes.status,
 	resolvedLinks: notes.resolvedLinks,
+	parentId: notes.parentId,
 	tags: sql<string>`GROUP_CONCAT(${tags.name})`.as('tags')
 } as const;

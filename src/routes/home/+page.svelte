@@ -8,6 +8,7 @@
 
 	type HomePageData = {
 		notes: Note[];
+		repliesByParent?: Record<string, (Note & { tags: string[] })[]>;
 	};
 
 	let { data }: { data: HomePageData } = $props();
@@ -17,6 +18,7 @@
 
 	const rawNotes = $derived(data.notes || []);
 	const notes = $derived(sortNotes(rawNotes, sortKey));
+	const repliesByParent = $derived(data.repliesByParent || {});
 
 	function handleEdit(event: CustomEvent<Note>) {
 		editingNoteId = event.detail.id;
@@ -46,7 +48,16 @@
 
 		<div class="flex flex-col space-y-4">
 			{#each notes as note (note.id)}
-				<TimelinePost {note} on:edit={handleEdit} />
+				<div>
+					<TimelinePost {note} on:edit={handleEdit} />
+					{#if repliesByParent[note.id]?.length}
+						<div class="border-base-300 mt-1 ml-6 space-y-2 border-l-2 pl-3">
+							{#each repliesByParent[note.id] as reply (reply.id)}
+								<TimelinePost note={reply} on:edit={handleEdit} compact />
+							{/each}
+						</div>
+					{/if}
+				</div>
 			{:else}
 				<p class="text-base-content text-opacity-60 text-center">
 					タイムラインにはまだ何もありません。

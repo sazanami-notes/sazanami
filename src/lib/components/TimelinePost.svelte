@@ -13,6 +13,7 @@
 
 	export let note: Note & { tags: string[] };
 	export let mode: 'timeline' | 'archive' | 'trash' = 'timeline';
+	export let compact = false; // リプライ（子メモ）表示用
 
 	const dispatch = createEventDispatcher<{ edit: Note; delete: Note }>();
 
@@ -246,6 +247,10 @@
 	const swipeThreshold = 100; // Swipe distance in pixels to trigger action
 
 	function handleTouchStart(e: TouchEvent) {
+		if (compact) {
+			isSwiping = false;
+			return;
+		}
 		// Don't start swipe if touching an interactive element
 		const target = e.target as HTMLElement;
 		if (target.closest('button, input, a, [role="button"]')) {
@@ -358,6 +363,35 @@
 		}
 	}
 
+	// リプライ（親メモへのぶら下げ）
+	let showReplyForm = false;
+	let replyText = '';
+	let isSubmittingReply = false;
+
+	async function submitReply() {
+		const content = replyText.trim();
+		if (!content || isSubmittingReply) return;
+		isSubmittingReply = true;
+		try {
+			const response = await fetch('/api/notes', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title: '', content, parentId: note.id })
+			});
+			if (response.ok) {
+				replyText = '';
+				showReplyForm = false;
+				await invalidateAll();
+			} else {
+				console.error('Failed to create reply:', await response.text());
+			}
+		} catch (error) {
+			console.error('Error creating reply:', error);
+		} finally {
+			isSubmittingReply = false;
+		}
+	}
+
 	const sendToBox = () => updateNoteStatus('box');
 	const sendToArchive = () => updateNoteStatus('archived');
 	const sendToTrash = () => updateNoteStatus('trash');
@@ -371,7 +405,9 @@
 
 <div
 	bind:this={element}
-	class="card bg-base-100 shadow-md transition-transform duration-200 ease-in-out select-none"
+	class="card transition-transform duration-200 ease-in-out select-none {compact
+		? 'border-base-200 bg-base-100/70 border shadow-none'
+		: 'bg-base-100 shadow-md'}"
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
@@ -411,8 +447,19 @@
 		<div class="text-base-content/60 mt-4 flex items-center justify-between text-xs">
 			<span>{formattedDate}</span>
 			<div class="card-actions">
-				<button class="btn btn-ghost btn-xs" onclick={handleInteraction}> Edit </button>
-				{#if mode === 'timeline'}
+				{#if !compact}
+					<button class="btn btn-ghost btn-xs" onclick={handleInteraction}> Edit </button>
+				{/if}
+				{#if mode === 'timeline' && !compact}
+					<button
+						class="btn btn-ghost btn-xs"
+						onclick={(e) => {
+							e.stopPropagation();
+							showReplyForm = !showReplyForm;
+						}}
+					>
+						返信
+					</button>
 					<button
 						class="btn btn-ghost btn-xs"
 						onclick={(e) => {
@@ -481,6 +528,39 @@
 				{/if}
 			</div>
 		</div>
+
+		{#if showReplyForm && !compact}
+			<div class="border-base-300 mt-3 border-t pt-3">
+				<textarea
+					class="textarea textarea-bordered w-full text-sm"
+					rows="2"
+					placeholder="返信を書く..."
+					bind:value={replyText}
+					onclick={(e) => e.stopPropagation()}
+				></textarea>
+				<div class="mt-2 flex justify-end gap-2">
+					<button
+						class="btn btn-ghost btn-xs"
+						onclick={(e) => {
+							e.stopPropagation();
+							showReplyForm = false;
+						}}
+					>
+						キャンセル
+					</button>
+					<button
+						class="btn btn-primary btn-xs"
+						onclick={(e) => {
+							e.stopPropagation();
+							submitReply();
+						}}
+						disabled={isSubmittingReply || !replyText.trim()}
+					>
+						{isSubmittingReply ? '送信中...' : '返信'}
+					</button>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 

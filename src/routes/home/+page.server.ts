@@ -32,9 +32,20 @@ export const load: ServerLoad = async ({ request }) => {
 		tags: note.tags ? note.tags.split(',') : []
 	}));
 
+	// リプライを親ごとにまとめる（タイムラインのスレッド表示用）
+	const parents = notesWithTags.filter((note) => !note.parentId);
+	const repliesByParent: Record<string, typeof notesWithTags> = {};
+	for (const note of notesWithTags) {
+		if (note.parentId) {
+			if (!repliesByParent[note.parentId]) repliesByParent[note.parentId] = [];
+			repliesByParent[note.parentId].push(note);
+		}
+	}
+
 	// 今日の出会いは /home/encounters ページで取得する（タイムラインから分離）
 	return {
-		notes: notesWithTags,
+		notes: parents,
+		repliesByParent,
 		user: sessionData.user,
 		session: sessionData.session
 	};

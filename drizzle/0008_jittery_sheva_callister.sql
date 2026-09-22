@@ -1,0 +1,1 @@
+ALTER TABLE `notes` ADD `parent_id` text REFERENCES notes(id);

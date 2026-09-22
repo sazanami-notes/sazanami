@@ -123,7 +123,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			content,
 			tags: tagNames,
 			skipTimeline,
-			status
+			status,
+			parentId
 		} = body as {
 			id?: string;
 			title?: string;
@@ -131,6 +132,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			tags?: string[];
 			skipTimeline?: boolean;
 			status?: string;
+			parentId?: string;
 		};
 
 		// IDのバリデーション
@@ -186,6 +188,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		}
 
+		// リプライの場合、親ノート（自分のもの）の存在チェック
+		let parentNoteId: string | null = null;
+		if (parentId) {
+			const parent = await db
+				.select({ id: notes.id })
+				.from(notes)
+				.where(and(eq(notes.id, parentId), eq(notes.userId, session.session.userId)))
+				.limit(1);
+			if (parent.length > 0) {
+				parentNoteId = parent[0].id;
+			}
+		}
+
 		// 新規メモを作成
 		await db.insert(notes).values({
 			id: noteId,
@@ -196,6 +211,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			createdAt: now,
 			updatedAt: now,
 			isPublic: false,
+			parentId: parentNoteId,
 			...(status ? { status } : {})
 		});
 
