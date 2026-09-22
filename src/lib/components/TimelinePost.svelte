@@ -397,6 +397,21 @@
 	const sendToTrash = () => updateNoteStatus('trash');
 	const restoreToInbox = () => updateNoteStatus('inbox');
 
+	// 操作アイコン（Material Icons）
+	const ICON = {
+		edit: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
+		reply:
+			'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z',
+		pin: 'M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z',
+		box: 'M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z',
+		archive:
+			'M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z',
+		restore:
+			'M20.55 5.22l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.15.55L3.46 5.22C3.17 5.57 3 6.01 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.49-.17-.93-.45-1.28zM12 9.5l5.5 5.5H14v2h-4v-2H6.5L12 9.5zM5.12 5l.82-1h12l.93 1H5.12z',
+		trash:
+			'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'
+	};
+
 	const formattedDate = formatDistanceToNow(new Date(note.updatedAt), {
 		addSuffix: true,
 		locale: ja
@@ -446,84 +461,107 @@
 
 		<div class="text-base-content/60 mt-4 flex items-center justify-between text-xs">
 			<span>{formattedDate}</span>
-			<div class="card-actions">
+			<div class="card-actions items-center gap-0.5">
 				{#if !compact}
-					<button class="btn btn-ghost btn-xs" onclick={handleInteraction}> Edit </button>
+					<button
+						class="btn btn-ghost btn-sm btn-square"
+						title="編集"
+						aria-label="編集"
+						onclick={handleInteraction}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.edit} /></svg>
+					</button>
 				{/if}
 				{#if mode === 'timeline' && !compact}
 					<button
-						class="btn btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square"
+						title="返信"
+						aria-label="返信"
 						onclick={(e) => {
 							e.stopPropagation();
 							showReplyForm = !showReplyForm;
 						}}
 					>
-						返信
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.reply} /></svg>
 					</button>
 					<button
-						class="btn btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square {note.isPinned ? 'text-primary' : ''}"
+						title={note.isPinned ? 'ピンを外す' : 'ピン'}
+						aria-label={note.isPinned ? 'ピンを外す' : 'ピン'}
 						onclick={(e) => {
 							e.stopPropagation();
 							togglePin();
 						}}
 					>
-						{note.isPinned ? 'Unpin' : 'Pin'}
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.pin} /></svg>
 					</button>
 					<button
-						class="btn btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square"
+						title="Boxへ移動"
+						aria-label="Boxへ移動"
 						onclick={(e) => {
 							e.stopPropagation();
 							sendToBox();
 						}}
 					>
-						Box
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.box} /></svg>
 					</button>
 					<button
-						class="btn btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square"
+						title="アーカイブ"
+						aria-label="アーカイブ"
 						onclick={(e) => {
 							e.stopPropagation();
 							sendToArchive();
 						}}
 					>
-						Archive
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.archive} /></svg>
 					</button>
 				{:else if mode === 'archive'}
 					<button
-						class="btn btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square"
+						title="受信箱に戻す"
+						aria-label="受信箱に戻す"
 						onclick={(e) => {
 							e.stopPropagation();
 							restoreToInbox();
 						}}
 					>
-						Restore
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
 					</button>
 					<button
-						class="btn btn-error btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square text-error"
+						title="ゴミ箱へ"
+						aria-label="ゴミ箱へ"
 						onclick={(e) => {
 							e.stopPropagation();
 							sendToTrash();
 						}}
 					>
-						Trash
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
 					</button>
 				{:else if mode === 'trash'}
 					<button
-						class="btn btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square"
+						title="受信箱に戻す"
+						aria-label="受信箱に戻す"
 						onclick={(e) => {
 							e.stopPropagation();
 							restoreToInbox();
 						}}
 					>
-						Restore
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
 					</button>
 					<button
-						class="btn btn-error btn-ghost btn-xs"
+						class="btn btn-ghost btn-sm btn-square text-error"
+						title="完全に削除"
+						aria-label="完全に削除"
 						onclick={(e) => {
 							e.stopPropagation();
 							openDeleteModal();
 						}}
 					>
-						Delete
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
 					</button>
 				{/if}
 			</div>
