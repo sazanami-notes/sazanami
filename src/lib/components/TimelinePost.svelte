@@ -420,9 +420,7 @@
 
 <div
 	bind:this={element}
-	class="card transition-transform duration-200 ease-in-out select-none {compact
-		? 'border-base-200 bg-base-100/70 border shadow-none'
-		: 'bg-base-100 shadow-md'}"
+	class="card bg-base-100 shadow-sm transition-transform duration-200 ease-in-out select-none"
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
@@ -430,23 +428,129 @@
 	aria-label={note.title || 'メモ'}
 >
 	<div class="card-body p-4">
-		{#if note.isPinned}
-			<div class="text-primary absolute top-2 right-2">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-				>
-					<path
-						d="M16 12V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v8l-2 2v2h5.2v5l1.8 2 1.8-2v-5H18v-2l-2-2z"
-					/>
-				</svg>
+		<!-- ヘッダー: 日付（左）+ 操作アイコン（右） -->
+		<div class="text-base-content/60 flex items-center justify-between text-xs">
+			<span class="flex items-center gap-1">
+				{#if note.isPinned}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="text-primary h-3.5 w-3.5"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+					><path d={ICON.pin} /></svg>
+				{/if}
+				{formattedDate}
+			</span>
+			<div class="card-actions items-center gap-0.5">
+				{#if !compact}
+					<button
+						class="btn btn-ghost btn-sm btn-square"
+						title="編集"
+						aria-label="編集"
+						onclick={handleInteraction}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.edit} /></svg>
+					</button>
+					{#if mode === 'timeline'}
+						<button
+							class="btn btn-ghost btn-sm btn-square {note.isPinned ? 'text-primary' : ''}"
+							title={note.isPinned ? 'ピンを外す' : 'ピン'}
+							aria-label={note.isPinned ? 'ピンを外す' : 'ピン'}
+							onclick={(e) => {
+								e.stopPropagation();
+								togglePin();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.pin} /></svg>
+						</button>
+						<button
+							class="btn btn-ghost btn-sm btn-square"
+							title="Boxへ移動"
+							aria-label="Boxへ移動"
+							onclick={(e) => {
+								e.stopPropagation();
+								sendToBox();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.box} /></svg>
+						</button>
+						<button
+							class="btn btn-ghost btn-sm btn-square"
+							title="アーカイブ"
+							aria-label="アーカイブ"
+							onclick={(e) => {
+								e.stopPropagation();
+								sendToArchive();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.archive} /></svg>
+						</button>
+					{:else if mode === 'archive'}
+						<button
+							class="btn btn-ghost btn-sm btn-square"
+							title="受信箱に戻す"
+							aria-label="受信箱に戻す"
+							onclick={(e) => {
+								e.stopPropagation();
+								restoreToInbox();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
+						</button>
+						<button
+							class="btn btn-ghost btn-sm btn-square text-error"
+							title="ゴミ箱へ"
+							aria-label="ゴミ箱へ"
+							onclick={(e) => {
+								e.stopPropagation();
+								sendToTrash();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
+						</button>
+					{:else if mode === 'trash'}
+						<button
+							class="btn btn-ghost btn-sm btn-square"
+							title="受信箱に戻す"
+							aria-label="受信箱に戻す"
+							onclick={(e) => {
+								e.stopPropagation();
+								restoreToInbox();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
+						</button>
+						<button
+							class="btn btn-ghost btn-sm btn-square text-error"
+							title="完全に削除"
+							aria-label="完全に削除"
+							onclick={(e) => {
+								e.stopPropagation();
+								openDeleteModal();
+							}}
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
+						</button>
+					{/if}
+				{/if}
+				{#if mode === 'timeline'}
+					<button
+						class="btn btn-ghost btn-sm btn-square"
+						title="返信"
+						aria-label="返信"
+						onclick={(e) => {
+							e.stopPropagation();
+							showReplyForm = !showReplyForm;
+						}}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.reply} /></svg>
+					</button>
+				{/if}
 			</div>
-		{/if}
+		</div>
 
 		{#if note.title && note.title !== 'Untitled Note'}
-			<h2 class="mb-2 text-xl font-bold">{note.title}</h2>
+			<h2 class="mt-2 mb-1 text-lg font-bold">{note.title}</h2>
 		{/if}
 
 		<div class="prose text-base-content max-w-none" use:enhanceProseContent={contentWithEmbeds}>
@@ -459,115 +563,7 @@
 			{/if}
 		</div>
 
-		<div class="text-base-content/60 mt-4 flex items-center justify-between text-xs">
-			<span>{formattedDate}</span>
-			<div class="card-actions items-center gap-0.5">
-				{#if !compact}
-					<button
-						class="btn btn-ghost btn-sm btn-square"
-						title="編集"
-						aria-label="編集"
-						onclick={handleInteraction}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.edit} /></svg>
-					</button>
-				{/if}
-				{#if mode === 'timeline' && !compact}
-					<button
-						class="btn btn-ghost btn-sm btn-square"
-						title="返信"
-						aria-label="返信"
-						onclick={(e) => {
-							e.stopPropagation();
-							showReplyForm = !showReplyForm;
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.reply} /></svg>
-					</button>
-					<button
-						class="btn btn-ghost btn-sm btn-square {note.isPinned ? 'text-primary' : ''}"
-						title={note.isPinned ? 'ピンを外す' : 'ピン'}
-						aria-label={note.isPinned ? 'ピンを外す' : 'ピン'}
-						onclick={(e) => {
-							e.stopPropagation();
-							togglePin();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.pin} /></svg>
-					</button>
-					<button
-						class="btn btn-ghost btn-sm btn-square"
-						title="Boxへ移動"
-						aria-label="Boxへ移動"
-						onclick={(e) => {
-							e.stopPropagation();
-							sendToBox();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.box} /></svg>
-					</button>
-					<button
-						class="btn btn-ghost btn-sm btn-square"
-						title="アーカイブ"
-						aria-label="アーカイブ"
-						onclick={(e) => {
-							e.stopPropagation();
-							sendToArchive();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.archive} /></svg>
-					</button>
-				{:else if mode === 'archive'}
-					<button
-						class="btn btn-ghost btn-sm btn-square"
-						title="受信箱に戻す"
-						aria-label="受信箱に戻す"
-						onclick={(e) => {
-							e.stopPropagation();
-							restoreToInbox();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
-					</button>
-					<button
-						class="btn btn-ghost btn-sm btn-square text-error"
-						title="ゴミ箱へ"
-						aria-label="ゴミ箱へ"
-						onclick={(e) => {
-							e.stopPropagation();
-							sendToTrash();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
-					</button>
-				{:else if mode === 'trash'}
-					<button
-						class="btn btn-ghost btn-sm btn-square"
-						title="受信箱に戻す"
-						aria-label="受信箱に戻す"
-						onclick={(e) => {
-							e.stopPropagation();
-							restoreToInbox();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
-					</button>
-					<button
-						class="btn btn-ghost btn-sm btn-square text-error"
-						title="完全に削除"
-						aria-label="完全に削除"
-						onclick={(e) => {
-							e.stopPropagation();
-							openDeleteModal();
-						}}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
-					</button>
-				{/if}
-			</div>
-		</div>
-
-		{#if showReplyForm && !compact}
+		{#if showReplyForm}
 			<div class="border-base-300 mt-3 border-t pt-3">
 				<textarea
 					class="textarea textarea-bordered w-full text-sm"

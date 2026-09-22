@@ -33,6 +33,17 @@
 	}
 </script>
 
+{#snippet replyTree(parentId: string)}
+	{#if repliesByParent[parentId]?.length}
+		<div class="border-base-300 mt-1 ml-4 space-y-2 border-l-2 pl-3">
+			{#each repliesByParent[parentId] as reply (reply.id)}
+				<TimelinePost note={reply} on:edit={handleEdit} compact />
+				{@render replyTree(reply.id)}
+			{/each}
+		</div>
+	{/if}
+{/snippet}
+
 <div class="container mx-auto px-4 py-8">
 	<!-- Timeline Feed -->
 	<div class="mx-auto max-w-2xl">
@@ -50,13 +61,7 @@
 			{#each notes as note (note.id)}
 				<div>
 					<TimelinePost {note} on:edit={handleEdit} />
-					{#if repliesByParent[note.id]?.length}
-						<div class="border-base-300 mt-1 ml-6 space-y-2 border-l-2 pl-3">
-							{#each repliesByParent[note.id] as reply (reply.id)}
-								<TimelinePost note={reply} on:edit={handleEdit} compact />
-							{/each}
-						</div>
-					{/if}
+					{@render replyTree(note.id)}
 				</div>
 			{:else}
 				<p class="text-base-content text-opacity-60 text-center">
