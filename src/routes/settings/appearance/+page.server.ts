@@ -28,7 +28,8 @@ export const load: PageServerLoad = async ({ request }) => {
 			themeMode: 'system',
 			lightThemeId: 'sazanami-days',
 			darkThemeId: 'sazanami-night',
-			font: 'sans-serif'
+			font: 'sans-serif',
+			blockHandleEnabled: true
 		},
 		userThemes
 	};
@@ -49,6 +50,10 @@ export const actions: Actions = {
 		const lightThemeId = (formData.get('lightThemeId') as string) || 'sazanami-days';
 		const darkThemeId = (formData.get('darkThemeId') as string) || 'sazanami-night';
 		const font = (formData.get('font') as string) || 'sans-serif';
+		// ブロックハンドル設定（フォームに含まれるときだけ更新。hidden=false + checkbox=true の2値方式）
+		const blockHandleValues = formData.getAll('blockHandleEnabled');
+		const blockHandleEnabled =
+			blockHandleValues.length === 0 ? undefined : blockHandleValues.includes('true');
 
 		try {
 			await db
@@ -58,7 +63,8 @@ export const actions: Actions = {
 					themeMode,
 					lightThemeId,
 					darkThemeId,
-					font
+					font,
+					...(blockHandleEnabled !== undefined ? { blockHandleEnabled } : {})
 				})
 				.onConflictDoUpdate({
 					target: userSettings.userId,
@@ -66,7 +72,8 @@ export const actions: Actions = {
 						themeMode,
 						lightThemeId,
 						darkThemeId,
-						font
+						font,
+						...(blockHandleEnabled !== undefined ? { blockHandleEnabled } : {})
 					}
 				});
 

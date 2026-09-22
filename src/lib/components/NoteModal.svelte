@@ -2,6 +2,7 @@
 	import TiptapEditor from './TiptapEditor.svelte';
 	import { offlineFetch } from '$lib/offline-queue';
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	let {
 		noteId = null,
@@ -196,7 +197,11 @@
 		{/if}
 
 		<div class="max-h-[60vh] min-h-[300px] overflow-y-auto">
-			<TiptapEditor content={content} onchange={(e) => (content = e.markdown)} />
+			<TiptapEditor
+				content={content}
+				onchange={(e) => (content = e.markdown)}
+				showBlockHandle={$page.data.settings?.blockHandleEnabled ?? true}
+			/>
 		</div>
 
 		<div class="modal-action mt-6 flex items-center justify-between">

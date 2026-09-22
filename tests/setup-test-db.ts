@@ -212,6 +212,7 @@ export async function createTables() {
 			light_theme_id TEXT DEFAULT 'sazanami-days' NOT NULL,
 			dark_theme_id TEXT DEFAULT 'sazanami-night' NOT NULL,
 			font TEXT DEFAULT 'sans-serif' NOT NULL,
+			block_handle_enabled INTEGER DEFAULT 1 NOT NULL,
 			bio TEXT,
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);

@@ -47,7 +47,8 @@ export const load: LayoutServerLoad = async ({ request, url }) => {
 			themeMode: 'system',
 			lightThemeId: 'sazanami-days',
 			darkThemeId: 'sazanami-night',
-			font: 'sans-serif'
+			font: 'sans-serif',
+			blockHandleEnabled: true
 		}
 	};
 };

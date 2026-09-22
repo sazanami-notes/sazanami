@@ -1,0 +1,1 @@
+ALTER TABLE `user_settings` ADD `block_handle_enabled` integer DEFAULT true NOT NULL;

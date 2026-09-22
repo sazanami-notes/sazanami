@@ -172,5 +172,7 @@ export const userSettings = sqliteTable('user_settings', {
 	lightThemeId: text('light_theme_id').notNull().default('sazanami-days'), // 組み込みテーマ名 or themes.id
 	darkThemeId: text('dark_theme_id').notNull().default('sazanami-night'), // 組み込みテーマ名 or themes.id
 	font: text('font').notNull().default('sans-serif'),
+	// エディタのブロックハンドル（Notion風ドラッグハンドル）を表示するか
+	blockHandleEnabled: integer('block_handle_enabled', { mode: 'boolean' }).notNull().default(true),
 	bio: text('bio')
 });

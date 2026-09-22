@@ -16,6 +16,7 @@
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
 	import { Markdown } from '@tiptap/markdown';
+import DragHandle from '@tiptap/extension-drag-handle';
 	import { goto } from '$app/navigation';
 
 	const lowlight = createLowlight(all);
@@ -24,10 +25,17 @@
 		content?: string;
 		editable?: boolean;
 		placeholder?: string;
+		showBlockHandle?: boolean;
 		onchange?: (event: { markdown: string; html: string }) => void;
 	};
 
-	let { content = '', editable = true, placeholder = 'Write something...', onchange }: Props = $props();
+	let {
+		content = '',
+		editable = true,
+		placeholder = 'Write something...',
+		showBlockHandle = true,
+		onchange
+	}: Props = $props();
 
 	// Yjs/CollaborationはHocuspocusサーバー未設置のため無効化（2026-08-17）。
 	// 共同編集を有効化する場合は、サーバー設置後にCollaboration拡張とYjs初期化を復活させること。
@@ -115,6 +123,75 @@
 			input.value = ''; // リセット
 		}
 	}
+
+	// --- Notion風ブロックハンドル ---
+	let showBlockMenu = $state(false);
+	let blockMenuPos = $state({ top: 0, left: 0 });
+	let activeBlockPos = $state<number | null>(null);
+
+	const blockTypes = [
+		{ id: 'paragraph', label: 'テキスト' },
+		{ id: 'h1', label: '見出し1' },
+		{ id: 'h2', label: '見出し2' },
+		{ id: 'h3', label: '見出し3' },
+		{ id: 'bulletList', label: '箇条書き' },
+		{ id: 'orderedList', label: '番号付きリスト' },
+		{ id: 'taskList', label: 'チェックリスト' },
+		{ id: 'blockquote', label: '引用' },
+		{ id: 'codeBlock', label: 'コード' }
+	];
+
+	function openBlockMenu(handleEl: HTMLElement) {
+		const rect = handleEl.getBoundingClientRect();
+		blockMenuPos = { top: rect.bottom + 6, left: Math.max(8, rect.left - 150) };
+		showBlockMenu = true;
+	}
+
+	function convertBlock(type: string) {
+		if (!editor || activeBlockPos === null) return;
+		const chain = editor.chain().focus().setNodeSelection(activeBlockPos);
+		switch (type) {
+			case 'paragraph':
+				chain.setParagraph().run();
+				break;
+			case 'h1':
+				chain.setHeading({ level: 1 }).run();
+				break;
+			case 'h2':
+				chain.setHeading({ level: 2 }).run();
+				break;
+			case 'h3':
+				chain.setHeading({ level: 3 }).run();
+				break;
+			case 'bulletList':
+				chain.toggleBulletList().run();
+				break;
+			case 'orderedList':
+				chain.toggleOrderedList().run();
+				break;
+			case 'taskList':
+				chain.toggleTaskList().run();
+				break;
+			case 'blockquote':
+				chain.toggleBlockquote().run();
+				break;
+			case 'codeBlock':
+				chain.toggleCodeBlock().run();
+				break;
+		}
+		showBlockMenu = false;
+	}
+
+	// メニュー外クリックで閉じる
+	$effect(() => {
+		if (!showBlockMenu || typeof window === 'undefined') return;
+		const handler = (e: MouseEvent) => {
+			const target = e.target as HTMLElement;
+			if (!target.closest('.block-menu')) showBlockMenu = false;
+		};
+		document.addEventListener('click', handler);
+		return () => document.removeEventListener('click', handler);
+	});
 
 	// --- WikiLink サジェスト ---
 	type Suggestion = { id: string; title: string; slug: string };
@@ -253,6 +330,42 @@
 				NoteEmbedNode,
 				Markdown
 			];
+
+			// Notion風ブロックハンドル（設定でオンオフ）
+			if (showBlockHandle && editable) {
+				extensions.push(
+					DragHandle.configure({
+						render: () => {
+							const el = document.createElement('div');
+							el.className = 'block-drag-handle';
+							el.setAttribute('title', 'ドラッグで移動 / クリックで種類変更');
+							el.innerHTML =
+								'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>';
+							el.addEventListener('click', (e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								openBlockMenu(el);
+							});
+							return el;
+						},
+						onNodeChange: ({ node }) => {
+							if (!node || !editor) {
+								activeBlockPos = null;
+								return;
+							}
+							let found = -1;
+							editor.state.doc.descendants((n, pos) => {
+								if (n === node) {
+									found = pos;
+									return false;
+								}
+								return true;
+							});
+							if (found >= 0) activeBlockPos = found;
+						}
+					})
+				);
+			}
 
 			editor = new Editor({
 				element: element,
@@ -458,6 +571,26 @@
 
 	<div bind:this={element} class="w-full"></div>
 
+	{#if showBlockMenu}
+		<div
+			class="block-menu border-base-300 bg-base-100 fixed z-[100] flex w-40 flex-col rounded-lg border py-1 shadow-lg"
+			style="top: {blockMenuPos.top}px; left: {blockMenuPos.left}px;"
+		>
+			{#each blockTypes as bt (bt.id)}
+				<button
+					type="button"
+					class="hover:bg-base-200 px-3 py-1.5 text-left text-sm"
+					onclick={(e) => {
+						e.stopPropagation();
+						convertBlock(bt.id);
+					}}
+				>
+					{bt.label}
+				</button>
+			{/each}
+		</div>
+	{/if}
+
 	{#if showSuggestions && suggestions.length > 0}
 		<div
 			bind:this={suggestContainer}
@@ -538,6 +671,29 @@
 		bottom: 0;
 		background: rgba(200, 200, 255, 0.4);
 		pointer-events: none;
+	}
+
+	/* Notion風ブロックハンドル */
+	:global(.block-drag-handle) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		border-radius: 4px;
+		color: var(--color-base-content);
+		opacity: 0.45;
+		cursor: grab;
+		transition:
+			background-color 0.15s,
+			opacity 0.15s;
+	}
+	:global(.block-drag-handle:hover) {
+		background-color: var(--color-base-200);
+		opacity: 1;
+	}
+	:global(.block-drag-handle:active) {
+		cursor: grabbing;
 	}
 
 	/* 挿入された画像のスタイル */

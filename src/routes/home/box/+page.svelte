@@ -71,16 +71,16 @@
 </script>
 
 <div class="container mx-auto px-4 py-8">
-	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-3xl font-bold">ノート一覧</h1>
-		<div class="flex gap-2">
+	<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+		<h1 class="text-2xl font-bold">ノート一覧</h1>
+		<div class="flex flex-wrap gap-2">
 			<a href="/home/box/archived" class="btn btn-ghost btn-sm"> 📁 アーカイブ </a>
 			<a href="/home/box/deleted" class="btn btn-ghost btn-sm"> 🗑️ 削除済み </a>
 			<button
 				onclick={createNewNote}
 				disabled={isCreating}
 				class:loading={isCreating}
-				class="btn btn-primary"
+				class="btn btn-primary btn-sm"
 			>
 				{#if isCreating}
 					作成中...
@@ -100,7 +100,7 @@
 		</div>
 	</div>
 
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+	<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
 		{#each filteredNotes as note (note.id)}
 			<MemoCard {note} linkToDetail={true} />
 		{/each}
