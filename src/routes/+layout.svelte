@@ -265,7 +265,7 @@
 
 				<button
 					onclick={() => openCreateModal()}
-					class="btn btn-circle btn-primary btn-lg absolute right-4 bottom-20 z-20 shadow-lg"
+					class="btn btn-circle btn-primary btn-lg absolute right-4 bottom-20 z-20 shadow-lg lg:bottom-6"
 					aria-label="Create Note"
 				>
 					<!-- add -->
@@ -291,6 +291,7 @@
 					<li><a href="/home">タイムライン</a></li>
 					<li><a href="/home/encounters">🔮 出会い</a></li>
 					<li><a href="/home/box">ノート一覧</a></li>
+					<li><a href="/home/search">検索</a></li>
 					<li><a href="/home/tasklist">タスクリスト</a></li>
 					<li><a href="/home/archive">アーカイブ</a></li>
 					<li><a href="/home/trash">ゴミ箱</a></li>
