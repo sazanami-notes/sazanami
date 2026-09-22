@@ -420,7 +420,7 @@
 
 <div
 	bind:this={element}
-	class="card bg-base-100 shadow-sm transition-transform duration-200 ease-in-out select-none"
+	class="card bg-base-100 shadow transition-transform duration-200 ease-in-out select-none"
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}

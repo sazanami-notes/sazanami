@@ -32,12 +32,12 @@
 			.replace(/[#>*_`~]/g, ' ')
 			.replace(/\s+/g, ' ')
 			.trim()
-			.slice(0, 90);
+			.slice(0, 120);
 	}
 </script>
 
-<div class="border-base-300 mt-8 border-t pt-6">
-	<h2 class="text-base-content/70 mb-4 flex items-center gap-2 text-base font-semibold">
+<div class="mt-8 pb-24">
+	<h2 class="text-base-content/60 mb-3 flex items-center gap-2 text-sm font-semibold">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			class="h-4 w-4"
@@ -53,48 +53,91 @@
 			/>
 		</svg>
 		リンク
+		{#if hasLinks}
+			<span class="text-base-content/40 font-normal">{mixedLinks.length + twoHopLinks.length}</span>
+		{/if}
 	</h2>
 
-	{#if !hasLinks}
-		<p class="text-base-content/40 text-sm">リンクはありません</p>
-	{:else}
-		<div class="flex flex-col gap-6">
-			{#if mixedLinks.length > 0}
-				<ul class="space-y-2">
-					{#each mixedLinks as link (link.id)}
-						{@const s = snippet(link.content)}
-						<li>
-							<a href={`/home/note/${link.id}`} class="link-hover link text-sm font-medium">
-								{link.title || '無題'}
-							</a>
-							{#if s}
-								<div class="text-base-content/50 truncate text-xs">{s}</div>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			{/if}
-
-			{#if twoHopLinks.length > 0}
-				<div>
-					<h3 class="text-base-content/40 mb-2 text-xs font-semibold tracking-wider">
-						2ホップリンク
-					</h3>
-					<ul class="space-y-2">
-						{#each twoHopLinks as link (link.id)}
+	<div class="card bg-base-100 border-base-200/70 rounded-box border shadow">
+		<div class="card-body p-2">
+			{#if !hasLinks}
+				<p class="text-base-content/40 p-3 text-sm">リンクはありません</p>
+			{:else}
+				{#if mixedLinks.length > 0}
+					<ul class="divide-base-200/60 divide-y">
+						{#each mixedLinks as link (link.id)}
 							{@const s = snippet(link.content)}
 							<li>
-								<a href={`/home/note/${link.id}`} class="link-hover link text-sm">
-									{link.title || '無題'}
+								<a
+									href={`/home/note/${link.id}`}
+									class="hover:bg-base-200/60 flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors"
+								>
+									<div class="min-w-0 flex-1">
+										<span class="link-hover text-sm font-medium">{link.title || '無題'}</span>
+										{#if s}
+											<p class="text-base-content/50 mt-0.5 line-clamp-2 text-xs">{s}</p>
+										{/if}
+									</div>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="text-base-content/30 h-4 w-4 shrink-0"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5l7 7-7 7"
+										/>
+									</svg>
 								</a>
-								{#if s}
-									<div class="text-base-content/50 truncate text-xs">{s}</div>
-								{/if}
 							</li>
 						{/each}
 					</ul>
-				</div>
+				{/if}
+
+				{#if twoHopLinks.length > 0}
+					<div class="mt-1">
+						<h3 class="text-base-content/40 px-3 pb-1 text-xs font-semibold tracking-wider">
+							2ホップリンク
+						</h3>
+						<ul class="divide-base-200/60 divide-y">
+							{#each twoHopLinks as link (link.id)}
+								{@const s = snippet(link.content)}
+								<li>
+									<a
+										href={`/home/note/${link.id}`}
+										class="hover:bg-base-200/60 flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors"
+									>
+										<div class="min-w-0 flex-1">
+											<span class="link-hover text-sm">{link.title || '無題'}</span>
+											{#if s}
+												<p class="text-base-content/50 mt-0.5 line-clamp-2 text-xs">{s}</p>
+											{/if}
+										</div>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="text-base-content/30 h-4 w-4 shrink-0"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M9 5l7 7-7 7"
+											/>
+										</svg>
+									</a>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
 			{/if}
 		</div>
-	{/if}
+	</div>
 </div>

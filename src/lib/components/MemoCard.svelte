@@ -134,7 +134,7 @@
 
 {#if linkToDetail}
 	<div
-		class="card bg-base-200 rounded-box block max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		class="card bg-base-100 border-base-200/70 rounded-box block max-h-64 min-h-40 cursor-pointer overflow-hidden border p-3 shadow transition-shadow hover:shadow-md"
 		onclick={(e) => {
 			// WikiLinkへのクリックなら親の遷移を無視する
 			if ((e.target as HTMLElement).closest('a.wiki-link')) return;
@@ -146,9 +146,9 @@
 			if (e.key === 'Enter' && note.id) goto(`/home/note/${note.id}`);
 		}}
 	>
-		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
+		<h2 class="card-title mb-1 line-clamp-2 text-base font-bold">{note.title}</h2>
 		<div
-			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
+			class="prose text-base-content/70 mb-2 line-clamp-3 text-sm"
 			use:enhanceProseContent={processedContent}
 		>
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -162,16 +162,16 @@
 		</div>
 		{:else}
 		<div
-		class="card bg-base-200 rounded-box max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		class="card bg-base-100 border-base-200/70 rounded-box max-h-64 min-h-40 cursor-pointer overflow-hidden border p-3 shadow transition-shadow hover:shadow-md"
 		onclick={handleClick}
 		role="button"
 		tabindex="0"
 		onkeydown={(e) => e.key === 'Enter' && handleClick()}
 		aria-label="メモを編集"
 		>
-		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
+		<h2 class="card-title mb-1 line-clamp-2 text-base font-bold">{note.title}</h2>
 		<div
-			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
+			class="prose text-base-content/70 mb-2 line-clamp-3 text-sm"
 			use:enhanceProseContent={processedContent}
 		>
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->

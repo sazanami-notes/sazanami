@@ -359,7 +359,7 @@
 	<hr class="border-base-300 my-4" />
 
 	<div class="mb-4">
-		<div class="card bg-base-100 border-base-200/70 rounded-box border shadow-sm">
+		<div class="card bg-base-100 border-base-200/70 rounded-box border shadow">
 			<div class="min-h-[400px] w-full p-4">
 				{#key editorKey}
 					<TiptapEditor content={content} onchange={handleContentChange} />

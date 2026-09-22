@@ -26,23 +26,23 @@
 	}
 </script>
 
-<div class="card bg-base-200 mt-4 shadow-sm">
+<div class="card bg-base-100 border-base-200/70 mt-4 rounded-box border shadow">
 	<div class="card-body p-4">
-		<div class="mb-1 flex items-center gap-2">
-			<span class="badge badge-secondary badge-sm">🧠 コンテキスト</span>
-			<span class="text-xs opacity-50">後から気づいたことを追記（生メモは書き換えない）</span>
+		<div class="mb-2 flex flex-wrap items-center gap-2">
+			<span class="badge badge-secondary badge-sm whitespace-nowrap">🧠 コンテキスト</span>
+			<span class="text-base-content/50 text-xs">後から気づいたことを追記（生メモは書き換えない）</span>
 		</div>
 		<textarea
-			class="textarea textarea-bordered w-full"
+			class="textarea textarea-bordered w-full text-sm"
 			rows={3}
 			bind:value={contextText}
 			placeholder="例: これは通勤中に思いついた。あとでXXの動画と関連付けて見直したい。"
 		></textarea>
 		<div class="card-actions justify-end">
 			{#if saved}
-				<span class="text-xs opacity-60">保存しました</span>
+				<span class="text-base-content/60 text-xs">保存しました</span>
 			{/if}
-			<button class="btn btn-outline btn-xs" onclick={save} disabled={busy}>
+			<button class="btn btn-outline btn-sm" onclick={save} disabled={busy}>
 				{busy ? '保存中...' : '保存'}
 			</button>
 		</div>
