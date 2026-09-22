@@ -218,27 +218,36 @@
 	}
 </script>
 
-<div class="mb-6 flex items-center justify-between">
-	<a href="/home/box" class="btn btn-ghost btn-sm">
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke-width="1.5"
-			stroke="currentColor"
-			class="mr-1 h-4 w-4"
+<div class="mb-4 flex items-center justify-between">
+	<div class="flex items-center gap-2">
+		<a
+			href="/home/box"
+			class="btn btn-ghost btn-sm btn-square"
+			title="一覧に戻る"
+			aria-label="一覧に戻る"
 		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-			/>
-		</svg>
-		一覧に戻る
-	</a>
-	<div class="flex gap-2">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke-width="1.5"
+				stroke="currentColor"
+				class="h-4 w-4"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+				/>
+			</svg>
+		</a>
+		<span class="text-base-content/50 text-xs">{formattedUpdatedAt}</span>
+	</div>
+	<div class="flex items-center gap-1">
 		<button
-			class="btn btn-outline btn-sm {copySuccess ? 'btn-success' : ''}"
+			class="btn btn-ghost btn-sm btn-square {copySuccess ? 'text-success' : ''}"
+			title={copySuccess ? 'コピーしました' : 'Markdownコピー'}
+			aria-label="Markdownコピー"
 			onclick={() => copyAsMarkdown()}
 		>
 			<svg
@@ -247,7 +256,7 @@
 				viewBox="0 0 24 24"
 				stroke-width="1.5"
 				stroke="currentColor"
-				class="mr-1 h-4 w-4"
+				class="h-4 w-4"
 			>
 				<path
 					stroke-linecap="round"
@@ -255,7 +264,6 @@
 					d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
 				/>
 			</svg>
-			{copySuccess ? 'コピーしました！' : 'Markdownコピー'}
 		</button>
 
 		<!-- 三点リーダーメニュー -->
@@ -340,8 +348,8 @@
 			name="title"
 			bind:value={title}
 			oninput={handleTitleInput}
-			class="w-full bg-transparent px-3 py-2 text-3xl font-bold focus:outline-none"
-			placeholder="タイトルを入力..."
+			class="w-full bg-transparent px-1 py-1 text-2xl font-bold focus:outline-none"
+			placeholder="タイトル"
 		/>
 		{#if titleError}
 			<p class="text-error px-3 text-sm">{titleError}</p>
@@ -351,10 +359,12 @@
 	<hr class="border-base-300 my-4" />
 
 	<div class="mb-4">
-		<div class="min-h-[400px] w-full">
-			{#key editorKey}
-				<TiptapEditor content={content} onchange={handleContentChange} />
-			{/key}
+		<div class="card bg-base-100 border-base-200/70 rounded-box border shadow-sm">
+			<div class="min-h-[400px] w-full p-4">
+				{#key editorKey}
+					<TiptapEditor content={content} onchange={handleContentChange} />
+				{/key}
+			</div>
 		</div>
 	</div>
 
@@ -363,15 +373,15 @@
 	<!-- Layer 1: コンテキスト追記（生メモと分離） -->
 	<ContextSection noteId={data.note.id} initialContext={data.note.context ?? null} />
 
-	<div class="flex items-center justify-end space-x-4">
-		{#if isSaving}
-			<span class="text-base-content/60 text-sm">保存中...</span>
-		{:else if isOfflineQueued}
-			<span class="text-warning text-sm">オフライン保存（未同期）</span>
-		{:else}
-			<span class="text-base-content/60 pr-2 text-sm">最終更新: {formattedUpdatedAt}</span>
-		{/if}
-	</div>
+	{#if isSaving || isOfflineQueued}
+		<div class="flex items-center justify-end">
+			{#if isSaving}
+				<span class="text-base-content/60 text-sm">保存中...</span>
+			{:else}
+				<span class="text-warning text-sm">オフライン保存（未同期）</span>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 {#if data.links}
