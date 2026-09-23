@@ -15,10 +15,22 @@
 
 	let editingNoteId: string | null = $state(null);
 	let sortKey: SortKey = $state('updatedAt_desc');
+	// クイックキャプチャ直後の楽観的反映用（invalidate完了でサーバー値に置き換わる）
+	let optimisticNotes = $state<(Note & { tags: string[] })[]>([]);
 
 	const rawNotes = $derived(data.notes || []);
-	const notes = $derived(sortNotes(rawNotes, sortKey));
+	const notes = $derived([
+		...optimisticNotes.filter((o) => !rawNotes.some((r) => r.id === o.id)),
+		...sortNotes(rawNotes, sortKey)
+	]);
 	const repliesByParent = $derived(data.repliesByParent || {});
+
+	function handleCreated(note: Note) {
+		// トップレベルの投稿のみ即時追加（リプライは親ツリー側で表示）
+		if (!note.parentId) {
+			optimisticNotes = [{ ...note, tags: [] }, ...optimisticNotes];
+		}
+	}
 
 	function handleEdit(event: CustomEvent<Note>) {
 		editingNoteId = event.detail.id;
@@ -54,7 +66,7 @@
 
 		<!-- 取るUI: クイックキャプチャ -->
 		<div class="mb-4">
-			<QuickCapture />
+			<QuickCapture oncreated={handleCreated} />
 		</div>
 
 		<div class="flex flex-col space-y-4">

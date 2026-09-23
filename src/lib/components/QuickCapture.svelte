@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import type { Note } from '$lib/types';
+
+	let { oncreated }: { oncreated?: (note: Note) => void } = $props();
 
 	let text = $state('');
 	let busy = $state(false);
@@ -15,10 +18,12 @@
 				body: JSON.stringify({ content: value })
 			});
 			if (res.ok) {
+				const note = (await res.json()) as Note;
 				text = '';
-				// invalidate('/home') は home の load が url 非依存だと無効化対象にならないため、
-				// 確実に一覧を再取得するには invalidateAll() を使う
-				await invalidateAll();
+				// 親へ即時反映（楽観的更新）
+				oncreated?.(note);
+				// 一覧の再取得は裏で実行（体感をブロックしない）
+				invalidateAll().catch(() => {});
 			}
 		} catch (e) {
 			console.error('Quick capture error:', e);
