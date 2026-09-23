@@ -1,15 +1,14 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { db, updateNoteLinks } from '$lib/server/db';
-import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
-import { eq, or, like, desc, sql, and } from 'drizzle-orm';
+import { notes, tags, noteTags } from '$lib/server/db/schema';
+import { eq, or, like, desc, sql, and, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
 
 export const GET: RequestHandler = async ({ url, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	console.log('Session in GET:', session);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
@@ -97,7 +96,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return json({ message: 'Unauthorized - No session found' }, { status: 401 });
 	}
@@ -111,9 +110,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ message: 'Invalid JSON format' }, { status: 400 });
 		}
 
-		// [デバッグ用ログ] 受信したリクエストボディを確認
-		console.log('Received request to create note');
-
 		if (typeof body !== 'object' || body === null) {
 			return json({ message: 'Invalid request body' }, { status: 400 });
 		}
@@ -122,7 +118,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			title,
 			content,
 			tags: tagNames,
-			skipTimeline,
 			status,
 			parentId
 		} = body as {
@@ -201,68 +196,46 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		}
 
-		// 新規メモを作成
-		await db.insert(notes).values({
-			id: noteId,
-			userId: session.session.userId,
-			title: noteTitle,
-			slug: noteSlug, // スラッグを保存
-			content: noteContent,
-			createdAt: now,
-			updatedAt: now,
-			isPublic: false,
-			parentId: parentNoteId,
-			...(status ? { status } : {})
-		});
-
-		// タイムラインイベントを記録（フラグでスキップ可能）
-		if (!skipTimeline) {
-			await db.insert(timeline).values({
+		// 新規メモを作成（作成行をそのまま返す）
+		const [created] = await db
+			.insert(notes)
+			.values({
+				id: noteId,
 				userId: session.session.userId,
-				noteId: noteId,
-				type: 'note_created',
-				createdAt: now
-			});
-		}
+				title: noteTitle,
+				slug: noteSlug, // スラッグを保存
+				content: noteContent,
+				createdAt: now,
+				updatedAt: now,
+				isPublic: false,
+				parentId: parentNoteId,
+				...(status ? { status } : {})
+			})
+			.returning();
 
-		// タグの処理
+		// タグの処理（既存タグを一括取得 → 新規タグをまとめて作成）
 		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
-			for (const tagName of tagNames) {
-				if (!tagName || !tagName.trim()) continue;
-
-				const trimmedTagName = tagName.trim();
-
-				// タグが存在するか確認
-				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
-
-				let tagId: string;
-
-				if (existingTag.length === 0) {
-					// 新規タグを作成
-					tagId = ulid();
-					await db.insert(tags).values({
-						id: tagId,
-						name: trimmedTagName,
-						createdAt: now
-					});
-				} else {
-					tagId = existingTag[0].id;
+			const names = [...new Set(tagNames.map((t) => (t || '').trim()).filter(Boolean))];
+			if (names.length > 0) {
+				const existingTags = await db.select().from(tags).where(inArray(tags.name, names));
+				const tagIdByName = new Map(existingTags.map((t) => [t.name, t.id]));
+				const newTags = names
+					.filter((name) => !tagIdByName.has(name))
+					.map((name) => ({ id: ulid(), name, createdAt: now }));
+				if (newTags.length > 0) {
+					await db.insert(tags).values(newTags);
+					newTags.forEach((t) => tagIdByName.set(t.name, t.id));
 				}
-
-				// ノートとタグの関連付け
-				await db.insert(noteTags).values({
-					noteId,
-					tagId
-				});
+				await db
+					.insert(noteTags)
+					.values(names.map((name) => ({ noteId, tagId: tagIdByName.get(name)! })));
 			}
 		}
 
-		// After creating the note, update its links
-		await updateNoteLinks(noteId, noteContent, session.session.userId);
+		// リンクの解決（新規ノートでリンクが無ければ内部でスキップ）
+		await updateNoteLinks(noteId, noteContent, session.session.userId, { isNew: true });
 
-		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
-
-		return json(newNote[0], { status: 201 });
+		return json(created, { status: 201 });
 	} catch (error) {
 		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);

@@ -2,8 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db, updateNoteLinks } from '$lib/server/db';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { ulid } from 'ulid';
 import { generateSlug } from '$lib/utils/slug';
 import JSZip from 'jszip';
@@ -107,7 +106,7 @@ async function extractMarkdownFromZip(zipFile: File): Promise<{ name: string; co
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session?.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}

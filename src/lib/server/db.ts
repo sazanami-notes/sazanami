@@ -143,9 +143,19 @@ export const deleteNote = async (id: string, userId: string) => {
  * @param content The new content of the note.
  * @param userId The ID of the user who owns the note.
  */
-export const updateNoteLinks = async (sourceNoteId: string, content: string, userId: string) => {
+export const updateNoteLinks = async (
+	sourceNoteId: string,
+	content: string,
+	userId: string,
+	options?: { isNew?: boolean }
+) => {
 	// 1. Parse content to extract wiki link titles
 	const linkedTitles = extractWikiLinks(content);
+
+	// 新規ノートでリンクも無ければ、note_links / resolved_links は初期状態のまま何もしない
+	if (linkedTitles.length === 0 && options?.isNew) {
+		return;
+	}
 
 	// 2. Find the corresponding notes for each link title
 	let targetNotes: { id: string; title: string }[] = [];

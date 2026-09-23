@@ -1,5 +1,4 @@
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import type { LayoutServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/connection';
@@ -8,9 +7,7 @@ import { eq } from 'drizzle-orm';
 
 export const load: LayoutServerLoad = async ({ request, url }) => {
 	const queryParams = url.searchParams.toString();
-	const sessionData = await auth.api.getSession({
-		headers: request.headers
-	});
+	const sessionData = await getSessionCached(request.headers);
 
 	const allowedPaths = ['/login', '/login/two-factor', '/'];
 	const isAllowedPath =

@@ -3,11 +3,9 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes, timeline } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
-
+import { getSessionCached } from '$lib/server/auth-session';
 export const POST: RequestHandler = async ({ request, params }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}

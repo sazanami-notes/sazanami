@@ -2,14 +2,11 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db/connection';
 import { userSettings, themes } from '$lib/server/db/schema';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { eq, and } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ request }) => {
-	const session = await auth.api.getSession({
-		headers: request.headers
-	});
+	const session = await getSessionCached(request.headers);
 
 	if (!session) {
 		throw redirect(302, '/login');
@@ -37,9 +34,7 @@ export const load: PageServerLoad = async ({ request }) => {
 
 export const actions: Actions = {
 	saveSettings: async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session = await getSessionCached(request.headers);
 
 		if (!session) {
 			return fail(401, { message: 'Unauthorized' });
@@ -85,9 +80,7 @@ export const actions: Actions = {
 	},
 
 	createTheme: async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session = await getSessionCached(request.headers);
 
 		if (!session) {
 			return fail(401, { message: 'Unauthorized' });
@@ -124,9 +117,7 @@ export const actions: Actions = {
 	},
 
 	deleteTheme: async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session = await getSessionCached(request.headers);
 
 		if (!session) {
 			return fail(401, { message: 'Unauthorized' });

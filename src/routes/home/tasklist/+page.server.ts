@@ -3,13 +3,9 @@ import { db } from '$lib/server/db';
 import { notes, noteTags, tags } from '$lib/server/db/schema';
 import { noteListSelect } from '$lib/server/db/note-list';
 import { and, eq, desc, like, or } from 'drizzle-orm';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
-
+import { getSessionCached } from '$lib/server/auth-session';
 export const load: ServerLoad = async ({ request }) => {
-	const sessionData = await auth.api.getSession({
-		headers: request.headers
-	});
+	const sessionData = await getSessionCached(request.headers);
 
 	if (!sessionData?.session) {
 		throw redirect(302, '/login');
