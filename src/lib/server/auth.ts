@@ -26,6 +26,7 @@ export function createAuth(platformEnv?: Record<string, string>) {
 
 	return betterAuth({
 		appName: 'Sazanami',
+		basePath: '/api/auth',
 		baseURL: authUrl,
 		secret: authSecret,
 		emailAndPassword: {
@@ -61,6 +62,19 @@ export function createAuth(platformEnv?: Record<string, string>) {
 		cookie: {
 			path: '/'
 		},
+		// 複数オリジン対応: Sazanami はカスタムドメイン（sznm.f5.si）と workers.dev の
+		// 両方のURLでアクセスされる。hooks.server.ts で /api/auth/* をオリジンに依らず
+		// better-auth に委譲するため、許可するオリジンをここで明示する。
+		trustedOrigins: [
+			'https://app.sznm.f5.si',
+			'https://dev.sznm.f5.si',
+			'https://sazanami.214kaedesato.workers.dev',
+			'https://sazanami-dev.214kaedesato.workers.dev',
+			'http://localhost:5173',
+			'http://localhost:4173',
+			'http://127.0.0.1:5173',
+			'http://127.0.0.1:4173'
+		],
 		plugins: [
 			passkey(),
 			twoFactor({
