@@ -1,7 +1,10 @@
 # Sazanami - Cloudflare Workers 設定
 # 本番 = sazanami（default）, 開発 = sazanami-dev（[[env.dev]]）
+# 公開URLの正: 本番 = https://app.sznm.f5.si / 開発 = https://dev.sznm.f5.si
+# （workers.dev は予備として有効のまま残す。auth.ts の trustedOrigins に全オリジン列挙）
 # 実際の機密値（TURSO_*, BETTER_AUTH_SECRET, S3_*）は wrangler secret で設定する。
 # このファイルには変数名・非機密な設定のみを書く。
+# ⚠️ CF側のvarsは粘着性があるため、デプロイ時は --var でも明示する（例: --var 'BETTER_AUTH_URL:...'）
 
 name = "sazanami"
 main = ".svelte-kit/cloudflare/_worker.js"
@@ -12,7 +15,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 STORAGE_DRIVER = "s3"
 S3_PUBLIC_URL = ""
-BETTER_AUTH_URL = "https://sazanami.214kaedesato.workers.dev"
+BETTER_AUTH_URL = "https://app.sznm.f5.si"
 
 # 本番環境のルーティング（カスタムドメインがあればここに。なければ *.workers.dev で公開）
 # routes = [ "sazanami.example.com/*" ]
@@ -26,9 +29,8 @@ compatibility_flags = ["nodejs_compat"]
 [env.dev.vars]
 STORAGE_DRIVER = "local"
 S3_PUBLIC_URL = ""
-BETTER_AUTH_URL = "https://sazanami-dev.214kaedesato.workers.dev"
+BETTER_AUTH_URL = "https://dev.sznm.f5.si"
 EMAIL_DRIVER = "plunk"
-MZK_EMAIL_TEST = "abc"
 
 # 観測性（オプション）：本番のみログ取得を有効化したい場合はコメント外す
 # [observability]
