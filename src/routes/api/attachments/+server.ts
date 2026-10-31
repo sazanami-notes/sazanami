@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { attachments } from '$lib/server/db/schema';
 import { getSessionCached } from '$lib/server/auth-session';
-import { getStorageDriver } from '$lib/server/storage';
+import { getStorageDriver, type R2Bucket } from '$lib/server/storage';
 import { ulid } from 'ulid';
 import { eq, and, desc } from 'drizzle-orm';
 
@@ -46,7 +46,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 // --------------------------------------------------------
 // POST /api/attachments - ファイルアップロード
 // --------------------------------------------------------
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	const session = await getSessionCached(request.headers);
 	if (!session?.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
@@ -71,7 +71,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		const fileId = ulid();
 		const buffer = Buffer.from(await file.arrayBuffer());
 
-		const storage = await getStorageDriver();
+		const storage = await getStorageDriver(
+			(platform?.env as { R2?: R2Bucket } | undefined)?.R2
+		);
 		const { url, filePath } = await storage.upload({
 			fileId,
 			fileName: file.name,
@@ -101,7 +103,7 @@ export const POST: RequestHandler = async ({ request }) => {
 // --------------------------------------------------------
 // DELETE /api/attachments?id=XXX - 画像削除
 // --------------------------------------------------------
-export const DELETE: RequestHandler = async ({ request, url }) => {
+export const DELETE: RequestHandler = async ({ request, url, platform }) => {
 	const session = await getSessionCached(request.headers);
 	if (!session?.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
@@ -126,7 +128,9 @@ export const DELETE: RequestHandler = async ({ request, url }) => {
 	const attachment = rows[0];
 
 	try {
-		const storage = await getStorageDriver();
+		const storage = await getStorageDriver(
+			(platform?.env as { R2?: R2Bucket } | undefined)?.R2
+		);
 		await storage.delete(attachment.filePath);
 	} catch (err) {
 		console.error('Storage delete error:', err);

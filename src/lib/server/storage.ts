@@ -143,7 +143,7 @@ async function createS3Driver(): Promise<StorageDriver> {
 // ---------------------------------------------------------------------------
 
 // Minimal R2Bucket interface (full types from @cloudflare/workers-types)
-interface R2Bucket {
+export interface R2Bucket {
 	put(
 		key: string,
 		value: ArrayBuffer | Uint8Array | ReadableStream | string,
@@ -152,7 +152,12 @@ interface R2Bucket {
 			customMetadata?: Record<string, string>;
 		}
 	): Promise<R2Object | null>;
+	get(key: string): Promise<R2ObjectBody | null>;
 	delete(key: string | string[]): Promise<void>;
+}
+
+export interface R2ObjectBody extends R2Object {
+	body: ReadableStream;
 }
 
 interface R2Object {
