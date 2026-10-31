@@ -17,7 +17,8 @@
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
 	import { Markdown } from '@tiptap/markdown';
 import DragHandle from '@tiptap/extension-drag-handle';
-	import { goto } from '$app/navigation';
+import { goto } from '$app/navigation';
+import { toAvifOrOriginal } from '$lib/utils/image-convert';
 
 	const lowlight = createLowlight(all);
 
@@ -69,8 +70,15 @@ import DragHandle from '@tiptap/extension-drag-handle';
 		uploadProgress = 0;
 
 		try {
+			// JPEG/PNG/WebPはブラウザ側でAVIFに変換してから送る（失敗時は元ファイル）
+			const uploadFile = await toAvifOrOriginal(file);
+			if (uploadFile.size > 10 * 1024 * 1024) {
+				alert('画像ファイルのサイズは10MB以下にしてください。');
+				return null;
+			}
+
 			const formData = new FormData();
-			formData.append('file', file);
+			formData.append('file', uploadFile);
 
 			// XMLHttpRequest でプログレス表示
 			const url = await new Promise<string>((resolve, reject) => {

@@ -26,6 +26,7 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1030.0",
 		"@better-auth/passkey": "1.6.25",
+		"@jsquash/avif": "^2.1.1",
 		"@libsql/client": "^0.15.10",
 		"@tiptap/core": "^3.20.0",
 		"@tiptap/extension-code-block-lowlight": "^3.20.0",

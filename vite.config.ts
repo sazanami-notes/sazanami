@@ -5,6 +5,11 @@ import { configDefaults } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	// @jsquash/avif が同梱するマルチスレッドWASMワーカー（avif_enc_mt.js）を
+	// Rollupがiifeで出力しようとして失敗するため、ES形式に固定する
+	worker: {
+		format: 'es'
+	},
 	ssr: {
 		external: ['nodemailer']
 	},
