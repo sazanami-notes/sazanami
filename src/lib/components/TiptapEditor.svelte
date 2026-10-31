@@ -15,6 +15,7 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
+	import { YoutubeNode, isYoutubeUrl } from './extensions/YoutubeNode';
 	import { Markdown } from '@tiptap/markdown';
 import DragHandle from '@tiptap/extension-drag-handle';
 import { goto } from '$app/navigation';
@@ -54,8 +55,32 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 	function normalizeMarkdown(markdown: string) {
 		return markdown
 			.replace(/\u00a0/g, ' ')
-			.replace(/^[ \t]*&nbsp;[ \t]*$/gm, '')
+			.replace(/^[ 	]*&nbsp;[ 	]*$/gm, '')
 			.replace(/&nbsp;/g, ' ');
+	}
+
+	/**
+	 * Markdown由来の「URLだけの段落」をYouTube埋め込みノードに置き換える。
+	 * 保存形式はURL文字列のままなので他ツールとも相互運用できる。
+	 */
+	function normalizeYoutubeBlocks(ed: Editor) {
+		const { state } = ed;
+		const targets: { pos: number; size: number; src: string }[] = [];
+		state.doc.descendants((node, pos) => {
+			if (node.type.name !== 'paragraph' || node.childCount !== 1) return;
+			const child = node.firstChild;
+			if (!child?.isText) return;
+			const text = (child.text || '').trim();
+			if (isYoutubeUrl(text)) targets.push({ pos, size: node.nodeSize, src: text });
+		});
+		if (targets.length === 0) return;
+
+		const tr = state.tr;
+		for (const t of targets.reverse()) {
+			tr.replaceWith(t.pos, t.pos + t.size, state.schema.nodes.youtube.create({ src: t.src }));
+		}
+		tr.setMeta('addToHistory', false);
+		ed.view.dispatch(tr);
 	}
 
 	// --- 画像アップロード処理 ---
@@ -336,6 +361,7 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 				}),
 				WikiLinkMark,
 				NoteEmbedNode,
+				YoutubeNode,
 				Markdown
 			];
 
@@ -431,6 +457,15 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 								}
 							}
 						}
+
+						// YouTubeのURLを貼ったら埋め込み（クリックで再生）に変換
+						const text = event.clipboardData?.getData('text/plain')?.trim();
+						if (text && isYoutubeUrl(text)) {
+							event.preventDefault();
+							editor?.chain().focus().insertContent({ type: 'youtube', attrs: { src: text } }).run();
+							return true;
+						}
+
 						return false;
 					},
 					// 画像ドロップ対応
@@ -481,6 +516,8 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 			});
 
 			lastSyncedMarkdown = normalizeMarkdown(editor.getMarkdown());
+			// 既存メモにURLだけ書かれている場合は埋め込みノードに変換する
+			normalizeYoutubeBlocks(editor);
 		} catch (error) {
 			console.error('Editor init error:', error);
 			alert('エディタの読み込みに失敗しました: ' + (error as Error).message);
@@ -520,6 +557,7 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 				isUpdatingInternal = true;
 				lastSyncedMarkdown = normalizedIncoming;
 				editor.commands.setContent(normalizedIncoming, { contentType: 'markdown' });
+				normalizeYoutubeBlocks(editor);
 				setTimeout(() => {
 					isUpdatingInternal = false;
 				}, 10);
