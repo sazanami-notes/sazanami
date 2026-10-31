@@ -23,6 +23,8 @@ export function createAuth(platformEnv?: Record<string, string>) {
 	const authSecret = platformEnv?.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET;
 	const googleClientId = platformEnv?.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID;
 	const googleClientSecret = platformEnv?.GOOGLE_CLIENT_SECRET || env.GOOGLE_CLIENT_SECRET;
+	const discordClientId = platformEnv?.DISCORD_CLIENT_ID || env.DISCORD_CLIENT_ID;
+	const discordClientSecret = platformEnv?.DISCORD_CLIENT_SECRET || env.DISCORD_CLIENT_SECRET;
 
 	return betterAuth({
 		appName: 'Sazanami',
@@ -57,7 +59,25 @@ export function createAuth(platformEnv?: Record<string, string>) {
 						clientId: googleClientId,
 						clientSecret: googleClientSecret || ''
 					}
-				: undefined
+				: undefined,
+			discord:
+				discordClientId && discordClientSecret
+					? {
+							clientId: discordClientId,
+							clientSecret: discordClientSecret,
+							// Discordはメールアドレスを返さない場合がある（emailスコープ未許可/未認証）
+							// → 実メールがあればそれを、無ければDiscordのユーザーID由来のローカル用アドレスを使う
+							mapProfileToUser: (profile) => ({
+								name: profile.global_name || profile.username,
+								email: profile.email || `${profile.id}@discord.local`,
+								emailVerified: Boolean(profile.verified),
+								image:
+									profile.avatar && profile.id
+										? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+										: undefined
+							})
+						}
+					: undefined
 		},
 		cookie: {
 			path: '/'

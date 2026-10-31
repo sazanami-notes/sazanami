@@ -17,6 +17,8 @@ export interface AppEnv {
 	BETTER_AUTH_URL: string;
 	GOOGLE_CLIENT_ID?: string;
 	GOOGLE_CLIENT_SECRET?: string;
+	DISCORD_CLIENT_ID?: string;
+	DISCORD_CLIENT_SECRET?: string;
 }
 
 /**
@@ -28,6 +30,8 @@ export function getAuthEnv(platformEnv?: Record<string, string>): {
 	BETTER_AUTH_SECRET: string;
 	GOOGLE_CLIENT_ID?: string;
 	GOOGLE_CLIENT_SECRET?: string;
+	DISCORD_CLIENT_ID?: string;
+	DISCORD_CLIENT_SECRET?: string;
 } {
 	if (platformEnv) {
 		return {
@@ -35,13 +39,18 @@ export function getAuthEnv(platformEnv?: Record<string, string>): {
 				platformEnv.BETTER_AUTH_URL || privateEnv.BETTER_AUTH_URL || 'http://localhost:5173',
 			BETTER_AUTH_SECRET: platformEnv.BETTER_AUTH_SECRET || privateEnv.BETTER_AUTH_SECRET!,
 			GOOGLE_CLIENT_ID: platformEnv.GOOGLE_CLIENT_ID || privateEnv.GOOGLE_CLIENT_ID,
-			GOOGLE_CLIENT_SECRET: platformEnv.GOOGLE_CLIENT_SECRET || privateEnv.GOOGLE_CLIENT_SECRET
+			GOOGLE_CLIENT_SECRET: platformEnv.GOOGLE_CLIENT_SECRET || privateEnv.GOOGLE_CLIENT_SECRET,
+			DISCORD_CLIENT_ID: platformEnv.DISCORD_CLIENT_ID || privateEnv.DISCORD_CLIENT_ID,
+			DISCORD_CLIENT_SECRET:
+				platformEnv.DISCORD_CLIENT_SECRET || privateEnv.DISCORD_CLIENT_SECRET
 		};
 	}
 	return {
 		BETTER_AUTH_URL: privateEnv.BETTER_AUTH_URL || 'http://localhost:5173',
 		BETTER_AUTH_SECRET: privateEnv.BETTER_AUTH_SECRET!,
 		GOOGLE_CLIENT_ID: privateEnv.GOOGLE_CLIENT_ID,
-		GOOGLE_CLIENT_SECRET: privateEnv.GOOGLE_CLIENT_SECRET
+		GOOGLE_CLIENT_SECRET: privateEnv.GOOGLE_CLIENT_SECRET,
+		DISCORD_CLIENT_ID: privateEnv.DISCORD_CLIENT_ID,
+		DISCORD_CLIENT_SECRET: privateEnv.DISCORD_CLIENT_SECRET
 	};
 }
