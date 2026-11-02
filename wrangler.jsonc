@@ -25,7 +25,7 @@
 			"name": "sazanami-dev",
 			"vars": {
 				"STORAGE_DRIVER": "r2",
-				"BETTER_AUTH_URL": "https://dev.sznm.f5.si",
+				"BETTER_AUTH_URL": "https://sazanami-dev.kaedesato.work",
 				"EMAIL_DRIVER": "plunk"
 			},
 			"r2_buckets": [
