@@ -90,6 +90,8 @@ export function createAuth(platformEnv?: Record<string, string>) {
 			'https://dev.sznm.f5.si',
 			'https://sazanami.214kaedesato.workers.dev',
 			'https://sazanami-dev.214kaedesato.workers.dev',
+			'https://sazanami-dev.kaedesato.work',
+			'https://sazanami.kaedesato.work',
 			'http://localhost:5173',
 			'http://localhost:4173',
 			'http://127.0.0.1:5173',

@@ -6,7 +6,7 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
 		"STORAGE_DRIVER": "r2",
-		"BETTER_AUTH_URL": "https://app.sznm.f5.si",
+		"BETTER_AUTH_URL": "https://sazanami.kaedesato.work",
 		"EMAIL_DRIVER": "plunk"
 	},
 	"r2_buckets": [
