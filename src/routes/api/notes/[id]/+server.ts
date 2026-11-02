@@ -70,12 +70,14 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			title,
 			content,
 			tags: tagNames,
-			context
+			context,
+			isPublic
 		} = body as {
 			title?: string;
 			content?: string;
 			tags?: string[];
 			context?: string | null;
+			isPublic?: boolean;
 		};
 
 		// ノートが存在するか確認
@@ -93,6 +95,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const titleChanged = title !== undefined && title !== existingNote[0].title;
 		const contentChanged = content !== undefined && content !== existingNote[0].content;
 		const contextChanged = context !== undefined && context !== existingNote[0].context;
+		const isPublicChanged =
+			typeof isPublic === 'boolean' && isPublic !== Boolean(existingNote[0].isPublic);
 		const tagsProvided = Array.isArray(tagNames);
 
 		const updatedFields: Record<string, unknown> = {};
@@ -115,12 +119,19 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedFields.context = context;
 			metadata.changes.context = { before: existingNote[0].context, after: context };
 		}
+		if (isPublicChanged) {
+			updatedFields.isPublic = isPublic;
+			metadata.changes.isPublic = {
+				before: Boolean(existingNote[0].isPublic),
+				after: isPublic
+			};
+		}
 		if (contentChanged) {
 			// updatedFields.content = content; handled above
 			// metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		if (titleChanged || contentChanged || contextChanged) {
+		if (titleChanged || contentChanged || contextChanged || isPublicChanged) {
 			updatedFields.updatedAt = now;
 		}
 
@@ -146,7 +157,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
-		if (!titleChanged && !contentChanged && !tagsProvided && !contextChanged) {
+		if (!titleChanged && !contentChanged && !tagsProvided && !contextChanged && !isPublicChanged) {
 			const noteTagsList = await db
 				.select({ name: tags.name })
 				.from(noteTags)

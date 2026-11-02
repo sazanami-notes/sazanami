@@ -23,6 +23,8 @@
 	let editorKey = $state(0);
 
 	let isCopying = $state(false);
+	let isPublic = $state(false);
+	let isUpdatingPublic = $state(false);
 
 	$effect(() => {
 		const nextNoteId = data.note.id;
@@ -39,6 +41,8 @@
 			copySuccess = false;
 			isSaving = false;
 			isCopying = false;
+			isPublic = Boolean(data.note.isPublic);
+			isUpdatingPublic = false;
 
 			lastSavedTitle = data.note.title ?? '';
 			lastSavedContent = data.note.content ?? '';
@@ -216,6 +220,30 @@
 			isUpdatingStatus = false;
 		}
 	}
+
+	// 公開/非公開の切り替え（公開はBoxのノートのみプロフィールに載る）
+	async function togglePublic() {
+		if (isUpdatingPublic) return;
+		const next = !isPublic;
+		isUpdatingPublic = true;
+		try {
+			const response = await fetch(`/api/notes/${data.note.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ isPublic: next })
+			});
+			if (!response.ok) {
+				const err = (await response.json().catch(() => ({}))) as { message?: string };
+				throw new Error(err.message || 'Failed to update visibility');
+			}
+			isPublic = next;
+		} catch (error) {
+			console.error('Error updating note visibility:', error);
+			alert('公開設定の更新に失敗しました');
+		} finally {
+			isUpdatingPublic = false;
+		}
+	}
 </script>
 
 <div class="mb-4 flex items-center justify-between">
@@ -244,6 +272,56 @@
 		<span class="text-base-content/50 text-xs">{formattedUpdatedAt}</span>
 	</div>
 	<div class="flex items-center gap-1">
+		<!-- 公開/非公開トグル -->
+		<button
+			class="btn btn-ghost btn-sm btn-square {isPublic
+				? 'text-primary'
+				: 'text-base-content/40'}"
+			title={isPublic
+				? '公開中（Boxに入れるとプロフィールに表示されます）'
+				: '非公開（クリックで公開）'}
+			aria-label={isPublic ? '公開中' : '非公開'}
+			aria-pressed={isPublic}
+			disabled={isUpdatingPublic}
+			onclick={() => togglePublic()}
+			type="button"
+		>
+			{#if isUpdatingPublic}
+				<span class="loading loading-spinner loading-xs"></span>
+			{:else if isPublic}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="h-4 w-4"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+					/>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+			{:else}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="h-4 w-4"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+					/>
+				</svg>
+			{/if}
+		</button>
+
 		<button
 			class="btn btn-ghost btn-sm btn-square {copySuccess ? 'text-success' : ''}"
 			title={copySuccess ? 'コピーしました' : 'Markdownコピー'}
