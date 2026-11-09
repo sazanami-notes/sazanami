@@ -41,8 +41,7 @@ export function getAuthEnv(platformEnv?: Record<string, string>): {
 			GOOGLE_CLIENT_ID: platformEnv.GOOGLE_CLIENT_ID || privateEnv.GOOGLE_CLIENT_ID,
 			GOOGLE_CLIENT_SECRET: platformEnv.GOOGLE_CLIENT_SECRET || privateEnv.GOOGLE_CLIENT_SECRET,
 			DISCORD_CLIENT_ID: platformEnv.DISCORD_CLIENT_ID || privateEnv.DISCORD_CLIENT_ID,
-			DISCORD_CLIENT_SECRET:
-				platformEnv.DISCORD_CLIENT_SECRET || privateEnv.DISCORD_CLIENT_SECRET
+			DISCORD_CLIENT_SECRET: platformEnv.DISCORD_CLIENT_SECRET || privateEnv.DISCORD_CLIENT_SECRET
 		};
 	}
 	return {

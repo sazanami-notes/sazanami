@@ -4,3 +4,11 @@ pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
+
+# 生成物（wrangler types / drizzle-kit が独自整形で書き戻すため）
+worker-configuration.d.ts
+drizzle/meta/
+
+# prettier-plugin-tailwindcss が <svelte:head> 内の CSS カスタムプロパティ式
+# （{themeInfo.custom.primaryColor} 等）を postcss で解析できずクラッシュするため除外
+src/routes/+layout.svelte

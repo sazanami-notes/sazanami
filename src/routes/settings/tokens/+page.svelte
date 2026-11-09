@@ -68,7 +68,10 @@
 {/if}
 
 {#if generatedToken}
-	<div id="generated-token" class="card bg-warning/10 border-warning/50 rounded-box mt-6 border shadow">
+	<div
+		id="generated-token"
+		class="card bg-warning/10 border-warning/50 rounded-box mt-6 border shadow"
+	>
 		<div class="card-body gap-3">
 			<h2 class="card-title text-lg">トークンを発行しました</h2>
 			<p class="text-sm font-semibold">
@@ -91,7 +94,12 @@
 	<div class="card-body">
 		<h2 class="card-title text-lg">新しいトークンを発行</h2>
 
-		<form method="POST" action="?/create" use:enhance={scrollToGeneratedToken} class="mt-2 space-y-4">
+		<form
+			method="POST"
+			action="?/create"
+			use:enhance={scrollToGeneratedToken}
+			class="mt-2 space-y-4"
+		>
 			<div class="form-control">
 				<label class="label" for="name">
 					<span class="label-text font-medium">トークン名 <span class="text-error">*</span></span>
@@ -105,7 +113,9 @@
 					maxlength="60"
 					required
 				/>
-				<p class="text-base-content/50 mt-1 text-xs">用途が分かる名前を付けてください（60文字以内）</p>
+				<p class="text-base-content/50 mt-1 text-xs">
+					用途が分かる名前を付けてください（60文字以内）
+				</p>
 			</div>
 
 			<fieldset class="form-control">
@@ -131,7 +141,11 @@
 				<label class="label" for="expiresInDays">
 					<span class="label-text font-medium">有効期限</span>
 				</label>
-				<select id="expiresInDays" name="expiresInDays" class="select select-bordered w-full max-w-xs">
+				<select
+					id="expiresInDays"
+					name="expiresInDays"
+					class="select select-bordered w-full max-w-xs"
+				>
 					<option value="30">30日</option>
 					<option value="90" selected>90日</option>
 					<option value="365">1年</option>
@@ -154,7 +168,7 @@
 			<p class="text-base-content/60 text-sm">まだトークンはありません。</p>
 		{:else}
 			<div class="overflow-x-auto">
-				<table class="table table-sm">
+				<table class="table-sm table">
 					<thead>
 						<tr>
 							<th>名前</th>
@@ -201,7 +215,11 @@
 												type="submit"
 												class="btn btn-ghost text-error btn-xs"
 												onclick={(e) => {
-													if (!confirm(`「${token.name}」を失効させますか？この操作は取り消せません。`)) {
+													if (
+														!confirm(
+															`「${token.name}」を失効させますか？この操作は取り消せません。`
+														)
+													) {
 														e.preventDefault();
 													}
 												}}

@@ -18,7 +18,10 @@
 
 	function excerpt(content: string | null): string {
 		if (!content) return '';
-		const text = content.replace(/[#*`[\]()>~_]/g, ' ').replace(/\s+/g, ' ').trim();
+		const text = content
+			.replace(/[#*`[\]()>~_]/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim();
 		return text.length > 80 ? text.slice(0, 80) + '…' : text;
 	}
 
@@ -73,11 +76,7 @@
 
 		{#if encounter}
 			{@const e = encounter}
-			<button
-				class="text-left"
-				onclick={() => goto(`/home/note/${e.id}`)}
-				disabled={busy}
-			>
+			<button class="text-left" onclick={() => goto(`/home/note/${e.id}`)} disabled={busy}>
 				<h3 class="text-lg font-bold">{e.title || '無題'}</h3>
 				{#if excerpt(e.content)}
 					<p class="mt-1 line-clamp-2 text-sm opacity-80">{excerpt(e.content)}</p>
@@ -86,18 +85,10 @@
 			</button>
 
 			<div class="card-actions mt-3 justify-end">
-				<button
-					class="btn btn-ghost btn-xs"
-					onclick={() => sendFeedback('skip')}
-					disabled={busy}
-				>
+				<button class="btn btn-ghost btn-xs" onclick={() => sendFeedback('skip')} disabled={busy}>
 					スルー
 				</button>
-				<button
-					class="btn btn-primary btn-xs"
-					onclick={() => sendFeedback('like')}
-					disabled={busy}
-				>
+				<button class="btn btn-primary btn-xs" onclick={() => sendFeedback('like')} disabled={busy}>
 					また会いたい
 				</button>
 				<button class="btn btn-outline btn-xs" onclick={fetchNext} disabled={busy}>

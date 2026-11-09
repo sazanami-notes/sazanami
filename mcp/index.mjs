@@ -96,7 +96,8 @@ async function api(path, { method = 'GET', query, body } = {}) {
 
 	if (!res.ok) {
 		const contentType = res.headers.get('content-type') || '';
-		const errObj = data && typeof data === 'object' && !Array.isArray(data) ? data.error : undefined;
+		const errObj =
+			data && typeof data === 'object' && !Array.isArray(data) ? data.error : undefined;
 		const code = errObj && typeof errObj === 'object' ? errObj.code : undefined;
 
 		let message = errObj && typeof errObj === 'object' ? errObj.message : undefined;
@@ -105,7 +106,8 @@ async function api(path, { method = 'GET', query, body } = {}) {
 			message = text.length > 300 ? `${text.slice(0, 300)}…` : text;
 		}
 		if (!message) message = res.statusText || '不明なエラー';
-		if (!contentType.includes('json')) message += ` (非JSONレスポンス: content-type=${contentType || '不明'})`;
+		if (!contentType.includes('json'))
+			message += ` (非JSONレスポンス: content-type=${contentType || '不明'})`;
 
 		throw new ApiError(res.status, code, message, data);
 	}

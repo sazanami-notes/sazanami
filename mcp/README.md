@@ -19,10 +19,10 @@ Sazanami の **設定 → APIトークン** でトークンを発行してくだ
 
 ### 環境変数
 
-| 変数 | 必須 | 既定値 | 説明 |
-| --- | --- | --- | --- |
-| `SAZANAMI_TOKEN` | **必須** | — | 個人アクセストークン（`sznm_...`）。未設定なら起動時に stderr へエラーを出して終了します |
-| `SAZANAMI_BASE_URL` | 任意 | `https://sazanami-dev.kaedesato.work` | API のベースURL（末尾スラッシュ不要） |
+| 変数                | 必須     | 既定値                                | 説明                                                                                     |
+| ------------------- | -------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `SAZANAMI_TOKEN`    | **必須** | —                                     | 個人アクセストークン（`sznm_...`）。未設定なら起動時に stderr へエラーを出して終了します |
+| `SAZANAMI_BASE_URL` | 任意     | `https://sazanami-dev.kaedesato.work` | API のベースURL（末尾スラッシュ不要）                                                    |
 
 ```bash
 export SAZANAMI_TOKEN="sznm_xxxxxxxxxxxx"
@@ -53,16 +53,16 @@ mcp_servers:
 
 ```json
 {
-  "mcpServers": {
-    "sazanami": {
-      "command": "node",
-      "args": ["/home/mizuki/workspace/sazanami/mcp/index.mjs"],
-      "env": {
-        "SAZANAMI_TOKEN": "sznm_xxxxxxxxxxxx",
-        "SAZANAMI_BASE_URL": "https://sazanami-dev.kaedesato.work"
-      }
-    }
-  }
+	"mcpServers": {
+		"sazanami": {
+			"command": "node",
+			"args": ["/home/mizuki/workspace/sazanami/mcp/index.mjs"],
+			"env": {
+				"SAZANAMI_TOKEN": "sznm_xxxxxxxxxxxx",
+				"SAZANAMI_BASE_URL": "https://sazanami-dev.kaedesato.work"
+			}
+		}
+	}
 }
 ```
 
@@ -70,14 +70,14 @@ mcp_servers:
 
 ## ツール一覧
 
-| ツール | 引数 | 説明 |
-| --- | --- | --- |
-| `list_notes` | `status?` `q?` `limit?` `offset?` | ノートを更新順に一覧する（`status` はカンマ区切り可、既定は `box-deleted` 以外すべて） |
-| `get_note` | `id` | ノート1件を本文・タグ込みで取得する |
-| `search_notes` | `q`, `limit?` | キーワードで全文検索し、要約一覧を返す |
-| `create_note` | `title?` `content?` `status?` `tags?` | ノートを新規作成する（結果に `id` とタイトルを含む） |
-| `update_note` | `id`, `title?` `content?` `status?` `isPublic?` | ノートを部分更新する（結果に `id` とタイトルを含む） |
-| `get_links` | `id` | 1ホップ / 2ホップリンクとバックリンクを取得する |
+| ツール         | 引数                                            | 説明                                                                                   |
+| -------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `list_notes`   | `status?` `q?` `limit?` `offset?`               | ノートを更新順に一覧する（`status` はカンマ区切り可、既定は `box-deleted` 以外すべて） |
+| `get_note`     | `id`                                            | ノート1件を本文・タグ込みで取得する                                                    |
+| `search_notes` | `q`, `limit?`                                   | キーワードで全文検索し、要約一覧を返す                                                 |
+| `create_note`  | `title?` `content?` `status?` `tags?`           | ノートを新規作成する（結果に `id` とタイトルを含む）                                   |
+| `update_note`  | `id`, `title?` `content?` `status?` `isPublic?` | ノートを部分更新する（結果に `id` とタイトルを含む）                                   |
+| `get_links`    | `id`                                            | 1ホップ / 2ホップリンクとバックリンクを取得する                                        |
 
 - `status` の値: `inbox` / `box` / `archived` / `trash` / `box-archived` / `box-deleted`
 - 成功時は API の JSON をそのまま整形して返します。

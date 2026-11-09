@@ -198,7 +198,7 @@
 
 		<div class="max-h-[60vh] min-h-[300px] overflow-y-auto">
 			<TiptapEditor
-				content={content}
+				{content}
 				onchange={(e) => (content = e.markdown)}
 				showBlockHandle={$page.data.settings?.blockHandleEnabled ?? true}
 			/>

@@ -2,7 +2,13 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { apiTokens } from '$lib/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { getPrincipal, generateRawToken, sha256Hex, parseScopes, type ApiScope } from '$lib/server/api-auth';
+import {
+	getPrincipal,
+	generateRawToken,
+	sha256Hex,
+	parseScopes,
+	type ApiScope
+} from '$lib/server/api-auth';
 import { apiJson, apiError, preflight } from '$lib/server/api-response';
 
 export const OPTIONS: RequestHandler = () => preflight();
@@ -14,7 +20,8 @@ export const OPTIONS: RequestHandler = () => preflight();
 export const GET: RequestHandler = async ({ request }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', 'ログインが必要です');
-	if (principal.tokenId) return apiError(403, 'session_required', 'トークン管理はブラウザから行ってください');
+	if (principal.tokenId)
+		return apiError(403, 'session_required', 'トークン管理はブラウザから行ってください');
 
 	const rows = await db
 		.select({
@@ -45,7 +52,8 @@ type CreateBody = {
 export const POST: RequestHandler = async ({ request }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', 'ログインが必要です');
-	if (principal.tokenId) return apiError(403, 'session_required', 'トークン管理はブラウザから行ってください');
+	if (principal.tokenId)
+		return apiError(403, 'session_required', 'トークン管理はブラウザから行ってください');
 
 	let body: CreateBody;
 	try {
@@ -56,7 +64,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const name = typeof body.name === 'string' ? body.name.trim() : '';
 	if (!name) return apiError(400, 'name_required', 'トークン名を入力してください');
-	if (name.length > 60) return apiError(400, 'name_too_long', 'トークン名は60文字以内にしてください');
+	if (name.length > 60)
+		return apiError(400, 'name_too_long', 'トークン名は60文字以内にしてください');
 
 	let scopes: ApiScope[] = ['read'];
 	if (Array.isArray(body.scopes)) {

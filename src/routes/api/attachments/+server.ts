@@ -71,9 +71,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const fileId = ulid();
 		const buffer = Buffer.from(await file.arrayBuffer());
 
-		const storage = await getStorageDriver(
-			(platform?.env as { R2?: R2Bucket } | undefined)?.R2
-		);
+		const storage = await getStorageDriver((platform?.env as { R2?: R2Bucket } | undefined)?.R2);
 		const { url, filePath } = await storage.upload({
 			fileId,
 			fileName: file.name,
@@ -128,9 +126,7 @@ export const DELETE: RequestHandler = async ({ request, url, platform }) => {
 	const attachment = rows[0];
 
 	try {
-		const storage = await getStorageDriver(
-			(platform?.env as { R2?: R2Bucket } | undefined)?.R2
-		);
+		const storage = await getStorageDriver((platform?.env as { R2?: R2Bucket } | undefined)?.R2);
 		await storage.delete(attachment.filePath);
 	} catch (err) {
 		console.error('Storage delete error:', err);

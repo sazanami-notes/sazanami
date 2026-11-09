@@ -159,16 +159,16 @@
 				<span class="badge badge-sm badge-ghost">{tag}</span>
 			{/each}
 		</div>
-		</div>
-		{:else}
-		<div
+	</div>
+{:else}
+	<div
 		class="card bg-base-100 border-base-200/70 rounded-box max-h-64 min-h-40 cursor-pointer overflow-hidden border p-3 shadow transition-shadow hover:shadow-md"
 		onclick={handleClick}
 		role="button"
 		tabindex="0"
 		onkeydown={(e) => e.key === 'Enter' && handleClick()}
 		aria-label="メモを編集"
-		>
+	>
 		<h2 class="card-title mb-1 line-clamp-2 text-base font-bold">{note.title}</h2>
 		<div
 			class="prose text-base-content/70 mb-2 line-clamp-3 text-sm"
@@ -182,5 +182,5 @@
 				<span class="badge badge-sm badge-ghost">{tag}</span>
 			{/each}
 		</div>
-		</div>
-		{/if}
+	</div>
+{/if}

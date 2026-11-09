@@ -20,7 +20,10 @@ function escapeMarkdownText(value: string) {
  * その後 renderWikiLinks などで `[[...]]` を処理しても、`![[...]]` が
  * 先頭の `!` だけ残る問題を防げる。
  */
-export function protectNoteEmbeds(content: string): { contentHtml: string; embeds: EmbedPlaceholder[] } {
+export function protectNoteEmbeds(content: string): {
+	contentHtml: string;
+	embeds: EmbedPlaceholder[];
+} {
 	const embeds: EmbedPlaceholder[] = [];
 	const protectedContent = content.replace(/!\[\[(.*?)\]\]/g, (_match, title) => {
 		const placeholder = `__SAZANAMI_NOTE_EMBED_${embeds.length}__`;
