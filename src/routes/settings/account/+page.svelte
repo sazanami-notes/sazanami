@@ -138,6 +138,21 @@
 <PasskeySection />
 
 <div class="mt-8">
+	<h2 class="text-xl font-semibold">APIトークン</h2>
+	<div class="mt-4">
+		<div class="flex items-center justify-between rounded-lg border p-4">
+			<div>
+				<span class="font-medium">外部ツール連携</span>
+				<p class="mt-1 text-sm text-gray-600">
+					MCPサーバーや外部スクリプトからAPIを利用するためのトークンを発行・管理できます。
+				</p>
+			</div>
+			<a href="/settings/tokens" class="btn btn-sm btn-outline shrink-0">トークンを管理する</a>
+		</div>
+	</div>
+</div>
+
+<div class="mt-8">
 	<h2 class="text-xl font-semibold">パスワード設定</h2>
 
 	{#if data.form?.message}
