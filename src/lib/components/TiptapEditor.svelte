@@ -52,6 +52,15 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 	let uploadProgress = $state(0);
 	let fileInputEl = $state<HTMLInputElement>();
 
+	// ノートコンパイザ（選択範囲を切り出して新規ノート化 → 元の場所に埋め込み）
+	let hasSelection = $state(false);
+	let showExtractDialog = $state(false);
+	let extractTitle = $state('');
+	let extractError = $state('');
+	let extracting = $state(false);
+	let toastMessage = $state('');
+	let toastTimer: ReturnType<typeof setTimeout>;
+
 	function normalizeMarkdown(markdown: string) {
 		return markdown
 			.replace(/\u00a0/g, ' ')
@@ -248,6 +257,157 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 		}
 	}
 
+	/** HTMLエスケープ（属性・本文用） */
+	function escapeHtml(value: string) {
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	/**
+	 * URLを貼った時にページタイトルを取得して [タイトル](URL) に差し替える。
+	 * 取得できなければURLのまま（ユーザーの入力を壊さない）。
+	 */
+	async function insertUrlWithTitle(url: string) {
+		if (!editor) return;
+		const insertAt = editor.state.selection.from;
+		editor
+			.chain()
+			.focus()
+			.insertContent(`<a href="${escapeHtml(url)}">${escapeHtml(url)}</a> `)
+			.run();
+
+		try {
+			const res = await fetch(`/api/link-title?url=${encodeURIComponent(url)}`);
+			if (!res.ok) return;
+			const data = (await res.json()) as { ok?: boolean; title?: string | null };
+			const title = data?.title?.trim();
+			if (!data?.ok || !title) return;
+
+			// ユーザーが編集していたら触らない（同じ位置にURLが残っている時だけ差し替え）
+			const doc = editor.state.doc;
+			const end = insertAt + url.length;
+			if (end > doc.content.size) return;
+			if (doc.textBetween(insertAt, end, '') !== url) return;
+
+			editor
+				.chain()
+				.focus()
+				.insertContentAt(
+					{ from: insertAt, to: end },
+					`<a href="${escapeHtml(url)}">${escapeHtml(title)}</a>`
+				)
+				.run();
+		} catch {
+			// 取得失敗時はURLのまま
+		}
+	}
+
+	/**
+	 * Markdown由来の「![[タイトル]]だけの段落」を埋め込みノードに置き換える。
+	 * （ノードを直接insertContentすると段落内の選択位置で失敗することがあるため、
+	 *   一度テキストとして差し込んでから正規化する）
+	 */
+	function normalizeNoteEmbeds(ed: Editor) {
+		const { state } = ed;
+		const targets: { pos: number; size: number; title: string }[] = [];
+		state.doc.descendants((node, pos) => {
+			if (node.type.name !== 'paragraph' || node.childCount !== 1) return;
+			const child = node.firstChild;
+			if (!child?.isText) return;
+			const text = (child.text || '').trim();
+			const m = text.match(/^!\[\[([^\]\n]+)\]\]$/);
+			if (m) targets.push({ pos, size: node.nodeSize, title: m[1].trim() });
+		});
+		if (targets.length === 0) return;
+
+		const tr = state.tr;
+		for (const t of targets.reverse()) {
+			tr.replaceWith(t.pos, t.pos + t.size, state.schema.nodes.noteEmbed.create({ title: t.title }));
+		}
+		tr.setMeta('addToHistory', false);
+		ed.view.dispatch(tr);
+	}
+
+	/** 短い通知を4秒表示する */
+	function showToast(message: string) {
+		toastMessage = message;
+		clearTimeout(toastTimer);
+		toastTimer = setTimeout(() => (toastMessage = ''), 4000);
+	}
+
+	/** 選択範囲を切り出すダイアログを開く（選択が無ければ何もしない） */
+	function openExtractDialog() {
+		if (!editor) return;
+		const { from, to } = editor.state.selection;
+		if (from === to) return;
+		const text = editor.state.doc.textBetween(from, to, '\n').trim();
+		if (!text) return;
+		const firstLine = text.split('\n')[0].replace(/^#+\s*/, '').trim();
+		extractTitle = firstLine.slice(0, 60);
+		extractError = '';
+		showExtractDialog = true;
+	}
+
+	/** 選択範囲を新規ノートとして保存し、元の位置に ![[タイトル]] を差し込む */
+	async function confirmExtract() {
+		if (!editor || extracting) return;
+		const title = extractTitle.trim();
+		if (!title) {
+			extractError = 'タイトルを入力してください';
+			return;
+		}
+		const { from, to } = editor.state.selection;
+		if (from === to) {
+			showExtractDialog = false;
+			return;
+		}
+
+		// 選択範囲のMarkdownを組み立てる（Tiptap Markdownのシリアライザを使う）
+		const sliceJson = editor.state.doc.cut(from, to).toJSON();
+		const markdown = editor.markdown
+			? editor.markdown.serialize(sliceJson)
+			: editor.state.doc.textBetween(from, to, '\n\n');
+
+		// 先にエディタへ埋め込みを差し込む。
+		// （fetchをawaitしてから編集すると、その間に選択位置がずれて挿入に失敗する）
+		const tr = editor.state.tr;
+		tr.deleteRange(from, to);
+		tr.insertText(`![[${title}]]`, from);
+		editor.view.dispatch(tr);
+		normalizeNoteEmbeds(editor);
+		editor.view.focus();
+
+		extracting = true;
+		extractError = '';
+		showExtractDialog = false;
+		try {
+			const res = await fetch('/api/notes', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title, content: markdown, status: 'box' })
+			});
+			const data = (await res.json()) as { id?: string; title?: string; message?: string };
+			if (!res.ok) {
+				// 作成できなかったらエディタを元に戻す
+				editor.commands.undo();
+				extractError = data?.message ?? 'ノートの作成に失敗しました';
+				showExtractDialog = true;
+				return;
+			}
+			showToast(`「${title}」を切り出しました`);
+		} catch {
+			editor.commands.undo();
+			extractError = '通信エラーが発生しました';
+			showExtractDialog = true;
+		} finally {
+			extracting = false;
+		}
+	}
+
 	function updateSuggestionPosition() {
 		if (!editor) return;
 		// カーソル位置のDOM座標を取得
@@ -413,6 +573,16 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 							'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-xl focus:outline-none max-w-none min-h-[300px] p-4'
 					},
 					handleKeyDown(_, event) {
+						// Ctrl/Cmd + Shift + X: 選択範囲を新しいノートに切り出す
+						if (
+							(event.ctrlKey || event.metaKey) &&
+							event.shiftKey &&
+							event.key.toLowerCase() === 'x'
+						) {
+							event.preventDefault();
+							openExtractDialog();
+							return true;
+						}
 						// trueを返すとtiptapがイベントを消費（デフォルト動作を阻止）
 						return handleKeyDown(event);
 					},
@@ -466,6 +636,13 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 							return true;
 						}
 
+						// 素のURLを貼ったらタイトルを取得して [タイトル](URL) にする（失敗時はURLのまま）
+						if (text && /^https?:\/\/\S+$/i.test(text)) {
+							event.preventDefault();
+							void insertUrlWithTitle(text);
+							return true;
+						}
+
 						return false;
 					},
 					// 画像ドロップ対応
@@ -481,6 +658,11 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 						imageFiles.forEach((file) => insertImageFromFile(file));
 						return true;
 					}
+				},
+				onSelectionUpdate: ({ editor: e }) => {
+					const { from, to } = e.state.selection;
+					hasSelection =
+						from !== to && e.state.doc.textBetween(from, to, ' ').trim().length > 0;
 				},
 				onTransaction: ({ editor: e }) => {
 					// トランザクションのたびにサジェスト状態を更新
@@ -515,6 +697,12 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 				}
 			});
 
+			// 開発時のみ: ブラウザのコンソールからエディタ状態を確認できるようにする
+			if (import.meta.env.DEV) {
+				const w = window as unknown as { __sznmEditors?: Editor[]; __sznmEditor?: Editor };
+				w.__sznmEditors = [...(w.__sznmEditors ?? []), editor];
+				w.__sznmEditor = editor;
+			}
 			lastSyncedMarkdown = normalizeMarkdown(editor.getMarkdown());
 			// 既存メモにURLだけ書かれている場合は埋め込みノードに変換する
 			normalizeYoutubeBlocks(editor);
@@ -603,6 +791,31 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 				{/if}
 			</button>
 
+			<button
+				type="button"
+				onclick={openExtractDialog}
+				disabled={!hasSelection}
+				class="btn btn-ghost btn-xs tooltip tooltip-bottom gap-1"
+				data-tip="選択範囲を新しいノートに切り出す（Ctrl+Shift+X）"
+				title="ノートに切り出す"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-4 w-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"
+					/>
+				</svg>
+				<span class="hidden text-xs sm:inline">切り出し</span>
+			</button>
+
 			<span class="text-base-content/40 text-xs"> 画像のペースト・ドロップも対応 </span>
 		</div>
 		<!-- ファイル選択（非表示） -->
@@ -669,6 +882,52 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 					<span class="truncate">{suggestion.title}</span>
 				</button>
 			{/each}
+		</div>
+	{/if}
+
+	<!-- ノートコンパイザ: 切り出しダイアログ -->
+	{#if showExtractDialog}
+		<div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+			<div class="card bg-base-100 border-base-200/70 rounded-box w-full max-w-md border shadow-lg">
+				<div class="card-body gap-3">
+					<h3 class="text-base font-bold">選択範囲をノートに切り出す</h3>
+					<p class="text-base-content/60 text-xs">
+						新しいノートを作り、元の場所に埋め込み（![[タイトル]]）を差し込みます。
+					</p>
+					<label class="form-control w-full">
+						<span class="label-text text-xs">ノートのタイトル</span>
+						<input
+							bind:value={extractTitle}
+							class="input input-bordered input-sm mt-1 w-full"
+							maxlength="60"
+							placeholder="例: ツェッテルカステンの原則"
+						/>
+					</label>
+					{#if extractError}
+						<p class="text-error text-xs">{extractError}</p>
+					{/if}
+					<div class="flex justify-end gap-2">
+						<button
+							type="button"
+							class="btn btn-ghost btn-sm"
+							onclick={() => (showExtractDialog = false)}
+							disabled={extracting}
+						>
+							キャンセル
+						</button>
+						<button type="button" class="btn btn-primary btn-sm" onclick={confirmExtract} disabled={extracting}>
+							{#if extracting}<span class="loading loading-spinner loading-xs"></span>{/if}
+							切り出す
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if toastMessage}
+		<div class="toast toast-top toast-center z-[210]">
+			<div class="alert alert-success py-2 text-sm">{toastMessage}</div>
 		</div>
 	{/if}
 </div>
