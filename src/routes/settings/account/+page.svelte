@@ -47,7 +47,7 @@
 	}
 </script>
 
-<h1 class="text-2xl font-bold">アカウント管理</h1>
+<h1 class="mb-6 text-2xl font-bold">アカウント管理</h1>
 
 <div class="mt-4">
 	<h2 class="text-xl font-semibold">ユーザー情報</h2>
