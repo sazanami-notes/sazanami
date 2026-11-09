@@ -5,6 +5,7 @@ import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { getSessionCached } from '$lib/server/auth-session';
+import { syncNoteAttachments } from '$lib/server/note-attachments';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
 import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 
@@ -178,6 +179,11 @@ export const PUT: RequestHandler = async ({ params, request, platform }) => {
 				.update(notes)
 				.set(updatedFields)
 				.where(and(eq(notes.id, noteId), eq(notes.userId, session.session.userId)));
+		}
+
+		// 本文が変わったら、参照している画像の紐付けを更新する
+		if (contentChanged) {
+			await syncNoteAttachments(noteId, session.session.userId, content);
 		}
 
 		// タイムラインイベントを記録

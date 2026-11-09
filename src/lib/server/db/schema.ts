@@ -128,7 +128,11 @@ export const attachments = sqliteTable(
 		fileSize: integer('file_size').notNull(), // バイト単位
 		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
 	},
-	(table) => [index('attachments_user_created_idx').on(table.userId, table.createdAt)]
+	(table) => [
+		index('attachments_user_created_idx').on(table.userId, table.createdAt),
+		// /uploads の公開判定で file_path を引くため
+		index('attachments_file_path_idx').on(table.filePath)
+	]
 );
 
 // NOTE_ATTACHMENTS テーブル (多対多の中間テーブル)

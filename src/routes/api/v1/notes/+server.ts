@@ -5,6 +5,7 @@ import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { ulid } from 'ulid';
 import { getPrincipal, hasScope } from '$lib/server/api-auth';
+import { syncNoteAttachments } from '$lib/server/note-attachments';
 import { apiJson, apiError, preflight } from '$lib/server/api-response';
 import {
 	NOTE_STATUSES,
@@ -215,6 +216,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	await updateNoteLinks(noteId, content, principal.userId, { isNew: true });
+	await syncNoteAttachments(noteId, principal.userId, content);
 
 	// updateNoteLinks が resolvedLinks を書き戻すので、最新行を読み直して返す
 	const [fresh] = await db

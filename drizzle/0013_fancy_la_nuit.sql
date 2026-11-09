@@ -1,0 +1,1 @@
+CREATE INDEX `attachments_file_path_idx` ON `attachments` (`file_path`);
