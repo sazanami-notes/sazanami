@@ -5,6 +5,7 @@ import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { eq, or, like, desc, sql, and, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { getSessionCached } from '$lib/server/auth-session';
+import { syncNoteAttachments } from '$lib/server/note-attachments';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
 import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 
@@ -246,6 +247,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// リンクの解決（新規ノートでリンクが無ければ内部でスキップ）
 		await updateNoteLinks(noteId, noteContent, session.session.userId, { isNew: true });
+
+		// 本文が参照している画像をノートに紐付ける（/uploads の公開判定に使う）
+		await syncNoteAttachments(noteId, session.session.userId, noteContent);
 
 		// 保存レスポンスは待たせず、裏で埋め込みを更新する
 		scheduleNoteEmbedding(platform, created);

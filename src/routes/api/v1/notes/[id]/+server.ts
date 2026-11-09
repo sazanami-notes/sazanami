@@ -4,6 +4,7 @@ import { db, deleteNote, updateBacklinksOnTitleChange, updateNoteLinks } from '$
 import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 import { notes } from '$lib/server/db/schema';
 import { getPrincipal, hasScope } from '$lib/server/api-auth';
+import { syncNoteAttachments } from '$lib/server/note-attachments';
 import { apiJson, apiError, preflight } from '$lib/server/api-response';
 import { NOTE_STATUSES, getTagsMap, isNoteStatus, toApiNote } from '$lib/server/api-notes';
 import { generateSlug } from '$lib/utils/slug';
@@ -137,11 +138,12 @@ export const PUT: RequestHandler = async ({ request, params, platform }) => {
 			await updateBacklinksOnTitleChange(noteId, existing.title, nextTitle, principal.userId);
 		}
 		if (titleChanged || contentChanged) {
-			await updateNoteLinks(
-				noteId,
-				typeof body.content === 'string' ? body.content : (existing.content ?? ''),
-				principal.userId
-			);
+			const nextContent =
+				typeof body.content === 'string' ? body.content : (existing.content ?? '');
+			await updateNoteLinks(noteId, nextContent, principal.userId);
+			if (contentChanged) {
+				await syncNoteAttachments(noteId, principal.userId, nextContent);
+			}
 		}
 	}
 
