@@ -128,6 +128,22 @@ Authorization: Bearer sznm_xxxxxxxx
 
 `{ "oneHopLinks": [noteSummary], "backlinks": [noteSummary], "twoHopLinks": [noteSummary] }`
 
+### `GET /api/v1/export`（read）
+
+全ノートを吸い出す。`format=json`（既定）はJSON、`format=md` は frontmatter 付き Markdown の ZIP。
+
+- クエリ: `format`（`json`|`md`）, `limit`（既定5000・最大20000）, `cursor`（前回の `nextCursor`）
+- レスポンス（json）: `{ "version": 1, "exportedAt": "...", "count": 12, "nextCursor": null, "notes": [exportNote] }`
+- `exportNote` = `{ id, title, content, status, isPublic, isPinned, tags[], createdAt, updatedAt, parentId }`
+
+### `POST /api/v1/import`（write）
+
+`{ "notes": [exportNote], "skipExistingTitles": true }` を投入する。1回500件まで。
+`skipExistingTitles` は既定 `true` で、同名タイトルのノートはスキップ（Boxのタイトル一意制約を踏まない）。
+
+- レスポンス: `{ "imported": 3, "skipped": 1, "failed": 0, "errors": [] }`
+- Markdown/ZIP のインポートは Web UI（`/settings/import`）側の担当
+
 ## レート制限
 
 未実装（TODO）。トークン単位の `lastUsedAt` のみ記録している。
