@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { redirect, fail } from '@sveltejs/kit';
 import { createAuth } from '$lib/server/auth';
+import { getSessionCached } from '$lib/server/auth-session';
 const auth = createAuth();
 import { APIError } from 'better-auth/api';
 import { db } from '$lib/server/db/connection';
@@ -8,9 +9,7 @@ import { account, verification } from '$lib/server/db/auth-schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ request }) => {
-	const sessionData = await auth.api.getSession({
-		headers: request.headers
-	});
+	const sessionData = await getSessionCached(request.headers);
 
 	if (!sessionData?.session) {
 		throw redirect(302, '/login');
@@ -29,9 +28,7 @@ export const load: PageServerLoad = async ({ request }) => {
 
 export const actions: Actions = {
 	resetPasswordDirect: async ({ request }) => {
-		const sessionData = await auth.api.getSession({
-			headers: request.headers
-		});
+		const sessionData = await getSessionCached(request.headers);
 
 		if (!sessionData?.session) {
 			throw redirect(302, '/login');
@@ -99,9 +96,7 @@ export const actions: Actions = {
 		}
 	},
 	unlinkAccount: async ({ request }) => {
-		const sessionData = await auth.api.getSession({
-			headers: request.headers
-		});
+		const sessionData = await getSessionCached(request.headers);
 
 		if (!sessionData?.session) {
 			return fail(401, { message: 'Unauthorized' });

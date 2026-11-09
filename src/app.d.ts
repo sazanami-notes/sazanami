@@ -15,6 +15,8 @@ declare global {
 				BETTER_AUTH_URL?: string;
 				GOOGLE_CLIENT_ID?: string;
 				GOOGLE_CLIENT_SECRET?: string;
+				DISCORD_CLIENT_ID?: string;
+				DISCORD_CLIENT_SECRET?: string;
 				SMTP_USER?: string;
 				SMTP_PASS?: string;
 				SMTP_FROM?: string;

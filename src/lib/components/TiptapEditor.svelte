@@ -15,37 +15,33 @@
 	import { CodeBlockWithLanguage } from './extensions/CodeBlockWithLanguage';
 	import { WikiLinkMark } from './extensions/WikiLinkMark';
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
-	import * as Y from 'yjs';
-	import { IndexeddbPersistence } from 'y-indexeddb';
-	import { HocuspocusProvider } from '@hocuspocus/provider';
-	import Collaboration from '@tiptap/extension-collaboration';
-	import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+	import { YoutubeNode, isYoutubeUrl } from './extensions/YoutubeNode';
 	import { Markdown } from '@tiptap/markdown';
-	import { goto } from '$app/navigation';
+import DragHandle from '@tiptap/extension-drag-handle';
+import { goto } from '$app/navigation';
+import { toAvifOrOriginal } from '$lib/utils/image-convert';
 
 	const lowlight = createLowlight(all);
 
 	type Props = {
 		content?: string;
-		noteId?: string; // For IndexedDB and Yjs room sync
-		initialContentBinBase64?: string; // Optional: Initial Yjs binary update from server
 		editable?: boolean;
 		placeholder?: string;
-		onchange?: (event: { markdown: string; html: string; yjsUpdateBase64: string }) => void;
+		showBlockHandle?: boolean;
+		onchange?: (event: { markdown: string; html: string }) => void;
 	};
 
 	let {
-		content = $bindable(''),
-		noteId,
-		initialContentBinBase64,
+		content = '',
 		editable = true,
 		placeholder = 'Write something...',
+		showBlockHandle = true,
 		onchange
 	}: Props = $props();
 
-	let ydoc: Y.Doc | null = null;
-	let indexedDBProvider: IndexeddbPersistence | null = null;
-	let hocuspocusProvider: HocuspocusProvider | null = null;
+	// Yjs/CollaborationはHocuspocusサーバー未設置のため無効化（2026-08-17）。
+	// 共同編集を有効化する場合は、サーバー設置後にCollaboration拡張とYjs初期化を復活させること。
+	// ※Collaboration有効時はYjsドキュメントが空のままProseMirrorを巻き戻す問題を確認済み
 
 	let element: HTMLElement;
 	let editor: Editor | null = $state(null);
@@ -56,11 +52,44 @@
 	let uploadProgress = $state(0);
 	let fileInputEl = $state<HTMLInputElement>();
 
+	// ノートコンパイザ（選択範囲を切り出して新規ノート化 → 元の場所に埋め込み）
+	let hasSelection = $state(false);
+	let showExtractDialog = $state(false);
+	let extractTitle = $state('');
+	let extractError = $state('');
+	let extracting = $state(false);
+	let toastMessage = $state('');
+	let toastTimer: ReturnType<typeof setTimeout>;
+
 	function normalizeMarkdown(markdown: string) {
 		return markdown
 			.replace(/\u00a0/g, ' ')
-			.replace(/^[ \t]*&nbsp;[ \t]*$/gm, '')
+			.replace(/^[^\S\n]*&nbsp;[^\S\n]*$/gm, '')
 			.replace(/&nbsp;/g, ' ');
+	}
+
+	/**
+	 * Markdown由来の「URLだけの段落」をYouTube埋め込みノードに置き換える。
+	 * 保存形式はURL文字列のままなので他ツールとも相互運用できる。
+	 */
+	function normalizeYoutubeBlocks(ed: Editor) {
+		const { state } = ed;
+		const targets: { pos: number; size: number; src: string }[] = [];
+		state.doc.descendants((node, pos) => {
+			if (node.type.name !== 'paragraph' || node.childCount !== 1) return;
+			const child = node.firstChild;
+			if (!child?.isText) return;
+			const text = (child.text || '').trim();
+			if (isYoutubeUrl(text)) targets.push({ pos, size: node.nodeSize, src: text });
+		});
+		if (targets.length === 0) return;
+
+		const tr = state.tr;
+		for (const t of targets.reverse()) {
+			tr.replaceWith(t.pos, t.pos + t.size, state.schema.nodes.youtube.create({ src: t.src }));
+		}
+		tr.setMeta('addToHistory', false);
+		ed.view.dispatch(tr);
 	}
 
 	// --- 画像アップロード処理 ---
@@ -75,8 +104,15 @@
 		uploadProgress = 0;
 
 		try {
+			// JPEG/PNG/WebPはブラウザ側でAVIFに変換してから送る（失敗時は元ファイル）
+			const uploadFile = await toAvifOrOriginal(file);
+			if (uploadFile.size > 10 * 1024 * 1024) {
+				alert('画像ファイルのサイズは10MB以下にしてください。');
+				return null;
+			}
+
 			const formData = new FormData();
-			formData.append('file', file);
+			formData.append('file', uploadFile);
 
 			// XMLHttpRequest でプログレス表示
 			const url = await new Promise<string>((resolve, reject) => {
@@ -130,6 +166,75 @@
 		}
 	}
 
+	// --- Notion風ブロックハンドル ---
+	let showBlockMenu = $state(false);
+	let blockMenuPos = $state({ top: 0, left: 0 });
+	let activeBlockPos = $state<number | null>(null);
+
+	const blockTypes = [
+		{ id: 'paragraph', label: 'テキスト' },
+		{ id: 'h1', label: '見出し1' },
+		{ id: 'h2', label: '見出し2' },
+		{ id: 'h3', label: '見出し3' },
+		{ id: 'bulletList', label: '箇条書き' },
+		{ id: 'orderedList', label: '番号付きリスト' },
+		{ id: 'taskList', label: 'チェックリスト' },
+		{ id: 'blockquote', label: '引用' },
+		{ id: 'codeBlock', label: 'コード' }
+	];
+
+	function openBlockMenu(handleEl: HTMLElement) {
+		const rect = handleEl.getBoundingClientRect();
+		blockMenuPos = { top: rect.bottom + 6, left: Math.max(8, rect.left - 150) };
+		showBlockMenu = true;
+	}
+
+	function convertBlock(type: string) {
+		if (!editor || activeBlockPos === null) return;
+		const chain = editor.chain().focus().setNodeSelection(activeBlockPos);
+		switch (type) {
+			case 'paragraph':
+				chain.setParagraph().run();
+				break;
+			case 'h1':
+				chain.setHeading({ level: 1 }).run();
+				break;
+			case 'h2':
+				chain.setHeading({ level: 2 }).run();
+				break;
+			case 'h3':
+				chain.setHeading({ level: 3 }).run();
+				break;
+			case 'bulletList':
+				chain.toggleBulletList().run();
+				break;
+			case 'orderedList':
+				chain.toggleOrderedList().run();
+				break;
+			case 'taskList':
+				chain.toggleTaskList().run();
+				break;
+			case 'blockquote':
+				chain.toggleBlockquote().run();
+				break;
+			case 'codeBlock':
+				chain.toggleCodeBlock().run();
+				break;
+		}
+		showBlockMenu = false;
+	}
+
+	// メニュー外クリックで閉じる
+	$effect(() => {
+		if (!showBlockMenu || typeof window === 'undefined') return;
+		const handler = (e: MouseEvent) => {
+			const target = e.target as HTMLElement;
+			if (!target.closest('.block-menu')) showBlockMenu = false;
+		};
+		document.addEventListener('click', handler);
+		return () => document.removeEventListener('click', handler);
+	});
+
 	// --- WikiLink サジェスト ---
 	type Suggestion = { id: string; title: string; slug: string };
 	let suggestions: Suggestion[] = $state([]);
@@ -149,6 +254,157 @@
 			}
 		} catch {
 			suggestions = [];
+		}
+	}
+
+	/** HTMLエスケープ（属性・本文用） */
+	function escapeHtml(value: string) {
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	/**
+	 * URLを貼った時にページタイトルを取得して [タイトル](URL) に差し替える。
+	 * 取得できなければURLのまま（ユーザーの入力を壊さない）。
+	 */
+	async function insertUrlWithTitle(url: string) {
+		if (!editor) return;
+		const insertAt = editor.state.selection.from;
+		editor
+			.chain()
+			.focus()
+			.insertContent(`<a href="${escapeHtml(url)}">${escapeHtml(url)}</a> `)
+			.run();
+
+		try {
+			const res = await fetch(`/api/link-title?url=${encodeURIComponent(url)}`);
+			if (!res.ok) return;
+			const data = (await res.json()) as { ok?: boolean; title?: string | null };
+			const title = data?.title?.trim();
+			if (!data?.ok || !title) return;
+
+			// ユーザーが編集していたら触らない（同じ位置にURLが残っている時だけ差し替え）
+			const doc = editor.state.doc;
+			const end = insertAt + url.length;
+			if (end > doc.content.size) return;
+			if (doc.textBetween(insertAt, end, '') !== url) return;
+
+			editor
+				.chain()
+				.focus()
+				.insertContentAt(
+					{ from: insertAt, to: end },
+					`<a href="${escapeHtml(url)}">${escapeHtml(title)}</a>`
+				)
+				.run();
+		} catch {
+			// 取得失敗時はURLのまま
+		}
+	}
+
+	/**
+	 * Markdown由来の「![[タイトル]]だけの段落」を埋め込みノードに置き換える。
+	 * （ノードを直接insertContentすると段落内の選択位置で失敗することがあるため、
+	 *   一度テキストとして差し込んでから正規化する）
+	 */
+	function normalizeNoteEmbeds(ed: Editor) {
+		const { state } = ed;
+		const targets: { pos: number; size: number; title: string }[] = [];
+		state.doc.descendants((node, pos) => {
+			if (node.type.name !== 'paragraph' || node.childCount !== 1) return;
+			const child = node.firstChild;
+			if (!child?.isText) return;
+			const text = (child.text || '').trim();
+			const m = text.match(/^!\[\[([^\]\n]+)\]\]$/);
+			if (m) targets.push({ pos, size: node.nodeSize, title: m[1].trim() });
+		});
+		if (targets.length === 0) return;
+
+		const tr = state.tr;
+		for (const t of targets.reverse()) {
+			tr.replaceWith(t.pos, t.pos + t.size, state.schema.nodes.noteEmbed.create({ title: t.title }));
+		}
+		tr.setMeta('addToHistory', false);
+		ed.view.dispatch(tr);
+	}
+
+	/** 短い通知を4秒表示する */
+	function showToast(message: string) {
+		toastMessage = message;
+		clearTimeout(toastTimer);
+		toastTimer = setTimeout(() => (toastMessage = ''), 4000);
+	}
+
+	/** 選択範囲を切り出すダイアログを開く（選択が無ければ何もしない） */
+	function openExtractDialog() {
+		if (!editor) return;
+		const { from, to } = editor.state.selection;
+		if (from === to) return;
+		const text = editor.state.doc.textBetween(from, to, '\n').trim();
+		if (!text) return;
+		const firstLine = text.split('\n')[0].replace(/^#+\s*/, '').trim();
+		extractTitle = firstLine.slice(0, 60);
+		extractError = '';
+		showExtractDialog = true;
+	}
+
+	/** 選択範囲を新規ノートとして保存し、元の位置に ![[タイトル]] を差し込む */
+	async function confirmExtract() {
+		if (!editor || extracting) return;
+		const title = extractTitle.trim();
+		if (!title) {
+			extractError = 'タイトルを入力してください';
+			return;
+		}
+		const { from, to } = editor.state.selection;
+		if (from === to) {
+			showExtractDialog = false;
+			return;
+		}
+
+		// 選択範囲のMarkdownを組み立てる（Tiptap Markdownのシリアライザを使う）
+		const sliceJson = editor.state.doc.cut(from, to).toJSON();
+		const markdown = editor.markdown
+			? editor.markdown.serialize(sliceJson)
+			: editor.state.doc.textBetween(from, to, '\n\n');
+
+		// 先にエディタへ埋め込みを差し込む。
+		// （fetchをawaitしてから編集すると、その間に選択位置がずれて挿入に失敗する）
+		const tr = editor.state.tr;
+		tr.deleteRange(from, to);
+		tr.insertText(`![[${title}]]`, from);
+		editor.view.dispatch(tr);
+		normalizeNoteEmbeds(editor);
+		editor.view.focus();
+
+		extracting = true;
+		extractError = '';
+		showExtractDialog = false;
+		try {
+			const res = await fetch('/api/notes', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title, content: markdown, status: 'box' })
+			});
+			const data = (await res.json()) as { id?: string; title?: string; message?: string };
+			if (!res.ok) {
+				// 作成できなかったらエディタを元に戻す
+				editor.commands.undo();
+				extractError = data?.message ?? 'ノートの作成に失敗しました';
+				showExtractDialog = true;
+				return;
+			}
+			showToast(`「${title}」を切り出しました`);
+		} catch {
+			editor.commands.undo();
+			extractError = '通信エラーが発生しました';
+			showExtractDialog = true;
+		} finally {
+			extracting = false;
 		}
 	}
 
@@ -234,42 +490,13 @@
 
 	onMount(() => {
 		try {
-			ydoc = new Y.Doc();
+			// Yjs初期化なし（Collaboration無効のため）
 
-			// If we have initial binary content from server, apply it
-			if (initialContentBinBase64) {
-				try {
-					const uint8Array = Uint8Array.from(atob(initialContentBinBase64), (c) => c.charCodeAt(0));
-					Y.applyUpdate(ydoc, uint8Array);
-				} catch (e) {
-					console.error('Failed to parse initial Yjs update', e);
-				}
-			}
-
-			// Configure IndexedDB persistence if a valid noteId is provided
-			if (noteId) {
-				indexedDBProvider = new IndexeddbPersistence(noteId, ydoc);
-				indexedDBProvider.on('synced', () => {
-					console.log('Yjs document synced from IndexedDB');
-				});
-
-				// Hocuspocus real-time collaboration provider
-				hocuspocusProvider = new HocuspocusProvider({
-					url: import.meta.env.PUBLIC_HOCUSPOCUS_URL || 'ws://localhost:1234',
-					name: noteId,
-					document: ydoc
-				});
-			}
-
-			// Build extensions array (CollaborationCursor is conditional on Hocuspocus)
+			// Build extensions array
 			const extensions: Extensions = [
 				StarterKit.configure({
 					codeBlock: false,
-					link: false,
-					undoRedo: false // disable history because of Collaboration extension
-				}),
-				Collaboration.configure({
-					document: ydoc
+					link: false
 				}),
 				Placeholder.configure({
 					placeholder: placeholder
@@ -294,16 +521,42 @@
 				}),
 				WikiLinkMark,
 				NoteEmbedNode,
+				YoutubeNode,
 				Markdown
 			];
 
-			// Only add cursor awareness when Hocuspocus is connected
-			if (hocuspocusProvider) {
-				extensions.splice(
-					2,
-					0,
-					CollaborationCursor.configure({
-						provider: hocuspocusProvider
+			// Notion風ブロックハンドル（設定でオンオフ）
+			if (showBlockHandle && editable) {
+				extensions.push(
+					DragHandle.configure({
+						render: () => {
+							const el = document.createElement('div');
+							el.className = 'block-drag-handle';
+							el.setAttribute('title', 'ドラッグで移動 / クリックで種類変更');
+							el.innerHTML =
+								'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>';
+							el.addEventListener('click', (e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								openBlockMenu(el);
+							});
+							return el;
+						},
+						onNodeChange: ({ node }) => {
+							if (!node || !editor) {
+								activeBlockPos = null;
+								return;
+							}
+							let found = -1;
+							editor.state.doc.descendants((n, pos) => {
+								if (n === node) {
+									found = pos;
+									return false;
+								}
+								return true;
+							});
+							if (found >= 0) activeBlockPos = found;
+						}
 					})
 				);
 			}
@@ -320,6 +573,16 @@
 							'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-xl focus:outline-none max-w-none min-h-[300px] p-4'
 					},
 					handleKeyDown(_, event) {
+						// Ctrl/Cmd + Shift + X: 選択範囲を新しいノートに切り出す
+						if (
+							(event.ctrlKey || event.metaKey) &&
+							event.shiftKey &&
+							event.key.toLowerCase() === 'x'
+						) {
+							event.preventDefault();
+							openExtractDialog();
+							return true;
+						}
 						// trueを返すとtiptapがイベントを消費（デフォルト動作を阻止）
 						return handleKeyDown(event);
 					},
@@ -364,6 +627,22 @@
 								}
 							}
 						}
+
+						// YouTubeのURLを貼ったら埋め込み（クリックで再生）に変換
+						const text = event.clipboardData?.getData('text/plain')?.trim();
+						if (text && isYoutubeUrl(text)) {
+							event.preventDefault();
+							editor?.chain().focus().insertContent({ type: 'youtube', attrs: { src: text } }).run();
+							return true;
+						}
+
+						// 素のURLを貼ったらタイトルを取得して [タイトル](URL) にする（失敗時はURLのまま）
+						if (text && /^https?:\/\/\S+$/i.test(text)) {
+							event.preventDefault();
+							void insertUrlWithTitle(text);
+							return true;
+						}
+
 						return false;
 					},
 					// 画像ドロップ対応
@@ -379,6 +658,11 @@
 						imageFiles.forEach((file) => insertImageFromFile(file));
 						return true;
 					}
+				},
+				onSelectionUpdate: ({ editor: e }) => {
+					const { from, to } = e.state.selection;
+					hasSelection =
+						from !== to && e.state.doc.textBetween(from, to, ' ').trim().length > 0;
 				},
 				onTransaction: ({ editor: e }) => {
 					// トランザクションのたびにサジェスト状態を更新
@@ -404,19 +688,24 @@
 					// Use Tiptap Markdown natively to export clean MD
 					const md = normalizeMarkdown(e.getMarkdown());
 					lastSyncedMarkdown = md;
-					content = md; // コンポーネント外の `bind:content` に変更を通知する
+					// 親への通知はonchange経由のみ（contentは読み取り専用prop）
 
-					if (onchange && ydoc) {
+					if (onchange) {
 						const html = e.getHTML();
-						const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
-						// Convert uint8array to base64
-						const yjsUpdateBase64 = btoa(String.fromCharCode.apply(null, Array.from(yjsUpdate)));
-						onchange({ markdown: md, html, yjsUpdateBase64 });
+						onchange({ markdown: md, html });
 					}
 				}
 			});
 
+			// 開発時のみ: ブラウザのコンソールからエディタ状態を確認できるようにする
+			if (import.meta.env.DEV) {
+				const w = window as unknown as { __sznmEditors?: Editor[]; __sznmEditor?: Editor };
+				w.__sznmEditors = [...(w.__sznmEditors ?? []), editor];
+				w.__sznmEditor = editor;
+			}
 			lastSyncedMarkdown = normalizeMarkdown(editor.getMarkdown());
+			// 既存メモにURLだけ書かれている場合は埋め込みノードに変換する
+			normalizeYoutubeBlocks(editor);
 		} catch (error) {
 			console.error('Editor init error:', error);
 			alert('エディタの読み込みに失敗しました: ' + (error as Error).message);
@@ -431,24 +720,9 @@
 		return editor ? editor.getHTML() : '';
 	}
 
-	export function getYjsUpdateBase64() {
-		if (!ydoc) return '';
-		const yjsUpdate = Y.encodeStateAsUpdate(ydoc);
-		return btoa(String.fromCharCode.apply(null, Array.from(yjsUpdate)));
-	}
-
 	onDestroy(() => {
 		if (editor) {
 			editor.destroy();
-		}
-		if (indexedDBProvider) {
-			indexedDBProvider.destroy();
-		}
-		if (hocuspocusProvider) {
-			hocuspocusProvider.destroy();
-		}
-		if (ydoc) {
-			ydoc.destroy();
 		}
 		clearTimeout(debounceTimer);
 	});
@@ -471,6 +745,7 @@
 				isUpdatingInternal = true;
 				lastSyncedMarkdown = normalizedIncoming;
 				editor.commands.setContent(normalizedIncoming, { contentType: 'markdown' });
+				normalizeYoutubeBlocks(editor);
 				setTimeout(() => {
 					isUpdatingInternal = false;
 				}, 10);
@@ -516,6 +791,31 @@
 				{/if}
 			</button>
 
+			<button
+				type="button"
+				onclick={openExtractDialog}
+				disabled={!hasSelection}
+				class="btn btn-ghost btn-xs tooltip tooltip-bottom gap-1"
+				data-tip="選択範囲を新しいノートに切り出す（Ctrl+Shift+X）"
+				title="ノートに切り出す"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-4 w-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"
+					/>
+				</svg>
+				<span class="hidden text-xs sm:inline">切り出し</span>
+			</button>
+
 			<span class="text-base-content/40 text-xs"> 画像のペースト・ドロップも対応 </span>
 		</div>
 		<!-- ファイル選択（非表示） -->
@@ -529,6 +829,26 @@
 	{/if}
 
 	<div bind:this={element} class="w-full"></div>
+
+	{#if showBlockMenu}
+		<div
+			class="block-menu border-base-300 bg-base-100 fixed z-[100] flex w-40 flex-col rounded-lg border py-1 shadow-lg"
+			style="top: {blockMenuPos.top}px; left: {blockMenuPos.left}px;"
+		>
+			{#each blockTypes as bt (bt.id)}
+				<button
+					type="button"
+					class="hover:bg-base-200 px-3 py-1.5 text-left text-sm"
+					onclick={(e) => {
+						e.stopPropagation();
+						convertBlock(bt.id);
+					}}
+				>
+					{bt.label}
+				</button>
+			{/each}
+		</div>
+	{/if}
 
 	{#if showSuggestions && suggestions.length > 0}
 		<div
@@ -562,6 +882,52 @@
 					<span class="truncate">{suggestion.title}</span>
 				</button>
 			{/each}
+		</div>
+	{/if}
+
+	<!-- ノートコンパイザ: 切り出しダイアログ -->
+	{#if showExtractDialog}
+		<div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+			<div class="card bg-base-100 border-base-200/70 rounded-box w-full max-w-md border shadow-lg">
+				<div class="card-body gap-3">
+					<h3 class="text-base font-bold">選択範囲をノートに切り出す</h3>
+					<p class="text-base-content/60 text-xs">
+						新しいノートを作り、元の場所に埋め込み（![[タイトル]]）を差し込みます。
+					</p>
+					<label class="form-control w-full">
+						<span class="label-text text-xs">ノートのタイトル</span>
+						<input
+							bind:value={extractTitle}
+							class="input input-bordered input-sm mt-1 w-full"
+							maxlength="60"
+							placeholder="例: ツェッテルカステンの原則"
+						/>
+					</label>
+					{#if extractError}
+						<p class="text-error text-xs">{extractError}</p>
+					{/if}
+					<div class="flex justify-end gap-2">
+						<button
+							type="button"
+							class="btn btn-ghost btn-sm"
+							onclick={() => (showExtractDialog = false)}
+							disabled={extracting}
+						>
+							キャンセル
+						</button>
+						<button type="button" class="btn btn-primary btn-sm" onclick={confirmExtract} disabled={extracting}>
+							{#if extracting}<span class="loading loading-spinner loading-xs"></span>{/if}
+							切り出す
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if toastMessage}
+		<div class="toast toast-top toast-center z-[210]">
+			<div class="alert alert-success py-2 text-sm">{toastMessage}</div>
 		</div>
 	{/if}
 </div>
@@ -610,6 +976,29 @@
 		bottom: 0;
 		background: rgba(200, 200, 255, 0.4);
 		pointer-events: none;
+	}
+
+	/* Notion風ブロックハンドル */
+	:global(.block-drag-handle) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		border-radius: 4px;
+		color: var(--color-base-content);
+		opacity: 0.45;
+		cursor: grab;
+		transition:
+			background-color 0.15s,
+			opacity 0.15s;
+	}
+	:global(.block-drag-handle:hover) {
+		background-color: var(--color-base-200);
+		opacity: 1;
+	}
+	:global(.block-drag-handle:active) {
+		cursor: grabbing;
 	}
 
 	/* 挿入された画像のスタイル */

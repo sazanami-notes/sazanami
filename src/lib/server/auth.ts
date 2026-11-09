@@ -23,9 +23,12 @@ export function createAuth(platformEnv?: Record<string, string>) {
 	const authSecret = platformEnv?.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET;
 	const googleClientId = platformEnv?.GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID;
 	const googleClientSecret = platformEnv?.GOOGLE_CLIENT_SECRET || env.GOOGLE_CLIENT_SECRET;
+	const discordClientId = platformEnv?.DISCORD_CLIENT_ID || env.DISCORD_CLIENT_ID;
+	const discordClientSecret = platformEnv?.DISCORD_CLIENT_SECRET || env.DISCORD_CLIENT_SECRET;
 
 	return betterAuth({
 		appName: 'Sazanami',
+		basePath: '/api/auth',
 		baseURL: authUrl,
 		secret: authSecret,
 		emailAndPassword: {
@@ -56,11 +59,44 @@ export function createAuth(platformEnv?: Record<string, string>) {
 						clientId: googleClientId,
 						clientSecret: googleClientSecret || ''
 					}
-				: undefined
+				: undefined,
+			discord:
+				discordClientId && discordClientSecret
+					? {
+							clientId: discordClientId,
+							clientSecret: discordClientSecret,
+							// Discordはメールアドレスを返さない場合がある（emailスコープ未許可/未認証）
+							// → 実メールがあればそれを、無ければDiscordのユーザーID由来のローカル用アドレスを使う
+							mapProfileToUser: (profile) => ({
+								name: profile.global_name || profile.username,
+								email: profile.email || `${profile.id}@discord.local`,
+								emailVerified: Boolean(profile.verified),
+								image:
+									profile.avatar && profile.id
+										? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+										: undefined
+							})
+						}
+					: undefined
 		},
 		cookie: {
 			path: '/'
 		},
+		// 複数オリジン対応: Sazanami はカスタムドメイン（sznm.f5.si）と workers.dev の
+		// 両方のURLでアクセスされる。hooks.server.ts で /api/auth/* をオリジンに依らず
+		// better-auth に委譲するため、許可するオリジンをここで明示する。
+		trustedOrigins: [
+			'https://app.sznm.f5.si',
+			'https://dev.sznm.f5.si',
+			'https://sazanami.214kaedesato.workers.dev',
+			'https://sazanami-dev.214kaedesato.workers.dev',
+			'https://sazanami-dev.kaedesato.work',
+			'https://sazanami.kaedesato.work',
+			'http://localhost:5173',
+			'http://localhost:4173',
+			'http://127.0.0.1:5173',
+			'http://127.0.0.1:4173'
+		],
 		plugins: [
 			passkey(),
 			twoFactor({

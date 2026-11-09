@@ -4,12 +4,11 @@ import { db, updateNoteLinks, updateBacklinksOnTitleChange } from '$lib/server/d
 import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
 
 export const GET: RequestHandler = async ({ params, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
 	}
@@ -38,18 +37,8 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			.leftJoin(tags, eq(noteTags.tagId, tags.id))
 			.where(eq(noteTags.noteId, noteId));
 
-		let contentBinBase64: string | undefined;
-		if (note[0].contentBin) {
-			try {
-				contentBinBase64 = Buffer.from(note[0].contentBin).toString('base64');
-			} catch {
-				// ignore
-			}
-		}
-
 		const noteWithTags = {
 			...note[0],
-			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
 		};
 
@@ -61,7 +50,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 };
 
 export const PUT: RequestHandler = async ({ params, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
 	}
@@ -80,15 +69,15 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const {
 			title,
 			content,
-			contentBin,
 			tags: tagNames,
-			context
+			context,
+			isPublic
 		} = body as {
 			title?: string;
 			content?: string;
-			contentBin?: string;
 			tags?: string[];
 			context?: string | null;
+			isPublic?: boolean;
 		};
 
 		// ノートが存在するか確認
@@ -105,8 +94,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		const now = new Date();
 		const titleChanged = title !== undefined && title !== existingNote[0].title;
 		const contentChanged = content !== undefined && content !== existingNote[0].content;
-		const contentBinChanged = contentBin !== undefined;
 		const contextChanged = context !== undefined && context !== existingNote[0].context;
+		const isPublicChanged =
+			typeof isPublic === 'boolean' && isPublic !== Boolean(existingNote[0].isPublic);
 		const tagsProvided = Array.isArray(tagNames);
 
 		const updatedFields: Record<string, unknown> = {};
@@ -129,20 +119,19 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updatedFields.context = context;
 			metadata.changes.context = { before: existingNote[0].context, after: context };
 		}
-		if (contentBinChanged) {
-			try {
-				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
-				metadata.changes.contentBin = true;
-			} catch (e) {
-				console.error('Failed to parse contentBin base64', e);
-			}
+		if (isPublicChanged) {
+			updatedFields.isPublic = isPublic;
+			metadata.changes.isPublic = {
+				before: Boolean(existingNote[0].isPublic),
+				after: isPublic
+			};
 		}
 		if (contentChanged) {
 			// updatedFields.content = content; handled above
 			// metadata.changes.content = true; // コンテンツの変更は差分ではなく変更があったことだけ記録
 		}
 
-		if (titleChanged || contentChanged || contentBinChanged || contextChanged) {
+		if (titleChanged || contentChanged || contextChanged || isPublicChanged) {
 			updatedFields.updatedAt = now;
 		}
 
@@ -168,7 +157,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			}
 		}
 
-		if (!titleChanged && !contentChanged && !contentBinChanged && !tagsProvided && !contextChanged) {
+		if (!titleChanged && !contentChanged && !tagsProvided && !contextChanged && !isPublicChanged) {
 			const noteTagsList = await db
 				.select({ name: tags.name })
 				.from(noteTags)
@@ -274,18 +263,6 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 		// After updating the note, update its links
 		if (contentChanged) {
-			updatedFields.content = content;
-			// metadata.changes.content = true;
-		}
-		if (contentBinChanged) {
-			try {
-				updatedFields.contentBin = Buffer.from(contentBin!, 'base64');
-				metadata.changes.contentBin = true;
-			} catch (e) {
-				console.error('Failed to parse contentBin base64', e);
-			}
-		}
-		if (contentChanged) {
 			const finalContent = content !== undefined ? content : existingNote[0].content;
 			await updateNoteLinks(noteId, finalContent || '', session.session.userId);
 		}
@@ -313,18 +290,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			.leftJoin(tags, eq(noteTags.tagId, tags.id))
 			.where(eq(noteTags.noteId, noteId));
 
-		let contentBinBase64: string | undefined;
-		if (updatedNote[0].contentBin) {
-			try {
-				contentBinBase64 = Buffer.from(updatedNote[0].contentBin).toString('base64');
-			} catch {
-				// ignore
-			}
-		}
-
 		const noteWithTags = {
 			...updatedNote[0],
-			contentBin: contentBinBase64,
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean),
 			resolvedLinks: updatedNote[0].resolvedLinks // ここで明示的に含める（select * なので本来含まれるが確認用）
 		};
@@ -337,7 +304,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
 	}

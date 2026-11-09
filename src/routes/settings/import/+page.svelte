@@ -1,4 +1,6 @@
 <script lang="ts">
+	import JSZip from 'jszip';
+
 	let selectedFiles = $state<File[]>([]);
 	let isDragging = $state(false);
 	let isLoading = $state(false);
@@ -8,10 +10,14 @@
 		errors: string[];
 	} | null>(null);
 	let errorMessage = $state('');
+	let progress = $state({ current: 0, total: 0 });
 
 	let fileInputEl: HTMLInputElement;
 
 	const hasAnyFiles = $derived(selectedFiles.length > 0);
+
+	// 1リクエストあたりの処理数（Cloudflare Workersの制限対策）
+	const BATCH_SIZE = 25;
 
 	function addFiles(newFiles: FileList | File[]) {
 		const arr = Array.from(newFiles);
@@ -34,7 +40,6 @@
 	}
 
 	function onDragLeave(e: DragEvent) {
-		// 子要素への移動では発火しないように
 		const related = e.relatedTarget as Node | null;
 		if (related && (e.currentTarget as HTMLElement).contains(related)) return;
 		isDragging = false;
@@ -56,7 +61,41 @@
 		selectedFiles = [];
 		result = null;
 		errorMessage = '';
+		progress = { current: 0, total: 0 };
 		if (fileInputEl) fileInputEl.value = '';
+	}
+
+	/** 選択されたファイル（ZIP / md）からMarkdownファイルを集める（ZIPはブラウザ内で展開） */
+	async function collectMarkdownFiles(files: File[]): Promise<{ name: string; content: string }[]> {
+		const collected: { name: string; content: string }[] = [];
+
+		for (const file of files) {
+			const lower = file.name.toLowerCase();
+			if (lower.endsWith('.zip')) {
+				const zip = await JSZip.loadAsync(await file.arrayBuffer());
+				const promises: Promise<void>[] = [];
+				zip.forEach((path, entry) => {
+					if (
+						entry.dir ||
+						path.startsWith('__MACOSX/') ||
+						(path.split('/').pop() ?? '').startsWith('.') ||
+						!path.toLowerCase().endsWith('.md')
+					) {
+						return;
+					}
+					const base = path.split('/').pop() ?? path;
+					promises.push(
+						entry.async('string').then((content) => {
+							collected.push({ name: base, content });
+						})
+					);
+				});
+				await Promise.all(promises);
+			} else if (lower.endsWith('.md')) {
+				collected.push({ name: file.name, content: await file.text() });
+			}
+		}
+		return collected;
 	}
 
 	async function handleImport() {
@@ -68,37 +107,60 @@
 		isLoading = true;
 		result = null;
 		errorMessage = '';
-
-		const formData = new FormData();
-		for (const file of selectedFiles) {
-			formData.append('files', file);
-		}
+		progress = { current: 0, total: 0 };
 
 		try {
-			const response = await fetch('/api/notes/import', {
-				method: 'POST',
-				body: formData
-			});
-
-			const data = (await response.json()) as {
-				importedCount: number;
-				skippedCount?: number;
-				errors?: string[];
-				message?: string;
-			};
-
-			if (response.ok) {
-				result = {
-					importedCount: data.importedCount,
-					skippedCount: data.skippedCount ?? 0,
-					errors: data.errors ?? []
-				};
-				// インポート完了後にファイルリストをリセット
-				selectedFiles = [];
-				if (fileInputEl) fileInputEl.value = '';
-			} else {
-				errorMessage = `エラー: ${data.message || '不明なエラーが発生しました。'}`;
+			// 1. ブラウザ内でZIPを展開してMarkdownを集める
+			const mdFiles = await collectMarkdownFiles(selectedFiles);
+			if (mdFiles.length === 0) {
+				errorMessage = 'Markdownファイルが見つかりませんでした。';
+				return;
 			}
+
+			// 2. バッチに分けて順次送信（進捗表示つき）
+			progress = { current: 0, total: mdFiles.length };
+			let totalImported = 0;
+			let totalSkipped = 0;
+			const allErrors: string[] = [];
+
+			for (let i = 0; i < mdFiles.length; i += BATCH_SIZE) {
+				const batch = mdFiles.slice(i, i + BATCH_SIZE);
+				const formData = new FormData();
+				for (const f of batch) {
+					formData.append('files', new File([f.content], f.name, { type: 'text/markdown' }));
+				}
+
+				const response = await fetch('/api/notes/import', {
+					method: 'POST',
+					body: formData
+				});
+				const data = (await response.json()) as {
+					importedCount?: number;
+					skippedCount?: number;
+					errors?: string[];
+					message?: string;
+				};
+
+				if (response.ok) {
+					totalImported += data.importedCount ?? 0;
+					totalSkipped += data.skippedCount ?? 0;
+					allErrors.push(...(data.errors ?? []));
+				} else {
+					allErrors.push(
+						`バッチ ${Math.floor(i / BATCH_SIZE) + 1} の処理に失敗: ${data.message || '不明なエラー'}`
+					);
+				}
+
+				progress = { current: Math.min(i + BATCH_SIZE, mdFiles.length), total: mdFiles.length };
+			}
+
+			result = {
+				importedCount: totalImported,
+				skippedCount: totalSkipped,
+				errors: allErrors
+			};
+			selectedFiles = [];
+			if (fileInputEl) fileInputEl.value = '';
 		} catch (e) {
 			errorMessage = 'インポート処理中にエラーが発生しました。';
 			console.error('Import error:', e);
@@ -127,6 +189,7 @@
 		<p class="text-base-content/70 mt-1 text-sm">
 			ObsidianのVaultをZIPでエクスポートしてインポートできます。<br />
 			Markdownファイル（.md）または ZIPファイルに対応しています。<br />
+			Frontmatterのタグ・更新日時も取り込み、[[リンク]]は自動で解決されます。<br />
 			インポートされたノートは
 			<span class="badge badge-sm badge-outline">BOX</span> に保存されます。
 		</p>
@@ -143,7 +206,9 @@
 				<li>できあがったZIPファイルをここにドロップするかファイル選択してインポート</li>
 			</ol>
 			<p class="text-base-content/60 mt-2">
-				※ フォルダ構造は無視されます。すべてのMarkdownファイルがBOXにインポートされます。
+				※ フォルダ構造は無視されます。すべてのMarkdownファイルがBOXにインポートされます。<br />
+				※ 同じタイトルのノートが既にある場合はスキップされます。<br />
+				※ 大量のファイルは自動で分割して処理されます（進捗が表示されます）。
 			</p>
 		</div>
 	</div>
@@ -228,6 +293,21 @@
 		{/if}
 	</button>
 
+	<!-- 進捗表示 -->
+	{#if isLoading && progress.total > 0}
+		<div class="space-y-1">
+			<div class="text-base-content/60 flex justify-between text-xs">
+				<span>処理中...</span>
+				<span>{progress.current} / {progress.total} ノート</span>
+			</div>
+			<progress
+				class="progress progress-primary w-full"
+				value={progress.current}
+				max={progress.total}
+			></progress>
+		</div>
+	{/if}
+
 	<!-- エラーメッセージ -->
 	{#if errorMessage}
 		<div class="alert alert-error">
@@ -256,16 +336,19 @@
 					<div class="w-full">
 						<p class="text-sm font-medium">一部のファイルのインポートに失敗しました:</p>
 						<ul class="mt-1 list-inside list-disc space-y-0.5 text-xs">
-							{#each result.errors as err (err)}
+							{#each result.errors.slice(0, 10) as err (err)}
 								<li>{err}</li>
 							{/each}
+							{#if result.errors.length > 10}
+								<li>…ほか {result.errors.length - 10} 件</li>
+							{/if}
 						</ul>
 					</div>
 				</div>
 			{/if}
 			<p class="text-base-content/60 text-sm">
 				インポートされたノートは
-				<a href="/home" class="link link-primary">BOX</a> で確認できます。
+				<a href="/home/box" class="link link-primary">BOX</a> で確認できます。
 			</p>
 		</div>
 	{/if}

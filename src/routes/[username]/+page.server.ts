@@ -31,11 +31,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	// ユーザーの公開ノート（本人の場合はピン留めなども表示対象にするなど調整可能）
 	// ここではシンプルに「公開されているノート」または「自分が所有するノート（本人の場合）」を取得
+	// 公開プロフィールに出すのは Box（整理済み）のノートのみ。inboxの走り書きは出さない。
 	const userNotes = await db.query.notes.findMany({
 		where: and(
 			eq(notes.userId, foundUser.id),
 			isOwner ? undefined : eq(notes.isPublic, true), // 他人のページなら公開のみ
-			eq(notes.status, 'inbox') // archivedやtrashは除外
+			eq(notes.status, 'box') // archivedやtrash・inboxは除外
 		),
 		orderBy: [desc(notes.createdAt)],
 		limit: 50 // とりあえず50件

@@ -4,6 +4,7 @@
 	import type { Note } from '$lib/types';
 	import hljs from 'highlight.js';
 	import { renderWikiLinks } from '$lib/utils/note-utils';
+	import { protectNoteEmbeds, restoreNoteEmbeds } from '$lib/utils/note-embeds';
 	import { sanitizeHtml, escapeHtml } from '$lib/utils/sanitize';
 	import { customMarked } from '$lib/utils/markdown-renderer';
 
@@ -12,49 +13,15 @@
 
 	const dispatch = createEventDispatcher<{ edit: Note }>();
 
-	type EmbedPlaceholder = {
-		placeholder: string;
-		title: string;
-	};
-
-	function escapeMarkdownText(value: string) {
-		return value
-			.replace(/\\/g, '\\\\')
-			.replace(/\]/g, '\\]')
-			.replace(/\(/g, '\\(')
-			.replace(/\)/g, '\\)');
-	}
-
-	function protectNoteEmbeds(content: string) {
-		const embeds: EmbedPlaceholder[] = [];
-		const protectedContent = content.replace(/!\[\[(.*?)\]\]/g, (_match, title) => {
-			const placeholder = `__SAZANAMI_NOTE_EMBED_${embeds.length}__`;
-			embeds.push({ placeholder, title });
-			return placeholder;
-		});
-
-		return { contentHtml: protectedContent, embeds };
-	}
-
-	function restoreNoteEmbeds(content: string, embeds: EmbedPlaceholder[]) {
-		let restored = content;
-		for (const embed of embeds) {
-			const linkText = `埋め込み: ${escapeMarkdownText(embed.title)}`;
-			const encodedTitle = encodeURIComponent(embed.title);
-			restored = restored.replace(embed.placeholder, `[${linkText}](note-embed:${encodedTitle})`);
-		}
-		return restored;
-	}
+	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
+	$: processedContent = renderWikiLinks(noteEmbedsProtected.contentHtml, note.resolvedLinks);
+	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
 
 	function handleClick() {
 		if (!linkToDetail && note.id) {
 			dispatch('edit', note);
 		}
 	}
-
-	$: noteEmbedsProtected = protectNoteEmbeds(note.content || '');
-	$: processedContent = renderWikiLinks(noteEmbedsProtected.contentHtml, note.resolvedLinks);
-	$: contentWithEmbeds = restoreNoteEmbeds(processedContent, noteEmbedsProtected.embeds);
 	$: isHtmlContent = /<p>|<h[1-6]>|<ul|<ol|<blockquote|<pre|<div/i.test(contentWithEmbeds || '');
 	$: renderedContent = isHtmlContent
 		? sanitizeHtml(contentWithEmbeds || '')
@@ -167,7 +134,7 @@
 
 {#if linkToDetail}
 	<div
-		class="card bg-base-200 rounded-box block max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		class="card bg-base-100 border-base-200/70 rounded-box block max-h-64 min-h-40 cursor-pointer overflow-hidden border p-3 shadow transition-shadow hover:shadow-md"
 		onclick={(e) => {
 			// WikiLinkへのクリックなら親の遷移を無視する
 			if ((e.target as HTMLElement).closest('a.wiki-link')) return;
@@ -179,9 +146,9 @@
 			if (e.key === 'Enter' && note.id) goto(`/home/note/${note.id}`);
 		}}
 	>
-		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
+		<h2 class="card-title mb-1 line-clamp-2 text-base font-bold">{note.title}</h2>
 		<div
-			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
+			class="prose text-base-content/70 mb-2 line-clamp-3 text-sm"
 			use:enhanceProseContent={processedContent}
 		>
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -195,16 +162,16 @@
 		</div>
 		{:else}
 		<div
-		class="card bg-base-200 rounded-box max-h-64 min-h-48 cursor-pointer overflow-hidden p-4 shadow-md transition-shadow hover:shadow-lg"
+		class="card bg-base-100 border-base-200/70 rounded-box max-h-64 min-h-40 cursor-pointer overflow-hidden border p-3 shadow transition-shadow hover:shadow-md"
 		onclick={handleClick}
 		role="button"
 		tabindex="0"
 		onkeydown={(e) => e.key === 'Enter' && handleClick()}
 		aria-label="メモを編集"
 		>
-		<h2 class="card-title mb-2 line-clamp-1 text-lg font-bold">{note.title}</h2>
+		<h2 class="card-title mb-1 line-clamp-2 text-base font-bold">{note.title}</h2>
 		<div
-			class="prose text-base-content/70 mb-3 line-clamp-4 text-sm"
+			class="prose text-base-content/70 mb-2 line-clamp-3 text-sm"
 			use:enhanceProseContent={processedContent}
 		>
 			<!-- eslint-disable-next-line svelte/no-at-html-tags -->

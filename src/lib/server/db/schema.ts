@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, uniqueIndex, blob } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, uniqueIndex, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
@@ -26,7 +26,6 @@ export const notes = sqliteTable(
 		title: text('title').notNull().default('Untitled Note'),
 		slug: text('slug').notNull(), // スラッグを追加 (デフォルト値はマイグレーションで処理)
 		content: text('content'), // Markdownコンテンツ
-		contentBin: blob('content_bin', { mode: 'buffer' }), // Yjsドキュメントのバイナリデータ
 		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(), // 作成日時 (MSタイムスタンプ)
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(), // 更新日時 (MSタイムスタンプ)
 		isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
@@ -40,7 +39,11 @@ export const notes = sqliteTable(
 		// 出会い（Encounter）機能用: FSRS式の重み付きランダム再提示
 		lastEncounteredAt: integer('last_encountered_at', { mode: 'timestamp_ms' }), // 最後に出会いとして表示した日時
 		encounterCount: integer('encounter_count').notNull().default(0), // 出会い回数
-		encounterBoost: integer('encounter_boost').notNull().default(0) // フィードバック（また会いたい:+1 / スルー:-1）
+		encounterBoost: integer('encounter_boost').notNull().default(0), // フィードバック（また会いたい:+1 / スルー:-1）
+		// リプライ（タイムラインのスレッド表示用）: 親ノートへの参照。親が消えてもメモは残す
+		parentId: text('parent_id').references((): AnySQLiteColumn => notes.id, {
+			onDelete: 'set null'
+		})
 	},
 	(table) => [
 		// Boxノートのタイトルはユーザー内で一意にする（WikiLink解決のため）
@@ -169,5 +172,33 @@ export const userSettings = sqliteTable('user_settings', {
 	lightThemeId: text('light_theme_id').notNull().default('sazanami-days'), // 組み込みテーマ名 or themes.id
 	darkThemeId: text('dark_theme_id').notNull().default('sazanami-night'), // 組み込みテーマ名 or themes.id
 	font: text('font').notNull().default('sans-serif'),
+	// エディタのブロックハンドル（Notion風ドラッグハンドル）を表示するか
+	blockHandleEnabled: integer('block_handle_enabled', { mode: 'boolean' }).notNull().default(true),
 	bio: text('bio')
 });
+
+// API TOKENS テーブル（外部API・MCP用の個人アクセストークン）
+// 平文トークンは保存せず、SHA-256ハッシュのみを持つ。発行時に一度だけ平文を返す。
+export const apiTokens = sqliteTable(
+	'api_tokens',
+	{
+		id: text('id')
+			.notNull()
+			.primaryKey()
+			.$defaultFn(() => ulid()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		tokenHash: text('token_hash').notNull(),
+		prefix: text('prefix').notNull(), // 表示用（例: sznm_a1b2c3d4）
+		scopes: text('scopes').notNull().default('read'), // カンマ区切り: read,write
+		lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
+		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
+		revokedAt: integer('revoked_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(table) => [uniqueIndex('api_tokens_hash_unique').on(table.tokenHash)]
+);

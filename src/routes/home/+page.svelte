@@ -3,24 +3,34 @@
 	import type { Note } from '$lib/types';
 	import NoteModal from '$lib/components/NoteModal.svelte';
 	import SortSelector from '$lib/components/SortSelector.svelte';
-	import EncounterCard from '$lib/components/EncounterCard.svelte';
 	import QuickCapture from '$lib/components/QuickCapture.svelte';
 	import { sortNotes, type SortKey } from '$lib/utils/note-utils';
-	import type { EncounterNote } from '$lib/components/EncounterCard.svelte';
 
 	type HomePageData = {
 		notes: Note[];
-		encounter: EncounterNote | null;
+		repliesByParent?: Record<string, (Note & { tags: string[] })[]>;
 	};
 
 	let { data }: { data: HomePageData } = $props();
 
 	let editingNoteId: string | null = $state(null);
 	let sortKey: SortKey = $state('updatedAt_desc');
+	// クイックキャプチャ直後の楽観的反映用（invalidate完了でサーバー値に置き換わる）
+	let optimisticNotes = $state<(Note & { tags: string[] })[]>([]);
 
 	const rawNotes = $derived(data.notes || []);
-	const notes = $derived(sortNotes(rawNotes, sortKey));
-	const encounter = $derived(data.encounter);
+	const notes = $derived([
+		...optimisticNotes.filter((o) => !rawNotes.some((r) => r.id === o.id)),
+		...sortNotes(rawNotes, sortKey)
+	]);
+	const repliesByParent = $derived(data.repliesByParent || {});
+
+	function handleCreated(note: Note) {
+		// トップレベルの投稿のみ即時追加（リプライは親ツリー側で表示）
+		if (!note.parentId) {
+			optimisticNotes = [{ ...note, tags: [] }, ...optimisticNotes];
+		}
+	}
 
 	function handleEdit(event: CustomEvent<Note>) {
 		editingNoteId = event.detail.id;
@@ -35,6 +45,17 @@
 	}
 </script>
 
+{#snippet replyTree(parentId: string)}
+	{#if repliesByParent[parentId]?.length}
+		<div class="border-base-300 mt-1 ml-4 space-y-2 border-l-2 pl-3">
+			{#each repliesByParent[parentId] as reply (reply.id)}
+				<TimelinePost note={reply} on:edit={handleEdit} compact />
+				{@render replyTree(reply.id)}
+			{/each}
+		</div>
+	{/if}
+{/snippet}
+
 <div class="container mx-auto px-4 py-8">
 	<!-- Timeline Feed -->
 	<div class="mx-auto max-w-2xl">
@@ -45,17 +66,15 @@
 
 		<!-- 取るUI: クイックキャプチャ -->
 		<div class="mb-4">
-			<QuickCapture />
-		</div>
-
-		<!-- 出会い: FSRS式の再提示 -->
-		<div class="mb-4">
-			<EncounterCard initial={encounter} />
+			<QuickCapture oncreated={handleCreated} />
 		</div>
 
 		<div class="flex flex-col space-y-4">
 			{#each notes as note (note.id)}
-				<TimelinePost {note} on:edit={handleEdit} />
+				<div>
+					<TimelinePost {note} on:edit={handleEdit} />
+					{@render replyTree(note.id)}
+				</div>
 			{:else}
 				<p class="text-base-content text-opacity-60 text-center">
 					タイムラインにはまだ何もありません。

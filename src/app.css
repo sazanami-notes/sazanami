@@ -14,7 +14,8 @@
 	--color-base-100: oklch(98% 0.001 106.423);
 	--color-base-200: oklch(97% 0.001 106.424);
 	--color-base-300: oklch(92% 0.003 48.717);
-	--color-base-content: oklch(12% 0.042 264.695);
+	/* Figmaのデザイントークンに合わせる: 本文 #2E2E2E / アクセント ミント #81D5CE・濃ティール #00504C */
+	--color-base-content: oklch(30% 0.004 260);
 	--color-primary: oklch(85% 0.138 181.071);
 	--color-primary-content: oklch(27% 0.046 192.524);
 	--color-secondary: oklch(82% 0.111 230.318);
@@ -142,6 +143,20 @@ ul[data-type='taskList'] li > div > p {
 .prose ul[data-type='taskList'] > li::marker {
 	content: none !important;
 	display: none !important;
+}
+
+/* Tighten bullet/numbered list line spacing in markdown view
+   (prose adds ~8px around li and p inside li, which looks too airy) */
+.prose ul li,
+.prose ol li {
+	margin-top: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.prose ul li > p,
+.prose ol li > p {
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
 /* Code block language selector global styles */

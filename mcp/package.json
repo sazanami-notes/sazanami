@@ -1,0 +1,30 @@
+{
+  "name": "sazanami-mcp",
+  "version": "0.1.0",
+  "description": "Sazanami の公開 REST API v1 を MCP ツールとして公開する stdio サーバー",
+  "type": "module",
+  "bin": {
+    "sazanami-mcp": "./index.mjs"
+  },
+  "main": "./index.mjs",
+  "files": [
+    "index.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node ./index.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "sazanami",
+    "notes"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  }
+}

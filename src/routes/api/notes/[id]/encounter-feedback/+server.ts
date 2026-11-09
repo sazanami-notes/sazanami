@@ -1,12 +1,9 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-import { createAuth } from '$lib/server/auth';
+import { getSessionCached } from '$lib/server/auth-session';
 import { applyEncounterFeedback } from '$lib/server/encounter';
-
-const auth = createAuth();
-
 export const POST: RequestHandler = async ({ request, params }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}

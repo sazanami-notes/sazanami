@@ -1,15 +1,14 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { db, updateNoteLinks } from '$lib/server/db';
-import { notes, tags, noteTags, timeline } from '$lib/server/db/schema';
-import { eq, or, like, desc, sql, and } from 'drizzle-orm';
+import { notes, tags, noteTags } from '$lib/server/db/schema';
+import { eq, or, like, desc, sql, and, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
 
 export const GET: RequestHandler = async ({ url, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	console.log('Session in GET:', session);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
@@ -97,7 +96,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return json({ message: 'Unauthorized - No session found' }, { status: 401 });
 	}
@@ -111,9 +110,6 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ message: 'Invalid JSON format' }, { status: 400 });
 		}
 
-		// [デバッグ用ログ] 受信したリクエストボディを確認
-		console.log('Received request to create note');
-
 		if (typeof body !== 'object' || body === null) {
 			return json({ message: 'Invalid request body' }, { status: 400 });
 		}
@@ -121,18 +117,17 @@ export const POST: RequestHandler = async ({ request }) => {
 			id,
 			title,
 			content,
-			contentBin,
 			tags: tagNames,
-			skipTimeline,
-			status
+			status,
+			parentId
 		} = body as {
 			id?: string;
 			title?: string;
 			content?: string;
-			contentBin?: string;
 			tags?: string[];
 			skipTimeline?: boolean;
 			status?: string;
+			parentId?: string;
 		};
 
 		// IDのバリデーション
@@ -152,14 +147,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		const now = new Date();
 		let noteTitle = title;
 		const noteContent = content || '';
-		let noteContentBin: Buffer | null = null;
-		if (contentBin) {
-			try {
-				noteContentBin = Buffer.from(contentBin, 'base64');
-			} catch (e) {
-				console.error('Failed to parse contentBin base64', e);
-			}
-		}
 
 		// タイムラインや新規作成からのポストの場合、タイトルが未指定（undefined または空文字）であれば自動生成...しない
 		if (title === undefined || title.trim() === '') {
@@ -196,68 +183,59 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		}
 
-		// 新規メモを作成
-		await db.insert(notes).values({
-			id: noteId,
-			userId: session.session.userId,
-			title: noteTitle,
-			slug: noteSlug, // スラッグを保存
-			content: noteContent,
-			contentBin: noteContentBin,
-			createdAt: now,
-			updatedAt: now,
-			isPublic: false,
-			...(status ? { status } : {})
-		});
-
-		// タイムラインイベントを記録（フラグでスキップ可能）
-		if (!skipTimeline) {
-			await db.insert(timeline).values({
-				userId: session.session.userId,
-				noteId: noteId,
-				type: 'note_created',
-				createdAt: now
-			});
-		}
-
-		// タグの処理
-		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
-			for (const tagName of tagNames) {
-				if (!tagName || !tagName.trim()) continue;
-
-				const trimmedTagName = tagName.trim();
-
-				// タグが存在するか確認
-				const existingTag = await db.select().from(tags).where(eq(tags.name, trimmedTagName));
-
-				let tagId: string;
-
-				if (existingTag.length === 0) {
-					// 新規タグを作成
-					tagId = ulid();
-					await db.insert(tags).values({
-						id: tagId,
-						name: trimmedTagName,
-						createdAt: now
-					});
-				} else {
-					tagId = existingTag[0].id;
-				}
-
-				// ノートとタグの関連付け
-				await db.insert(noteTags).values({
-					noteId,
-					tagId
-				});
+		// リプライの場合、親ノート（自分のもの）の存在チェック
+		let parentNoteId: string | null = null;
+		if (parentId) {
+			const parent = await db
+				.select({ id: notes.id })
+				.from(notes)
+				.where(and(eq(notes.id, parentId), eq(notes.userId, session.session.userId)))
+				.limit(1);
+			if (parent.length > 0) {
+				parentNoteId = parent[0].id;
 			}
 		}
 
-		// After creating the note, update its links
-		await updateNoteLinks(noteId, noteContent, session.session.userId);
+		// 新規メモを作成（作成行をそのまま返す）
+		const [created] = await db
+			.insert(notes)
+			.values({
+				id: noteId,
+				userId: session.session.userId,
+				title: noteTitle,
+				slug: noteSlug, // スラッグを保存
+				content: noteContent,
+				createdAt: now,
+				updatedAt: now,
+				isPublic: false,
+				parentId: parentNoteId,
+				...(status ? { status } : {})
+			})
+			.returning();
 
-		const newNote = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
+		// タグの処理（既存タグを一括取得 → 新規タグをまとめて作成）
+		if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
+			const names = [...new Set(tagNames.map((t) => (t || '').trim()).filter(Boolean))];
+			if (names.length > 0) {
+				const existingTags = await db.select().from(tags).where(inArray(tags.name, names));
+				const tagIdByName = new Map(existingTags.map((t) => [t.name, t.id]));
+				const newTags = names
+					.filter((name) => !tagIdByName.has(name))
+					.map((name) => ({ id: ulid(), name, createdAt: now }));
+				if (newTags.length > 0) {
+					await db.insert(tags).values(newTags);
+					newTags.forEach((t) => tagIdByName.set(t.name, t.id));
+				}
+				await db
+					.insert(noteTags)
+					.values(names.map((name) => ({ noteId, tagId: tagIdByName.get(name)! })));
+			}
+		}
 
-		return json(newNote[0], { status: 201 });
+		// リンクの解決（新規ノートでリンクが無ければ内部でスキップ）
+		await updateNoteLinks(noteId, noteContent, session.session.userId, { isNew: true });
+
+		return json(created, { status: 201 });
 	} catch (error) {
 		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);

@@ -3,12 +3,11 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { notes } from '$lib/server/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { generateSlug } from '$lib/utils/slug';
 
 export const GET: RequestHandler = async ({ url, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}

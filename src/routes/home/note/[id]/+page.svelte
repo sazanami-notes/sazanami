@@ -4,16 +4,17 @@
 	import ContextSection from '$lib/components/ContextSection.svelte';
 	import { onDestroy } from 'svelte';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
+	import { offlineFetch } from '$lib/offline-queue';
 	import { format } from 'date-fns';
 	import { ja } from 'date-fns/locale';
 
 	let { data }: { data: PageData } = $props();
 
 	let content = $state('');
-	let currentMd = $state('');
 	let title = $state('');
 	let saveTimeout: ReturnType<typeof setTimeout>;
 	let isSaving = $state(false);
+	let isOfflineQueued = $state(false);
 	let copySuccess = $state(false);
 	let titleError = $state('');
 	let lastSavedTitle = '';
@@ -22,26 +23,30 @@
 	let editorKey = $state(0);
 
 	let isCopying = $state(false);
+	let isPublic = $state(false);
+	let isUpdatingPublic = $state(false);
 
 	$effect(() => {
 		const nextNoteId = data.note.id;
 
+		// noteIdが変わったときだけ初期化する（content/titleを監視しない）
 		if (nextNoteId !== currentNoteId) {
 			clearTimeout(saveTimeout);
 			currentNoteId = nextNoteId;
 			editorKey += 1;
+			content = data.note.content ?? '';
+			title = data.note.title ?? '';
+			titleError = '';
+			isMenuOpen = false;
+			copySuccess = false;
+			isSaving = false;
+			isCopying = false;
+			isPublic = Boolean(data.note.isPublic);
+			isUpdatingPublic = false;
+
+			lastSavedTitle = data.note.title ?? '';
+			lastSavedContent = data.note.content ?? '';
 		}
-
-		content = data.note.content ?? '';
-		title = data.note.title ?? '';
-		titleError = '';
-		isMenuOpen = false;
-		copySuccess = false;
-		isSaving = false;
-		isCopying = false;
-
-		lastSavedTitle = title;
-		lastSavedContent = content;
 	});
 
 	function normalizeMarkdownForClipboard(markdown: string) {
@@ -81,7 +86,7 @@
 	async function copyAsMarkdown(options?: { expandEmbeds?: boolean }) {
 		isCopying = true;
 		try {
-			let markdownContent = `# ${title}\n\n---\n\n${currentMd || content || ''}`;
+			let markdownContent = `# ${title}\n\n---\n\n${content || ''}`;
 
 			if (options?.expandEmbeds) {
 				markdownContent = await expandEmbedsInMarkdown(markdownContent);
@@ -116,17 +121,21 @@
 
 			isSaving = true;
 			try {
-				const response = await fetch(`/api/notes/${data.note.id}`, {
+				const response = await offlineFetch(`/api/notes/${data.note.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ title, content })
 				});
 
-				if (response.status === 409) {
+				if ('queued' in response) {
+					// オフライン: キューに保存された（オンライン復帰時に自動再送）
+					isOfflineQueued = true;
+				} else if (response.status === 409) {
 					const err = (await response.json()) as { message?: string };
 					titleError = err.message || '同じタイトルのノートが既に存在します';
 				} else if (response.ok) {
 					titleError = '';
+					isOfflineQueued = false;
 					const updatedNote = (await response.json()) as {
 						title?: string;
 						content?: string;
@@ -151,6 +160,18 @@
 
 	onDestroy(() => {
 		clearTimeout(saveTimeout);
+	});
+
+	// オフラインキューが同期完了したら「未同期」表示を解除
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const handler = () => {
+			isOfflineQueued = false;
+		};
+		window.addEventListener('sazanami:sync-complete', handler);
+		return () => {
+			window.removeEventListener('sazanami:sync-complete', handler);
+		};
 	});
 
 	const handleContentChange = (event: { markdown: string }) => {
@@ -199,29 +220,112 @@
 			isUpdatingStatus = false;
 		}
 	}
+
+	// 公開/非公開の切り替え（公開はBoxのノートのみプロフィールに載る）
+	async function togglePublic() {
+		if (isUpdatingPublic) return;
+		const next = !isPublic;
+		isUpdatingPublic = true;
+		try {
+			const response = await fetch(`/api/notes/${data.note.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ isPublic: next })
+			});
+			if (!response.ok) {
+				const err = (await response.json().catch(() => ({}))) as { message?: string };
+				throw new Error(err.message || 'Failed to update visibility');
+			}
+			isPublic = next;
+		} catch (error) {
+			console.error('Error updating note visibility:', error);
+			alert('公開設定の更新に失敗しました');
+		} finally {
+			isUpdatingPublic = false;
+		}
+	}
 </script>
 
-<div class="mb-6 flex items-center justify-between">
-	<a href="/home/box" class="btn btn-ghost btn-sm">
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke-width="1.5"
-			stroke="currentColor"
-			class="mr-1 h-4 w-4"
+<div class="mb-4 flex items-center justify-between">
+	<div class="flex items-center gap-2">
+		<a
+			href="/home/box"
+			class="btn btn-ghost btn-sm btn-square"
+			title="一覧に戻る"
+			aria-label="一覧に戻る"
 		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-			/>
-		</svg>
-		一覧に戻る
-	</a>
-	<div class="flex gap-2">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke-width="1.5"
+				stroke="currentColor"
+				class="h-4 w-4"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+				/>
+			</svg>
+		</a>
+		<span class="text-base-content/50 text-xs">{formattedUpdatedAt}</span>
+	</div>
+	<div class="flex items-center gap-1">
+		<!-- 公開/非公開トグル -->
 		<button
-			class="btn btn-outline btn-sm {copySuccess ? 'btn-success' : ''}"
+			class="btn btn-ghost btn-sm btn-square {isPublic
+				? 'text-primary'
+				: 'text-base-content/40'}"
+			title={isPublic
+				? '公開中（Boxに入れるとプロフィールに表示されます）'
+				: '非公開（クリックで公開）'}
+			aria-label={isPublic ? '公開中' : '非公開'}
+			aria-pressed={isPublic}
+			disabled={isUpdatingPublic}
+			onclick={() => togglePublic()}
+			type="button"
+		>
+			{#if isUpdatingPublic}
+				<span class="loading loading-spinner loading-xs"></span>
+			{:else if isPublic}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="h-4 w-4"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+					/>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+			{:else}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="h-4 w-4"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+					/>
+				</svg>
+			{/if}
+		</button>
+
+		<button
+			class="btn btn-ghost btn-sm btn-square {copySuccess ? 'text-success' : ''}"
+			title={copySuccess ? 'コピーしました' : 'Markdownコピー'}
+			aria-label="Markdownコピー"
 			onclick={() => copyAsMarkdown()}
 		>
 			<svg
@@ -230,7 +334,7 @@
 				viewBox="0 0 24 24"
 				stroke-width="1.5"
 				stroke="currentColor"
-				class="mr-1 h-4 w-4"
+				class="h-4 w-4"
 			>
 				<path
 					stroke-linecap="round"
@@ -238,7 +342,6 @@
 					d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
 				/>
 			</svg>
-			{copySuccess ? 'コピーしました！' : 'Markdownコピー'}
 		</button>
 
 		<!-- 三点リーダーメニュー -->
@@ -323,8 +426,8 @@
 			name="title"
 			bind:value={title}
 			oninput={handleTitleInput}
-			class="w-full bg-transparent px-3 py-2 text-3xl font-bold focus:outline-none"
-			placeholder="タイトルを入力..."
+			class="w-full bg-transparent px-1 py-1 text-2xl font-bold focus:outline-none"
+			placeholder="タイトル"
 		/>
 		{#if titleError}
 			<p class="text-error px-3 text-sm">{titleError}</p>
@@ -334,10 +437,16 @@
 	<hr class="border-base-300 my-4" />
 
 	<div class="mb-4">
-		<div class="min-h-[400px] w-full">
-			{#key editorKey}
-				<TiptapEditor content={content ?? ''} onchange={handleContentChange} />
-			{/key}
+		<div class="card bg-base-100 border-base-200/70 rounded-box border shadow">
+			<div class="min-h-[400px] w-full p-4">
+				{#key editorKey}
+					<TiptapEditor
+						content={content}
+						onchange={handleContentChange}
+						showBlockHandle={data.settings?.blockHandleEnabled ?? true}
+					/>
+				{/key}
+			</div>
 		</div>
 	</div>
 
@@ -346,13 +455,15 @@
 	<!-- Layer 1: コンテキスト追記（生メモと分離） -->
 	<ContextSection noteId={data.note.id} initialContext={data.note.context ?? null} />
 
-	<div class="flex items-center justify-end space-x-4">
-		{#if isSaving}
-			<span class="text-base-content/60 text-sm">保存中...</span>
-		{:else}
-			<span class="text-base-content/60 pr-2 text-sm">最終更新: {formattedUpdatedAt}</span>
-		{/if}
-	</div>
+	{#if isSaving || isOfflineQueued}
+		<div class="flex items-center justify-end">
+			{#if isSaving}
+				<span class="text-base-content/60 text-sm">保存中...</span>
+			{:else}
+				<span class="text-warning text-sm">オフライン保存（未同期）</span>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 {#if data.links}

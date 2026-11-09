@@ -2,14 +2,11 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db/connection';
 import { userSettings, themes } from '$lib/server/db/schema';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import { eq, and } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ request }) => {
-	const session = await auth.api.getSession({
-		headers: request.headers
-	});
+	const session = await getSessionCached(request.headers);
 
 	if (!session) {
 		throw redirect(302, '/login');
@@ -28,7 +25,8 @@ export const load: PageServerLoad = async ({ request }) => {
 			themeMode: 'system',
 			lightThemeId: 'sazanami-days',
 			darkThemeId: 'sazanami-night',
-			font: 'sans-serif'
+			font: 'sans-serif',
+			blockHandleEnabled: true
 		},
 		userThemes
 	};
@@ -36,9 +34,7 @@ export const load: PageServerLoad = async ({ request }) => {
 
 export const actions: Actions = {
 	saveSettings: async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session = await getSessionCached(request.headers);
 
 		if (!session) {
 			return fail(401, { message: 'Unauthorized' });
@@ -49,6 +45,10 @@ export const actions: Actions = {
 		const lightThemeId = (formData.get('lightThemeId') as string) || 'sazanami-days';
 		const darkThemeId = (formData.get('darkThemeId') as string) || 'sazanami-night';
 		const font = (formData.get('font') as string) || 'sans-serif';
+		// ブロックハンドル設定（フォームに含まれるときだけ更新。hidden=false + checkbox=true の2値方式）
+		const blockHandleValues = formData.getAll('blockHandleEnabled');
+		const blockHandleEnabled =
+			blockHandleValues.length === 0 ? undefined : blockHandleValues.includes('true');
 
 		try {
 			await db
@@ -58,7 +58,8 @@ export const actions: Actions = {
 					themeMode,
 					lightThemeId,
 					darkThemeId,
-					font
+					font,
+					...(blockHandleEnabled !== undefined ? { blockHandleEnabled } : {})
 				})
 				.onConflictDoUpdate({
 					target: userSettings.userId,
@@ -66,7 +67,8 @@ export const actions: Actions = {
 						themeMode,
 						lightThemeId,
 						darkThemeId,
-						font
+						font,
+						...(blockHandleEnabled !== undefined ? { blockHandleEnabled } : {})
 					}
 				});
 
@@ -78,9 +80,7 @@ export const actions: Actions = {
 	},
 
 	createTheme: async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session = await getSessionCached(request.headers);
 
 		if (!session) {
 			return fail(401, { message: 'Unauthorized' });
@@ -117,9 +117,7 @@ export const actions: Actions = {
 	},
 
 	deleteTheme: async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session = await getSessionCached(request.headers);
 
 		if (!session) {
 			return fail(401, { message: 'Unauthorized' });

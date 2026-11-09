@@ -38,8 +38,12 @@
 				password: passwordFor2FA
 			});
 			if (res.data) {
-				totpURI = res.data.totpURI;
-				backupCodes = res.data.backupCodes || [];
+				if (res.data.method === 'totp') {
+					totpURI = res.data.totpURI;
+					backupCodes = res.data.backupCodes || [];
+				} else {
+					twoFactorError = 'この環境ではTOTPを利用できません。';
+				}
 			} else if (res.error) {
 				twoFactorError = res.error.message ?? null;
 			}

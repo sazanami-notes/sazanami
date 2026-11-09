@@ -28,6 +28,22 @@ export async function createTables() {
 	await client.execute(`CREATE UNIQUE INDEX user_email_unique ON user (email);`);
 	await client.execute(`CREATE UNIQUE INDEX user_username_unique ON user (username);`);
 	await client.execute(`
+		CREATE TABLE api_tokens (
+			id TEXT PRIMARY KEY NOT NULL,
+			user_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			token_hash TEXT NOT NULL,
+			prefix TEXT NOT NULL,
+			scopes TEXT DEFAULT 'read' NOT NULL,
+			last_used_at INTEGER,
+			expires_at INTEGER,
+			revoked_at INTEGER,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`);
+	await client.execute(`CREATE UNIQUE INDEX api_tokens_hash_unique ON api_tokens (token_hash);`);
+	await client.execute(`
 		CREATE TABLE session (
 			id TEXT PRIMARY KEY NOT NULL,
 			expires_at INTEGER NOT NULL,
@@ -111,7 +127,6 @@ export async function createTables() {
       title TEXT NOT NULL DEFAULT 'Untitled Note',
       slug TEXT NOT NULL,
       content TEXT,
-      content_bin BLOB,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       is_public INTEGER DEFAULT 0 NOT NULL,
@@ -123,6 +138,7 @@ export async function createTables() {
       encounter_boost INTEGER DEFAULT 0 NOT NULL,
       context TEXT,
       ai_suggestions TEXT,
+      parent_id TEXT,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     );
   `);
@@ -212,6 +228,7 @@ export async function createTables() {
 			light_theme_id TEXT DEFAULT 'sazanami-days' NOT NULL,
 			dark_theme_id TEXT DEFAULT 'sazanami-night' NOT NULL,
 			font TEXT DEFAULT 'sans-serif' NOT NULL,
+			block_handle_enabled INTEGER DEFAULT 1 NOT NULL,
 			bio TEXT,
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);
@@ -220,6 +237,7 @@ export async function createTables() {
 
 // Function to drop tables for test cleanup
 export async function dropTables() {
+	await client.execute(`DROP TABLE IF EXISTS api_tokens;`);
 	await client.execute(`DROP TABLE IF EXISTS user_settings;`);
 	await client.execute(`DROP TABLE IF EXISTS themes;`);
 	await client.execute(`DROP TABLE IF EXISTS timeline;`);

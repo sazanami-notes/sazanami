@@ -2,11 +2,9 @@ import { redirect, type ServerLoad } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { attachments } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
-
+import { getSessionCached } from '$lib/server/auth-session';
 export const load: ServerLoad = async ({ request }) => {
-	const sessionData = await auth.api.getSession({ headers: request.headers });
+	const sessionData = await getSessionCached(request.headers);
 
 	if (!sessionData?.session) {
 		throw redirect(302, '/login');

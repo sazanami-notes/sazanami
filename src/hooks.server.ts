@@ -1,5 +1,5 @@
 import { createAuth } from '$lib/server/auth';
-import { svelteKitHandler } from 'better-auth/svelte-kit';
+import { getSessionCached } from '$lib/server/auth-session';
 import { building } from '$app/environment';
 
 import type { Handle } from '@sveltejs/kit';
@@ -13,12 +13,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const auth = createAuth(event.platform?.env);
 
-	console.log(`Request: ${event.request.method} ${event.url.pathname}`);
-
 	try {
-		const result = await auth.api.getSession({
-			headers: event.request.headers
-		});
+		const result = await getSessionCached(event.request.headers);
 
 		if (result) {
 			console.log('Session found for user:', result.user?.name || 'unknown');
@@ -31,5 +27,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		console.error('Error getting session:', error);
 	}
 
-	return svelteKitHandler({ event, resolve, auth, building });
+	// /api/auth/* は better-auth に完全委譲する。
+	// 標準の svelteKitHandler は「リクエストのオリジン == BETTER_AUTH_URL のオリジン」を要求し、
+	// 一致しないオリジン（カスタムドメインと workers.dev の併用時など）からの /api/auth/* が
+	// 404 になる。ここではパスのみで委譲し、オリジン検証は better-auth 本体（trustedOrigins）に任せる。
+	const basePath = (auth.options as { basePath?: string }).basePath ?? '/api/auth';
+	if (event.url.pathname === basePath || event.url.pathname.startsWith(`${basePath}/`)) {
+		return auth.handler(event.request);
+	}
+
+	return resolve(event);
 };

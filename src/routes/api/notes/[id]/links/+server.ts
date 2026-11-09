@@ -4,12 +4,11 @@ import { db } from '$lib/server/db';
 import { notes, noteLinks, tags, noteTags } from '$lib/server/db/schema';
 import { eq, and, not, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
-import { createAuth } from '$lib/server/auth';
-const auth = createAuth();
+import { getSessionCached } from '$lib/server/auth-session';
 import type { Note } from '$lib/types';
 
 export const GET: RequestHandler = async ({ params, request }) => {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getSessionCached(request.headers);
 	if (!session?.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}

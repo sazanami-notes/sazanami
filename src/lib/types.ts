@@ -3,7 +3,6 @@ export interface Note {
 	userId: string;
 	title: string;
 	content?: string | null;
-	contentBin?: Buffer | null;
 	createdAt: Date;
 	updatedAt: Date;
 	isPublic: boolean;
@@ -12,6 +11,7 @@ export interface Note {
 	tags: string[];
 	slug: string;
 	resolvedLinks?: string | null;
+	parentId?: string | null; // リプライ: 親ノートのID
 }
 
 export interface User {

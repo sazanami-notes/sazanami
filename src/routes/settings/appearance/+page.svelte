@@ -10,12 +10,14 @@
 	let lightThemeId = data.settings.lightThemeId;
 	let darkThemeId = data.settings.darkThemeId;
 	let font = data.settings.font;
+	let blockHandleEnabled = data.settings.blockHandleEnabled;
 
 	$: {
 		themeMode = data.settings.themeMode;
 		lightThemeId = data.settings.lightThemeId;
 		darkThemeId = data.settings.darkThemeId;
 		font = data.settings.font;
+		blockHandleEnabled = data.settings.blockHandleEnabled;
 	}
 
 	// === テーマ作成用のステート ===
@@ -118,6 +120,25 @@
 						{/if}
 					</select>
 				</div>
+			</div>
+
+			<!-- ブロックハンドル表示（Notion風） -->
+			<div class="form-control">
+				<label class="label cursor-pointer justify-start gap-3" for="blockHandleEnabled">
+					<input type="hidden" name="blockHandleEnabled" value="false" />
+					<input
+						id="blockHandleEnabled"
+						name="blockHandleEnabled"
+						type="checkbox"
+						value="true"
+						class="toggle toggle-primary"
+						bind:checked={blockHandleEnabled}
+					/>
+					<span class="label-text font-medium">Notion風ブロックハンドルを表示</span>
+				</label>
+				<p class="text-base-content/60 mt-1 text-xs">
+					各ブロックの左端にドラッグハンドルを表示します（ドラッグで移動・クリックで種類変更）
+				</p>
 			</div>
 
 			<div class="pt-2">

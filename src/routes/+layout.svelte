@@ -8,6 +8,7 @@
 	import { invalidateAll, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { authClient } from '$lib/auth-client';
+	import { setupOfflineSync } from '$lib/offline-queue';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
@@ -32,6 +33,37 @@
 		untrack(() => {
 			currentThemeMode = themeMode;
 		});
+	});
+
+	// オフライン書き込みキューのセットアップ（オンライン復帰時に自動再送）
+	$effect(() => {
+		setupOfflineSync();
+	});
+
+	// オフライン同期の完了通知（トースト）
+	let syncToast = $state('');
+	let syncToastTimer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const handler = (e: Event) => {
+			const detail = (e as CustomEvent<{ synced: number; failed: number; offline: boolean }>).detail;
+			if (detail.offline) return;
+			if (detail.synced > 0) {
+				syncToast = `オフライン中の変更を ${detail.synced} 件同期しました`;
+			} else if (detail.failed > 0) {
+				syncToast = '同期に失敗した変更があります（再送を待っています）';
+			}
+			clearTimeout(syncToastTimer);
+			syncToastTimer = setTimeout(() => {
+				syncToast = '';
+			}, 5000);
+		};
+		window.addEventListener('sazanami:sync-complete', handler);
+		return () => {
+			window.removeEventListener('sazanami:sync-complete', handler);
+			clearTimeout(syncToastTimer);
+		};
 	});
 
 	async function openCreateModal() {
@@ -216,12 +248,24 @@
 				{@render children()}
 			</main>
 
+			{#if syncToast}
+				<div
+					class="toast toast-top toast-center z-50"
+					role="status"
+					aria-live="polite"
+				>
+					<div class="alert alert-success shadow-lg">
+						<span>{syncToast}</span>
+					</div>
+				</div>
+			{/if}
+
 			{#if !hideShell}
 				<Footer />
 
 				<button
 					onclick={() => openCreateModal()}
-					class="btn btn-circle btn-primary btn-lg absolute right-4 bottom-20 z-20 shadow-lg"
+					class="btn btn-circle btn-primary btn-lg absolute right-4 bottom-20 z-20 shadow-lg lg:bottom-6"
 					aria-label="Create Note"
 				>
 					<!-- add -->
@@ -245,7 +289,9 @@
 			<ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
 				{#if data.user}
 					<li><a href="/home">タイムライン</a></li>
+					<li><a href="/home/encounters">🔮 出会い</a></li>
 					<li><a href="/home/box">ノート一覧</a></li>
+					<li><a href="/home/search">検索</a></li>
 					<li><a href="/home/tasklist">タスクリスト</a></li>
 					<li><a href="/home/archive">アーカイブ</a></li>
 					<li><a href="/home/trash">ゴミ箱</a></li>
