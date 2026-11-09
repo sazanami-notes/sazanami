@@ -152,7 +152,8 @@ const server = new McpServer(
 	{
 		instructions:
 			'Sazanami のノートを検索・閲覧・作成・更新する MCP サーバーです。' +
-			'一覧は list_notes、全文検索は search_notes、単体取得は get_note を使います。'
+			'一覧は list_notes、検索は search_notes（semantic: true で意味検索）、単体取得は get_note、' +
+			'バックアップ/移行は export_notes と import_notes を使います。'
 	}
 );
 
@@ -302,6 +303,55 @@ server.registerTool(
 	},
 	tool(async ({ id }) => {
 		const data = await api(`/notes/${encodeURIComponent(id)}/links`);
+		return jsonResult(data);
+	})
+);
+
+// 7. export_notes
+server.registerTool(
+	'export_notes',
+	{
+		title: 'ノート全件エクスポート',
+		description:
+			'ノートをJSONでまとめて吸い出します（バックアップ・移行用）。limit/cursorで分割取得できます。',
+		inputSchema: {
+			limit: z.number().int().min(1).max(500).optional().describe('取得件数（1〜500、既定100）'),
+			cursor: z.string().optional().describe('前回の nextCursor（続きを取るとき）')
+		}
+	},
+	tool(async ({ limit, cursor }) => {
+		const data = await api('/export', { query: { limit, cursor } });
+		return jsonResult(data);
+	})
+);
+
+// 8. import_notes
+server.registerTool(
+	'import_notes',
+	{
+		title: 'ノート一括インポート',
+		description:
+			'export_notes が返した notes 配列をそのまま投入します。同名タイトルは既定でスキップ。',
+		inputSchema: {
+			notes: z
+				.array(
+					z.object({
+						title: z.string().optional(),
+						content: z.string().optional(),
+						status: z.enum(NOTE_STATUSES).optional(),
+						tags: z.array(z.string()).optional(),
+						createdAt: z.string().optional(),
+						updatedAt: z.string().optional()
+					})
+				)
+				.min(1)
+				.max(500)
+				.describe('投入するノート配列（1〜500件）'),
+			skipExistingTitles: z.boolean().optional().describe('既存タイトルをスキップ（既定true）')
+		}
+	},
+	tool(async ({ notes, skipExistingTitles }) => {
+		const data = await api('/import', { method: 'POST', body: { notes, skipExistingTitles } });
 		return jsonResult(data);
 	})
 );

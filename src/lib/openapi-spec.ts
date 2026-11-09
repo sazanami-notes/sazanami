@@ -38,6 +38,126 @@ export const openApiSpec = {
 	],
 	security: [{ bearerAuth: [] }],
 	paths: {
+		'/api/v1/export': {
+			get: {
+				tags: ['export'],
+				operationId: 'exportNotes',
+				summary: '全ノートをエクスポート',
+				description:
+					'format=json（既定）はJSON、format=md はMarkdown(frontmatter付き)のZIPを返す。limit と cursor で分割取得できる。',
+				parameters: [
+					{
+						name: 'format',
+						in: 'query',
+						required: false,
+						schema: { type: 'string', enum: ['json', 'md'], default: 'json' }
+					},
+					{
+						name: 'limit',
+						in: 'query',
+						required: false,
+						schema: { type: 'integer', minimum: 1, maximum: 20000, default: 5000 }
+					},
+					{
+						name: 'cursor',
+						in: 'query',
+						required: false,
+						schema: { type: 'string' },
+						description: '前回レスポンスの nextCursor'
+					}
+				],
+				responses: {
+					'200': {
+						description: 'エクスポート結果（format=md のときはZIP）',
+						content: {
+							'application/json': {
+								schema: {
+									type: 'object',
+									properties: {
+										version: { type: 'integer', const: 1 },
+										exportedAt: { type: 'string', format: 'date-time' },
+										count: { type: 'integer' },
+										nextCursor: { type: 'string', nullable: true },
+										notes: {
+											type: 'array',
+											items: { $ref: '#/components/schemas/ExportNote' }
+										}
+									}
+								}
+							},
+							'application/zip': { schema: { type: 'string', format: 'binary' } }
+						}
+					},
+					'401': {
+						description: '未認証',
+						content: {
+							'application/json': { schema: { $ref: '#/components/schemas/Error' } }
+						}
+					}
+				}
+			}
+		},
+		'/api/v1/import': {
+			post: {
+				tags: ['export'],
+				operationId: 'importNotes',
+				summary: '全ノートを一括インポート',
+				description: 'export_notes/エクスポートJSONの notes 配列を投入する。1回500件まで。',
+				requestBody: {
+					required: true,
+					content: {
+						'application/json': {
+							schema: {
+								type: 'object',
+								required: ['notes'],
+								properties: {
+									notes: {
+										type: 'array',
+										minItems: 1,
+										maxItems: 500,
+										items: { $ref: '#/components/schemas/ExportNote' }
+									},
+									skipExistingTitles: { type: 'boolean', default: true }
+								}
+							}
+						}
+					}
+				},
+				responses: {
+					'200': {
+						description: '取り込み結果',
+						content: {
+							'application/json': {
+								schema: {
+									type: 'object',
+									properties: {
+										imported: { type: 'integer' },
+										skipped: { type: 'integer' },
+										failed: { type: 'integer' },
+										errors: {
+											type: 'array',
+											items: {
+												type: 'object',
+												properties: {
+													index: { type: 'integer' },
+													message: { type: 'string' }
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					'401': {
+						description: '未認証',
+						content: {
+							'application/json': { schema: { $ref: '#/components/schemas/Error' } }
+						}
+					}
+				}
+			}
+		},
 		'/api/v1/health': {
 			get: {
 				tags: ['system'],
@@ -640,6 +760,22 @@ export const openApiSpec = {
 						type: 'array',
 						items: { $ref: '#/components/schemas/NoteSummary' }
 					}
+				}
+			},
+			ExportNote: {
+				type: 'object',
+				required: ['id', 'title', 'content', 'status', 'tags'],
+				properties: {
+					id: { type: 'string' },
+					title: { type: 'string' },
+					content: { type: 'string' },
+					status: { type: 'string' },
+					isPublic: { type: 'boolean' },
+					isPinned: { type: 'boolean' },
+					tags: { type: 'array', items: { type: 'string' } },
+					createdAt: { type: 'string', format: 'date-time' },
+					updatedAt: { type: 'string', format: 'date-time' },
+					parentId: { type: 'string', nullable: true }
 				}
 			},
 			DeleteNoteResponse: {
