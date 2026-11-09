@@ -74,7 +74,7 @@ mcp_servers:
 | -------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `list_notes`   | `status?` `q?` `limit?` `offset?`               | ノートを更新順に一覧する（`status` はカンマ区切り可、既定は `box-deleted` 以外すべて） |
 | `get_note`     | `id`                                            | ノート1件を本文・タグ込みで取得する                                                    |
-| `search_notes` | `q`, `limit?`                                   | キーワードで全文検索し、要約一覧を返す                                                 |
+| `search_notes` | `q`, `semantic?`, `limit?`                      | キーワード全文検索。`semantic: true` で意味検索（類似度スコア順）                      |
 | `create_note`  | `title?` `content?` `status?` `tags?`           | ノートを新規作成する（結果に `id` とタイトルを含む）                                   |
 | `update_note`  | `id`, `title?` `content?` `status?` `isPublic?` | ノートを部分更新する（結果に `id` とタイトルを含む）                                   |
 | `get_links`    | `id`                                            | 1ホップ / 2ホップリンクとバックリンクを取得する                                        |

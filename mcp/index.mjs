@@ -202,14 +202,19 @@ server.registerTool(
 	'search_notes',
 	{
 		title: 'ノート検索',
-		description: 'キーワードでノートを全文検索し、一致したノートの要約一覧を返します。',
+		description:
+			'ノートを検索します。既定はキーワードの全文一致、semantic: true にすると意味（埋め込み）検索になり、似ている順にスコア付きで返ります。',
 		inputSchema: {
-			q: z.string().min(1).describe('検索キーワード（必須）'),
-			limit: z.number().int().min(1).max(100).optional().describe('取得件数（1〜100、既定20）')
+			q: z.string().min(1).describe('検索クエリ（必須）'),
+			semantic: z
+				.boolean()
+				.optional()
+				.describe('trueで意味検索（言い回しが違っても近い内容を返す・score付き）'),
+			limit: z.number().int().min(1).max(50).optional().describe('取得件数（1〜50、既定20）')
 		}
 	},
-	tool(async ({ q, limit }) => {
-		const data = await api('/search', { query: { q, limit } });
+	tool(async ({ q, semantic, limit }) => {
+		const data = await api(semantic ? '/search/semantic' : '/search', { query: { q, limit } });
 		return jsonResult(data);
 	})
 );
