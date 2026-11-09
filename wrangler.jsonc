@@ -26,6 +26,9 @@
 	"env": {
 		"dev": {
 			"name": "sazanami-dev",
+			"ai": {
+				"binding": "AI"
+			},
 			"vars": {
 				"STORAGE_DRIVER": "r2",
 				"BETTER_AUTH_URL": "https://sazanami-dev.kaedesato.work",

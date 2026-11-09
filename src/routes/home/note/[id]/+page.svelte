@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import LinkExplorer from '$lib/components/LinkExplorer.svelte';
+	import RelatedNotes from '$lib/components/RelatedNotes.svelte';
 	import ContextSection from '$lib/components/ContextSection.svelte';
 	import { onDestroy } from 'svelte';
 	import TiptapEditor from '$lib/components/TiptapEditor.svelte';
@@ -477,3 +478,5 @@
 		/>
 	</div>
 {/if}
+
+<RelatedNotes noteId={data.note.id} />

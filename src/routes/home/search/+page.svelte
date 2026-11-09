@@ -9,6 +9,8 @@
 	type SearchPageData = {
 		notes: Note[];
 		q: string;
+		mode?: 'keyword' | 'semantic';
+		semanticAvailable?: boolean;
 		pagination: {
 			page: number;
 			total: number;
@@ -22,7 +24,9 @@
 	let sortKey: SortKey = $state('updatedAt_desc');
 
 	const rawNotes = $derived(data.notes || []);
-	const notes = $derived(sortNotes(rawNotes, sortKey));
+	const isSemantic = $derived(data.mode === 'semantic');
+	// 意味検索の並びはスコア順なので、クライアント側で並べ替えない
+	const notes = $derived(isSemantic ? rawNotes : sortNotes(rawNotes, sortKey));
 	const hasQuery = $derived(data.q.trim().length > 0);
 	const hasPrev = $derived(data.pagination.page > 1);
 	const hasNext = $derived(data.pagination.page < data.pagination.totalPages);
@@ -37,6 +41,13 @@
 
 	function handleSort(event: CustomEvent<SortKey>) {
 		sortKey = event.detail;
+	}
+
+	function modeLink(mode: 'keyword' | 'semantic') {
+		const params = new SvelteURLSearchParams();
+		if (data.q) params.set('q', data.q);
+		if (mode === 'semantic') params.set('mode', 'semantic');
+		return `/home/search?${params.toString()}`;
 	}
 
 	function buildPageLink(nextPage: number) {
@@ -62,7 +73,25 @@
 					<p class="text-base-content/70 mt-1 text-sm">検索キーワードを入力してください。</p>
 				{/if}
 			</div>
-			<SortSelector bind:value={sortKey} on:sort={handleSort} />
+			<div class="flex items-center gap-2">
+				{#if data.semanticAvailable}
+					<div class="join">
+						<a
+							class="btn btn-xs join-item"
+							class:btn-active={data.mode !== 'semantic'}
+							href={modeLink('keyword')}>キーワード</a
+						>
+						<a
+							class="btn btn-xs join-item"
+							class:btn-active={data.mode === 'semantic'}
+							href={modeLink('semantic')}>意味</a
+						>
+					</div>
+				{/if}
+				{#if !isSemantic}
+					<SortSelector bind:value={sortKey} on:sort={handleSort} />
+				{/if}
+			</div>
 		</div>
 
 		<div class="flex flex-col space-y-4">
