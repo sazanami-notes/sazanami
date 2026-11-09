@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { ulid } from 'ulid';
 import { db } from '$lib/server/db';
-import { apiTokens, notes, user } from '$lib/server/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { apiTokens, notes, user, tags, noteTags } from '$lib/server/db/schema';
+import { and, eq, inArray } from 'drizzle-orm';
 import { generateRawToken, sha256Hex } from '$lib/server/api-auth';
 import { GET as listNotes, POST as createNote } from '../../src/routes/api/v1/notes/+server';
+import { POST as importNotes } from '../../src/routes/api/v1/import/+server';
 import {
 	GET as getNote,
 	PUT as putNote,
@@ -259,6 +260,41 @@ describe('API v1（Bearer認証・スコープ・CRUD）', () => {
 		expect(res.status).toBe(200);
 		const [row] = await db.select({ id: notes.id }).from(notes).where(eq(notes.id, createdId));
 		expect(row).toBeUndefined();
+	});
+
+	it('インポートでタグをまとめて作成し、2件目以降は同じタグを再利用する', async () => {
+		const res = await importNotes(
+			makeEvent('http://x/api/v1/import', 'POST', writeToken, {
+				notes: [
+					{ title: '取込A', content: '本文A', status: 'box', tags: ['imp', 'shared'] },
+					{ title: '取込B', content: '本文B', status: 'box', tags: ['shared', 'imp2'] }
+				]
+			})
+		);
+		expect(res.status).toBe(200);
+		const body = await json(res);
+		expect(body.imported).toBe(2);
+
+		const rows = await db
+			.select({ id: notes.id })
+			.from(notes)
+			.where(and(eq(notes.userId, userId), inArray(notes.title, ['取込A', '取込B'])));
+		expect(rows.length).toBe(2);
+
+		const tagRows = await db
+			.select({ name: tags.name })
+			.from(noteTags)
+			.innerJoin(tags, eq(noteTags.tagId, tags.id))
+			.where(
+				inArray(
+					noteTags.noteId,
+					rows.map((row) => row.id)
+				)
+			);
+		expect(tagRows.map((row) => row.name).sort()).toEqual(['imp', 'imp2', 'shared', 'shared']);
+
+		// 後始末（タグは全体で共有なので消しておく）
+		await db.delete(tags).where(inArray(tags.name, ['imp', 'imp2', 'shared']));
 	});
 
 	it('他人のノートは404（所有チェック）', async () => {

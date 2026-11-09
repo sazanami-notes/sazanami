@@ -56,6 +56,13 @@ export const POST: RequestHandler = async ({ request }) => {
 		.where(eq(notes.userId, principal.userId));
 	const existingTitles = new Set(existingRows.map((row) => row.title));
 
+	// タグは全件を1回だけ読み、新規作成と紐付けは最後にまとめて書く（ノート毎のN+1を避ける）
+	const tagIdByName = new Map<string, string>(
+		(await db.select({ id: tags.id, name: tags.name }).from(tags)).map((tag) => [tag.name, tag.id])
+	);
+	const newTags: { id: string; name: string; createdAt: Date }[] = [];
+	const pendingNoteTags: { noteId: string; tagId: string }[] = [];
+
 	let imported = 0;
 	let skipped = 0;
 	const errors: { index: number; message: string }[] = [];
@@ -99,17 +106,15 @@ export const POST: RequestHandler = async ({ request }) => {
 					]
 				: [];
 			if (tagNames.length > 0) {
-				const existingTags = await db.select().from(tags);
-				const idByName = new Map(existingTags.map((tag) => [tag.name, tag.id]));
-				const missing = tagNames.filter((name) => !idByName.has(name));
-				if (missing.length > 0) {
-					const rows = missing.map((name) => ({ id: ulid(), name, createdAt: now }));
-					await db.insert(tags).values(rows);
-					rows.forEach((row) => idByName.set(row.name, row.id));
+				for (const name of tagNames) {
+					let tagId = tagIdByName.get(name);
+					if (!tagId) {
+						tagId = ulid();
+						tagIdByName.set(name, tagId);
+						newTags.push({ id: tagId, name, createdAt: now });
+					}
+					pendingNoteTags.push({ noteId: id, tagId });
 				}
-				await db
-					.insert(noteTags)
-					.values(tagNames.map((name) => ({ noteId: id, tagId: idByName.get(name)! })));
 			}
 
 			if (title) existingTitles.add(title);
@@ -118,6 +123,18 @@ export const POST: RequestHandler = async ({ request }) => {
 		} catch (error) {
 			errors.push({ index, message: error instanceof Error ? error.message : String(error) });
 		}
+	}
+
+	// タグは最後にまとめて書く（新規タグは1回、紐付けも分割してまとめてinsert）
+	try {
+		if (newTags.length > 0) {
+			await db.insert(tags).values(newTags);
+		}
+		for (let i = 0; i < pendingNoteTags.length; i += 200) {
+			await db.insert(noteTags).values(pendingNoteTags.slice(i, i + 200));
+		}
+	} catch (error) {
+		console.error('Failed to save tags on import:', error);
 	}
 
 	// リンク解決は全挿入後にまとめて（既存ノートへのリンクも張れる）
