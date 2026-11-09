@@ -26,11 +26,13 @@
 	}
 </script>
 
-<div class="card bg-base-100 border-base-200/70 mt-4 rounded-box border shadow">
+<div class="card bg-base-100 border-base-200/70 rounded-box mt-4 border shadow">
 	<div class="card-body p-4">
 		<div class="mb-2 flex flex-wrap items-center gap-2">
 			<span class="badge badge-secondary badge-sm whitespace-nowrap">🧠 コンテキスト</span>
-			<span class="text-base-content/50 text-xs">後から気づいたことを追記（生メモは書き換えない）</span>
+			<span class="text-base-content/50 text-xs"
+				>後から気づいたことを追記（生メモは書き換えない）</span
+			>
 		</div>
 		<textarea
 			class="textarea textarea-bordered w-full text-sm"

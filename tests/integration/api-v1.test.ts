@@ -102,9 +102,7 @@ describe('API v1（Bearer認証・スコープ・CRUD）', () => {
 	});
 
 	it('失効済みトークンは401', async () => {
-		const res = await listNotes(
-			makeEvent('http://x/api/v1/notes', 'GET', revokedToken)
-		);
+		const res = await listNotes(makeEvent('http://x/api/v1/notes', 'GET', revokedToken));
 		expect(res.status).toBe(401);
 	});
 
@@ -186,9 +184,15 @@ describe('API v1（Bearer認証・スコープ・CRUD）', () => {
 
 	it('更新でタイトルとslugが変わる', async () => {
 		const res = await putNote(
-			makeEvent(`http://x/api/v1/notes/${createdId}`, 'PUT', writeToken, { title: 'API更新後' }, {
-				id: createdId
-			})
+			makeEvent(
+				`http://x/api/v1/notes/${createdId}`,
+				'PUT',
+				writeToken,
+				{ title: 'API更新後' },
+				{
+					id: createdId
+				}
+			)
 		);
 		expect(res.status).toBe(200);
 		const body = await json(res);
@@ -199,17 +203,21 @@ describe('API v1（Bearer認証・スコープ・CRUD）', () => {
 
 	it('PUTにwriteスコープが必要', async () => {
 		const res = await putNote(
-			makeEvent(`http://x/api/v1/notes/${createdId}`, 'PUT', readToken, { title: 'x' }, {
-				id: createdId
-			})
+			makeEvent(
+				`http://x/api/v1/notes/${createdId}`,
+				'PUT',
+				readToken,
+				{ title: 'x' },
+				{
+					id: createdId
+				}
+			)
 		);
 		expect(res.status).toBe(403);
 	});
 
 	it('検索でヒットする', async () => {
-		const res = await searchNotes(
-			makeEvent('http://x/api/v1/search?q=API更新', 'GET', readToken)
-		);
+		const res = await searchNotes(makeEvent('http://x/api/v1/search?q=API更新', 'GET', readToken));
 		expect(res.status).toBe(200);
 		const body = await json(res);
 		expect((body.notes as unknown[]).length).toBe(1);
@@ -231,7 +239,10 @@ describe('API v1（Bearer認証・スコープ・CRUD）', () => {
 		const body = await json(res);
 		expect(body.permanent).toBe(false);
 
-		const [row] = await db.select({ status: notes.status }).from(notes).where(eq(notes.id, createdId));
+		const [row] = await db
+			.select({ status: notes.status })
+			.from(notes)
+			.where(eq(notes.id, createdId));
 		expect(row.status).toBe('trash');
 	});
 

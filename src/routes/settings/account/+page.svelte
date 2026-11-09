@@ -132,7 +132,7 @@
 
 <TwoFactorSection
 	twoFactorEnabled={(data.user as { twoFactorEnabled?: boolean }).twoFactorEnabled}
-	invalidateAll={invalidateAll}
+	{invalidateAll}
 />
 
 <PasskeySection />

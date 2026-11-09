@@ -15,6 +15,9 @@
 			"bucket_name": "sazanami-images"
 		}
 	],
+	"ai": {
+		"binding": "AI"
+	},
 	"assets": {
 		"directory": ".svelte-kit/cloudflare",
 		"binding": "ASSETS",

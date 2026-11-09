@@ -30,19 +30,19 @@ Authorization: Bearer sznm_xxxxxxxx
 
 ```json
 {
-  "id": "01J...",
-  "title": "タイトル",
-  "slug": "title-abc123",
-  "content": "# Markdown",
-  "status": "box",
-  "isPublic": false,
-  "isPinned": false,
-  "parentId": null,
-  "context": null,
-  "createdAt": "2026-11-09T03:00:00.000Z",
-  "updatedAt": "2026-11-09T03:00:00.000Z",
-  "resolvedLinks": {},
-  "tags": ["tag1"]
+	"id": "01J...",
+	"title": "タイトル",
+	"slug": "title-abc123",
+	"content": "# Markdown",
+	"status": "box",
+	"isPublic": false,
+	"isPinned": false,
+	"parentId": null,
+	"context": null,
+	"createdAt": "2026-11-09T03:00:00.000Z",
+	"updatedAt": "2026-11-09T03:00:00.000Z",
+	"resolvedLinks": {},
+	"tags": ["tag1"]
 }
 ```
 
@@ -61,6 +61,7 @@ Authorization: Bearer sznm_xxxxxxxx
 ### `GET /api/v1/notes`（read）
 
 クエリ:
+
 - `status`: カンマ区切り（`inbox,box,archived,trash,box-archived,box-deleted`）。既定は **`box-deleted` を除く全部**
 - `q`: タイトル・本文の部分一致
 - `tag`: タグ名
@@ -75,8 +76,16 @@ Authorization: Bearer sznm_xxxxxxxx
 ### `POST /api/v1/notes`（write）
 
 ボディ:
+
 ```json
-{ "title": "任意", "content": "任意", "status": "inbox|box|...", "isPublic": false, "parentId": null, "tags": ["a"] }
+{
+	"title": "任意",
+	"content": "任意",
+	"status": "inbox|box|...",
+	"isPublic": false,
+	"parentId": null,
+	"tags": ["a"]
+}
 ```
 
 - `title` 省略時 `Untitled Note`、`status` 省略時 `inbox`

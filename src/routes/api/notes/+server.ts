@@ -6,17 +6,21 @@ import { eq, or, like, desc, sql, and, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { getSessionCached } from '$lib/server/auth-session';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
+import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 
 export const GET: RequestHandler = async ({ url, request }) => {
 	const session = await getSessionCached(request.headers);
-	console.log('Session in GET:', session);
 	if (!session) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 
 	const search = url.searchParams.get('search') || '';
-	const page = parseInt(url.searchParams.get('page') || '1');
-	const limit = parseInt(url.searchParams.get('limit') || '20');
+	// クエリ値をそのまま信用しない（巨大limit・NaN・負数で全件走査させられないように）
+	const page = Math.max(Number.parseInt(url.searchParams.get('page') ?? '1', 10) || 1, 1);
+	const limit = Math.min(
+		Math.max(Number.parseInt(url.searchParams.get('limit') ?? '20', 10) || 20, 1),
+		100
+	);
 	const offset = (page - 1) * limit;
 
 	try {
@@ -45,21 +49,29 @@ export const GET: RequestHandler = async ({ url, request }) => {
 				.offset(offset);
 		}
 
-		// 各ノートのタグを取得
-		const notesWithTags = await Promise.all(
-			notesList.map(async (note) => {
-				const noteTagsList = await db
-					.select({ name: tags.name })
-					.from(noteTags)
-					.leftJoin(tags, eq(noteTags.tagId, tags.id))
-					.where(eq(noteTags.noteId, note.id));
+		// タグはノートごとに問い合わせず、1クエリでまとめて取得する（N+1対策）
+		const noteIds = notesList.map((note) => note.id);
+		const tagRows =
+			noteIds.length > 0
+				? await db
+						.select({ noteId: noteTags.noteId, name: tags.name })
+						.from(noteTags)
+						.innerJoin(tags, eq(noteTags.tagId, tags.id))
+						.where(inArray(noteTags.noteId, noteIds))
+				: [];
 
-				return {
-					...note,
-					tags: noteTagsList.map((nt) => nt.name).filter(Boolean)
-				};
-			})
-		);
+		const tagsByNote = new Map<string, string[]>();
+		for (const row of tagRows) {
+			if (!row.name) continue;
+			const list = tagsByNote.get(row.noteId) ?? [];
+			list.push(row.name);
+			tagsByNote.set(row.noteId, list);
+		}
+
+		const notesWithTags = notesList.map((note) => ({
+			...note,
+			tags: tagsByNote.get(note.id) ?? []
+		}));
 
 		// 総数を取得
 		let totalCount;
@@ -95,7 +107,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return json({ message: 'Unauthorized - No session found' }, { status: 401 });
@@ -235,11 +247,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		// リンクの解決（新規ノートでリンクが無ければ内部でスキップ）
 		await updateNoteLinks(noteId, noteContent, session.session.userId, { isNew: true });
 
+		// 保存レスポンスは待たせず、裏で埋め込みを更新する
+		scheduleNoteEmbedding(platform, created);
+
 		return json(created, { status: 201 });
 	} catch (error) {
 		// [デバッグ用ログ] エラー詳細を出力
 		console.error('Error creating note:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		return json({ message: `Internal Server Error: ${errorMessage}` }, { status: 500 });
+		// 内部エラーの詳細はクライアントに返さない（情報漏洩対策）。詳細はサーバーログのみ。
+		return json({ message: 'Internal Server Error' }, { status: 500 });
 	}
 };

@@ -157,18 +157,18 @@ wrangler deploy
 
 必要なシークレット（`wrangler secret put <NAME>` で設定）:
 
-| シークレット | 説明 |
-|---|---|
-| `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | Turso DB接続 |
-| `BETTER_AUTH_SECRET` | 認証シークレット |
-| `PLUNK_API_KEY` / `PLUNK_FROM_EMAIL` | メール送信（Plunk。`PLUNK_API_URL` でセルフホスト先を指定可） |
+| シークレット                              | 説明                                                          |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | Turso DB接続                                                  |
+| `BETTER_AUTH_SECRET`                      | 認証シークレット                                              |
+| `PLUNK_API_KEY` / `PLUNK_FROM_EMAIL`      | メール送信（Plunk。`PLUNK_API_URL` でセルフホスト先を指定可） |
 
 環境変数（`wrangler.jsonc` の `vars` で設定）:
 
-| 変数 | 説明 |
-|---|---|
-| `BETTER_AUTH_URL` | アプリの公開URL |
-| `EMAIL_DRIVER` | メールドライバー（`plunk` 等。未設定なら `auto`） |
-| `STORAGE_DRIVER` | ストレージドライバー（`s3` がデフォルト） |
+| 変数              | 説明                                              |
+| ----------------- | ------------------------------------------------- |
+| `BETTER_AUTH_URL` | アプリの公開URL                                   |
+| `EMAIL_DRIVER`    | メールドライバー（`plunk` 等。未設定なら `auto`） |
+| `STORAGE_DRIVER`  | ストレージドライバー（`s3` がデフォルト）         |
 
 S3ストレージの設定は環境変数（`S3_REGION`, `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL`）で行います。Cloudflare R2 を使う場合は `STORAGE_DRIVER=r2` でバケットバインディングを利用できます。

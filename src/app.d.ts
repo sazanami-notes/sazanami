@@ -30,6 +30,10 @@ declare global {
 				S3_SECRET_ACCESS_KEY?: string;
 				S3_ENDPOINT?: string;
 				S3_PUBLIC_URL?: string;
+				/** Workers AI binding（埋め込み生成用）。未設定の環境ではベクトル検索は無効。 */
+				AI?: {
+					run(model: string, input: Record<string, unknown>, options?: unknown): Promise<unknown>;
+				};
 			};
 		}
 	}

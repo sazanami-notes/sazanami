@@ -35,7 +35,11 @@ export const actions: Actions = {
 		}
 
 		try {
-			await (auth.api as unknown as { forgetPassword: (p: { body: { email: string; redirectTo?: string } }) => Promise<unknown> }).forgetPassword({
+			await (
+				auth.api as unknown as {
+					forgetPassword: (p: { body: { email: string; redirectTo?: string } }) => Promise<unknown>;
+				}
+			).forgetPassword({
 				body: {
 					email: sessionData.user.email,
 					redirectTo: '/reset-password'

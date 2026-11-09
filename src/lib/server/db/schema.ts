@@ -1,15 +1,16 @@
-import { sqliteTable, integer, text, uniqueIndex, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+import {
+	sqliteTable,
+	integer,
+	text,
+	index,
+	uniqueIndex,
+	customType,
+	type AnySQLiteColumn
+} from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 // auth-schema.tsから必要なテーブル定義をインポート
-import {
-	user,
-	session,
-	account,
-	verification,
-	passkey,
-	twoFactor
-} from './auth-schema';
+import { user, session, account, verification, passkey, twoFactor } from './auth-schema';
 // generateSlug のインポートは不要なので削除
 
 // NOTES テーブル
@@ -50,7 +51,12 @@ export const notes = sqliteTable(
 		// SQLiteのpartial index: status='box' かつ title!='' の場合のみ適用
 		uniqueIndex('notes_user_title_box_unique')
 			.on(table.userId, table.title)
-			.where(sql`${table.status} = 'box' AND ${table.title} != ''`)
+			.where(sql`${table.status} = 'box' AND ${table.title} != ''`),
+		// 一覧・検索・公開プロフィールの主要クエリ用（user_id で絞ってから status / 並び順）
+		index('notes_user_status_updated_idx').on(table.userId, table.status, table.updatedAt),
+		index('notes_user_updated_idx').on(table.userId, table.updatedAt),
+		index('notes_user_public_status_idx').on(table.userId, table.isPublic, table.status),
+		index('notes_parent_idx').on(table.parentId)
 	]
 );
 
@@ -66,75 +72,101 @@ export const tags = sqliteTable('tags', {
 // インデックスはdrizzle-kitのgenerateで自動生成されることを期待
 
 // NOTE_TAGS テーブル (多対多の中間テーブル)
-export const noteTags = sqliteTable('note_tags', {
-	noteId: text('note_id')
-		.notNull()
-		.references(() => notes.id, { onDelete: 'cascade' }),
-	tagId: text('tag_id')
-		.notNull()
-		.references(() => tags.id, { onDelete: 'cascade' })
-	// 複合主キーはdrizzle-kitに認識させるか、後で定義する
-});
-// インデックスはdrizzle-kitのgenerateで自動生成されることを期待
+export const noteTags = sqliteTable(
+	'note_tags',
+	{
+		noteId: text('note_id')
+			.notNull()
+			.references(() => notes.id, { onDelete: 'cascade' }),
+		tagId: text('tag_id')
+			.notNull()
+			.references(() => tags.id, { onDelete: 'cascade' })
+		// 複合主キーはdrizzle-kitに認識させるか、後で定義する
+	},
+	(table) => [
+		index('note_tags_note_idx').on(table.noteId),
+		index('note_tags_tag_idx').on(table.tagId)
+	]
+);
 
 // NOTE_LINKS テーブル (ノート間のリンク)
-export const noteLinks = sqliteTable('note_links', {
-	id: text('id')
-		.notNull()
-		.primaryKey()
-		.$defaultFn(() => ulid()), // ULIDなどを想定
-	sourceNoteId: text('source_note_id')
-		.notNull()
-		.references(() => notes.id, { onDelete: 'cascade' }),
-	targetNoteId: text('target_note_id')
-		.notNull()
-		.references(() => notes.id, { onDelete: 'cascade' }),
-	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
-});
-// インデックスはdrizzle-kitのgenerateで自動生成されることを期待
+export const noteLinks = sqliteTable(
+	'note_links',
+	{
+		id: text('id')
+			.notNull()
+			.primaryKey()
+			.$defaultFn(() => ulid()), // ULIDなどを想定
+		sourceNoteId: text('source_note_id')
+			.notNull()
+			.references(() => notes.id, { onDelete: 'cascade' }),
+		targetNoteId: text('target_note_id')
+			.notNull()
+			.references(() => notes.id, { onDelete: 'cascade' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
+	},
+	(table) => [
+		index('note_links_source_idx').on(table.sourceNoteId),
+		index('note_links_target_idx').on(table.targetNoteId)
+	]
+);
 
 // ATTACHMENTS テーブル
-export const attachments = sqliteTable('attachments', {
-	id: text('id')
-		.notNull()
-		.primaryKey()
-		.$defaultFn(() => ulid()), // ULIDなどを想定
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	fileName: text('file_name').notNull(),
-	filePath: text('file_path').notNull(), // S3などの外部ストレージパスやURL
-	mimeType: text('mime_type').notNull(),
-	fileSize: integer('file_size').notNull(), // バイト単位
-	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
-});
-// インデックスはdrizzle-kitのgenerateで自動生成されることを期待
+export const attachments = sqliteTable(
+	'attachments',
+	{
+		id: text('id')
+			.notNull()
+			.primaryKey()
+			.$defaultFn(() => ulid()), // ULIDなどを想定
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		fileName: text('file_name').notNull(),
+		filePath: text('file_path').notNull(), // S3などの外部ストレージパスやURL
+		mimeType: text('mime_type').notNull(),
+		fileSize: integer('file_size').notNull(), // バイト単位
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
+	},
+	(table) => [index('attachments_user_created_idx').on(table.userId, table.createdAt)]
+);
 
 // NOTE_ATTACHMENTS テーブル (多対多の中間テーブル)
-export const noteAttachments = sqliteTable('note_attachments', {
-	noteId: text('note_id')
-		.notNull()
-		.references(() => notes.id, { onDelete: 'cascade' }),
-	attachmentId: text('attachment_id')
-		.notNull()
-		.references(() => attachments.id, { onDelete: 'cascade' })
-	// 複合主キーはdrizzle-kitに認識させるか、後で定義する
-});
+export const noteAttachments = sqliteTable(
+	'note_attachments',
+	{
+		noteId: text('note_id')
+			.notNull()
+			.references(() => notes.id, { onDelete: 'cascade' }),
+		attachmentId: text('attachment_id')
+			.notNull()
+			.references(() => attachments.id, { onDelete: 'cascade' })
+		// 複合主キーはdrizzle-kitに認識させるか、後で定義する
+	},
+	(table) => [
+		index('note_attachments_note_idx').on(table.noteId),
+		index('note_attachments_attachment_idx').on(table.attachmentId)
+	]
+);
 
 // TIMELINE テーブル
-export const timeline = sqliteTable('timeline', {
-	id: text('id')
-		.notNull()
-		.primaryKey()
-		.$defaultFn(() => ulid()),
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	noteId: text('note_id').references(() => notes.id, { onDelete: 'cascade' }),
-	type: text('type').notNull(), // e.g., 'note_created', 'note_updated'
-	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-	metadata: text('metadata') // JSON string for extra data
-});
+export const timeline = sqliteTable(
+	'timeline',
+	{
+		id: text('id')
+			.notNull()
+			.primaryKey()
+			.$defaultFn(() => ulid()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		noteId: text('note_id').references(() => notes.id, { onDelete: 'cascade' }),
+		type: text('type').notNull(), // e.g., 'note_created', 'note_updated'
+		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+		metadata: text('metadata') // JSON string for extra data
+	},
+	(table) => [index('timeline_user_created_idx').on(table.userId, table.createdAt)]
+);
 
 // インポートした認証関連テーブルを再度エクスポート
 export { user, session, account, verification, passkey, twoFactor };
@@ -202,3 +234,26 @@ export const apiTokens = sqliteTable(
 	},
 	(table) => [uniqueIndex('api_tokens_hash_unique').on(table.tokenHash)]
 );
+
+// NOTE EMBEDDINGS テーブル（意味検索用のベクトル）
+// Turso ネイティブのベクトル列（FLOAT32）に bge-m3（1024次元）の埋め込みを保存する。
+// ベクトルは JSON 文字列として受け渡し、Turso 側で FLOAT32(1024) にキャストする。
+// インデックス（libsql_vector_idx）はマイグレーションSQLで手動作成する。
+const float32Vector = customType<{ data: string; driverData: string }>({
+	dataType() {
+		return 'FLOAT32(1024)';
+	}
+});
+
+export const noteEmbeddings = sqliteTable('note_embeddings', {
+	noteId: text('note_id')
+		.notNull()
+		.primaryKey()
+		.references(() => notes.id, { onDelete: 'cascade' }),
+	// 埋め込みを生成したモデル（例: @cf/baai/bge-m3）。乗り換え時の再埋め込み判定に使う
+	model: text('model').notNull(),
+	// 埋め込み対象テキストの SHA-256（内容が変わっていなければ再計算しない）
+	contentHash: text('content_hash').notNull(),
+	embedding: float32Vector('embedding').notNull(),
+	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
+});

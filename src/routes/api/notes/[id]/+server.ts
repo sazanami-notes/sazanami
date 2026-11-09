@@ -6,6 +6,7 @@ import { eq, and, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { getSessionCached } from '$lib/server/auth-session';
 import { generateSlug } from '$lib/utils/slug'; // スラッグ生成ユーティリティをインポート
+import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	const session = await getSessionCached(request.headers);
@@ -49,7 +50,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	}
 };
 
-export const PUT: RequestHandler = async ({ params, request }) => {
+export const PUT: RequestHandler = async ({ params, request, platform }) => {
 	const session = await getSessionCached(request.headers);
 	if (!session) {
 		return new Response('Unauthorized', { status: 401 });
@@ -295,6 +296,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			tags: noteTagsList.map((nt) => nt.name).filter(Boolean),
 			resolvedLinks: updatedNote[0].resolvedLinks // ここで明示的に含める（select * なので本来含まれるが確認用）
 		};
+
+		// 保存レスポンスは待たせず、裏で埋め込みを更新する
+		scheduleNoteEmbedding(platform, noteWithTags);
 
 		return json(noteWithTags);
 	} catch (error) {

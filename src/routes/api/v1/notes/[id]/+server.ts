@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { and, eq, ne } from 'drizzle-orm';
 import { db, deleteNote, updateBacklinksOnTitleChange, updateNoteLinks } from '$lib/server/db';
+import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 import { notes } from '$lib/server/db/schema';
 import { getPrincipal, hasScope } from '$lib/server/api-auth';
 import { apiJson, apiError, preflight } from '$lib/server/api-response';
@@ -21,7 +22,8 @@ async function loadNote(userId: string, id: string) {
 export const GET: RequestHandler = async ({ request, params }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
-	if (!hasScope(principal, 'read')) return apiError(403, 'insufficient_scope', 'readスコープが必要です');
+	if (!hasScope(principal, 'read'))
+		return apiError(403, 'insufficient_scope', 'readスコープが必要です');
 
 	const row = await loadNote(principal.userId, params.id as string);
 	if (!row) return apiError(404, 'not_found', 'ノートが見つかりません');
@@ -39,10 +41,11 @@ type UpdateBody = {
 	context?: unknown;
 };
 
-export const PUT: RequestHandler = async ({ request, params }) => {
+export const PUT: RequestHandler = async ({ request, params, platform }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
-	if (!hasScope(principal, 'write')) return apiError(403, 'insufficient_scope', 'writeスコープが必要です');
+	if (!hasScope(principal, 'write'))
+		return apiError(403, 'insufficient_scope', 'writeスコープが必要です');
 
 	const noteId = params.id as string;
 	const existing = await loadNote(principal.userId, noteId);
@@ -59,7 +62,8 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 	const updatedFields: Record<string, unknown> = {};
 
 	const titleChanged = typeof body.title === 'string' && body.title.trim() !== existing.title;
-	const contentChanged = typeof body.content === 'string' && body.content !== (existing.content ?? '');
+	const contentChanged =
+		typeof body.content === 'string' && body.content !== (existing.content ?? '');
 	const isPublicChanged =
 		typeof body.isPublic === 'boolean' && body.isPublic !== Boolean(existing.isPublic);
 	const isPinnedChanged =
@@ -72,7 +76,11 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 	let nextStatus = existing.status;
 	if (body.status !== undefined) {
 		if (!isNoteStatus(body.status)) {
-			return apiError(400, 'invalid_status', `statusは ${NOTE_STATUSES.join(' / ')} のいずれかです`);
+			return apiError(
+				400,
+				'invalid_status',
+				`statusは ${NOTE_STATUSES.join(' / ')} のいずれかです`
+			);
 		}
 		nextStatus = body.status;
 	}
@@ -99,7 +107,11 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 			)
 			.limit(1);
 		if (dup.length > 0) {
-			return apiError(409, 'title_conflict', `「${nextTitle}」というタイトルのノートが既に存在します`);
+			return apiError(
+				409,
+				'title_conflict',
+				`「${nextTitle}」というタイトルのノートが既に存在します`
+			);
 		}
 	}
 
@@ -135,13 +147,15 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 
 	const fresh = await loadNote(principal.userId, noteId);
 	const tagMap = await getTagsMap([noteId]);
+	scheduleNoteEmbedding(platform, fresh ?? existing);
 	return apiJson({ note: toApiNote(fresh ?? existing, tagMap.get(noteId) ?? []) });
 };
 
 export const DELETE: RequestHandler = async ({ request, params, url }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
-	if (!hasScope(principal, 'write')) return apiError(403, 'insufficient_scope', 'writeスコープが必要です');
+	if (!hasScope(principal, 'write'))
+		return apiError(403, 'insufficient_scope', 'writeスコープが必要です');
 
 	const noteId = params.id as string;
 	const existing = await loadNote(principal.userId, noteId);

@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { and, asc, desc, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm';
 import { db, updateNoteLinks } from '$lib/server/db';
+import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { ulid } from 'ulid';
 import { getPrincipal, hasScope } from '$lib/server/api-auth';
@@ -21,7 +22,8 @@ const DEFAULT_STATUSES = NOTE_STATUSES.filter((s) => s !== 'box-deleted');
 export const GET: RequestHandler = async ({ request, url }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
-	if (!hasScope(principal, 'read')) return apiError(403, 'insufficient_scope', 'readスコープが必要です');
+	if (!hasScope(principal, 'read'))
+		return apiError(403, 'insufficient_scope', 'readスコープが必要です');
 
 	const statusParam = url.searchParams.get('status');
 	let statuses: string[] = [...DEFAULT_STATUSES];
@@ -38,7 +40,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
 
 	const q = (url.searchParams.get('q') ?? '').trim();
 	const tag = (url.searchParams.get('tag') ?? '').trim();
-	const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get('limit') ?? '20', 10) || 20, 1), 100);
+	const limit = Math.min(
+		Math.max(Number.parseInt(url.searchParams.get('limit') ?? '20', 10) || 20, 1),
+		100
+	);
 	const offset = Math.max(Number.parseInt(url.searchParams.get('offset') ?? '0', 10) || 0, 0);
 	const sortParam = url.searchParams.get('sort') ?? 'updated';
 	const orderParam = url.searchParams.get('order') ?? 'desc';
@@ -68,12 +73,19 @@ export const GET: RequestHandler = async ({ request, url }) => {
 	const where = and(...conditions);
 
 	const sortColumn =
-		sortParam === 'title' ? notes.title : sortParam === 'created' ? notes.createdAt : notes.updatedAt;
+		sortParam === 'title'
+			? notes.title
+			: sortParam === 'created'
+				? notes.createdAt
+				: notes.updatedAt;
 	const orderBy = orderParam === 'asc' ? asc(sortColumn) : desc(sortColumn);
 
 	const [rows, countRow] = await Promise.all([
 		db.select().from(notes).where(where).orderBy(orderBy).limit(limit).offset(offset),
-		db.select({ count: sql<number>`COUNT(*)` }).from(notes).where(where)
+		db
+			.select({ count: sql<number>`COUNT(*)` })
+			.from(notes)
+			.where(where)
 	]);
 
 	const tagMap = await getTagsMap(rows.map((r) => r.id));
@@ -99,10 +111,11 @@ type CreateBody = {
 	tags?: unknown;
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
-	if (!hasScope(principal, 'write')) return apiError(403, 'insufficient_scope', 'writeスコープが必要です');
+	if (!hasScope(principal, 'write'))
+		return apiError(403, 'insufficient_scope', 'writeスコープが必要です');
 
 	let body: CreateBody;
 	try {
@@ -130,10 +143,20 @@ export const POST: RequestHandler = async ({ request }) => {
 		const dup = await db
 			.select({ id: notes.id })
 			.from(notes)
-			.where(and(eq(notes.userId, principal.userId), eq(notes.status, 'box'), eq(notes.title, finalTitle)))
+			.where(
+				and(
+					eq(notes.userId, principal.userId),
+					eq(notes.status, 'box'),
+					eq(notes.title, finalTitle)
+				)
+			)
 			.limit(1);
 		if (dup.length > 0) {
-			return apiError(409, 'title_conflict', `「${finalTitle}」というタイトルのノートが既に存在します`);
+			return apiError(
+				409,
+				'title_conflict',
+				`「${finalTitle}」というタイトルのノートが既に存在します`
+			);
 		}
 	}
 
@@ -167,7 +190,14 @@ export const POST: RequestHandler = async ({ request }) => {
 	// タグ（既存は使い回し、新規は作成）
 	let tagNames: string[] = [];
 	if (Array.isArray(body.tags)) {
-		tagNames = [...new Set(body.tags.filter((t): t is string => typeof t === 'string').map((t) => t.trim()).filter(Boolean))];
+		tagNames = [
+			...new Set(
+				body.tags
+					.filter((t): t is string => typeof t === 'string')
+					.map((t) => t.trim())
+					.filter(Boolean)
+			)
+		];
 		if (tagNames.length > 0) {
 			const existing = await db.select().from(tags).where(inArray(tags.name, tagNames));
 			const idByName = new Map(existing.map((t) => [t.name, t.id]));
@@ -178,7 +208,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				await db.insert(tags).values(newTags);
 				newTags.forEach((t) => idByName.set(t.name, t.id));
 			}
-			await db.insert(noteTags).values(tagNames.map((name) => ({ noteId, tagId: idByName.get(name)! })));
+			await db
+				.insert(noteTags)
+				.values(tagNames.map((name) => ({ noteId, tagId: idByName.get(name)! })));
 		}
 	}
 
@@ -190,6 +222,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		.from(notes)
 		.where(and(eq(notes.id, noteId), eq(notes.userId, principal.userId)))
 		.limit(1);
+
+	// 保存レスポンスは待たせず、裏で埋め込みを更新する
+	scheduleNoteEmbedding(platform, fresh ?? created);
 
 	return apiJson({ note: toApiNote(fresh ?? created, tagNames) }, { status: 201 });
 };

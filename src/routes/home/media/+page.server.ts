@@ -14,7 +14,9 @@ export const load: ServerLoad = async ({ request }) => {
 		.select()
 		.from(attachments)
 		.where(eq(attachments.userId, sessionData.user.id))
-		.orderBy(desc(attachments.createdAt));
+		.orderBy(desc(attachments.createdAt))
+		// 全件読み込みはメモリを圧迫するので上限を設ける（必要ならページングを追加する）
+		.limit(300);
 
 	return { attachments: items };
 };

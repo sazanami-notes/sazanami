@@ -408,8 +408,7 @@
 			'M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z',
 		restore:
 			'M20.55 5.22l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.15.55L3.46 5.22C3.17 5.57 3 6.01 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.49-.17-.93-.45-1.28zM12 9.5l5.5 5.5H14v2h-4v-2H6.5L12 9.5zM5.12 5l.82-1h12l.93 1H5.12z',
-		trash:
-			'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'
+		trash: 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'
 	};
 
 	const formattedDate = formatDistanceToNow(new Date(note.updatedAt), {
@@ -436,8 +435,8 @@
 						xmlns="http://www.w3.org/2000/svg"
 						class="text-primary h-3.5 w-3.5"
 						viewBox="0 0 24 24"
-						fill="currentColor"
-					><path d={ICON.pin} /></svg>
+						fill="currentColor"><path d={ICON.pin} /></svg
+					>
 				{/if}
 				{formattedDate}
 			</span>
@@ -449,7 +448,13 @@
 						aria-label="編集"
 						onclick={handleInteraction}
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.edit} /></svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							height="16"
+							viewBox="0 0 24 24"
+							width="16"
+							fill="currentColor"><path d={ICON.edit} /></svg
+						>
 					</button>
 					{#if mode === 'timeline'}
 						<button
@@ -461,7 +466,13 @@
 								togglePin();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.pin} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.pin} /></svg
+							>
 						</button>
 						<button
 							class="btn btn-ghost btn-sm btn-square"
@@ -472,7 +483,13 @@
 								sendToBox();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.box} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.box} /></svg
+							>
 						</button>
 						<button
 							class="btn btn-ghost btn-sm btn-square"
@@ -483,7 +500,13 @@
 								sendToArchive();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.archive} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.archive} /></svg
+							>
 						</button>
 					{:else if mode === 'archive'}
 						<button
@@ -495,7 +518,13 @@
 								restoreToInbox();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.restore} /></svg
+							>
 						</button>
 						<button
 							class="btn btn-ghost btn-sm btn-square text-error"
@@ -506,7 +535,13 @@
 								sendToTrash();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.trash} /></svg
+							>
 						</button>
 					{:else if mode === 'trash'}
 						<button
@@ -518,7 +553,13 @@
 								restoreToInbox();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.restore} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.restore} /></svg
+							>
 						</button>
 						<button
 							class="btn btn-ghost btn-sm btn-square text-error"
@@ -529,7 +570,13 @@
 								openDeleteModal();
 							}}
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.trash} /></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="16"
+								viewBox="0 0 24 24"
+								width="16"
+								fill="currentColor"><path d={ICON.trash} /></svg
+							>
 						</button>
 					{/if}
 				{/if}
@@ -543,7 +590,13 @@
 							showReplyForm = !showReplyForm;
 						}}
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d={ICON.reply} /></svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							height="16"
+							viewBox="0 0 24 24"
+							width="16"
+							fill="currentColor"><path d={ICON.reply} /></svg
+						>
 					</button>
 				{/if}
 			</div>
@@ -559,7 +612,9 @@
 				{@html sanitizeHtml(contentWithEmbeds || '')}
 			{:else}
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-				{@html sanitizeHtml(customMarked.parse(contentWithEmbeds || '', { breaks: true }) as string)}
+				{@html sanitizeHtml(
+					customMarked.parse(contentWithEmbeds || '', { breaks: true }) as string
+				)}
 			{/if}
 		</div>
 

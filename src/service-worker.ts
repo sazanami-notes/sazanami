@@ -115,14 +115,11 @@ self.addEventListener('fetch', (event) => {
 					.catch(async () => {
 						const cached = await caches.match(request);
 						if (cached) return cached;
-						return new Response(
-							JSON.stringify({ message: 'You are offline' }),
-							{
-								status: 503,
-								statusText: 'Service Unavailable',
-								headers: { 'Content-Type': 'application/json' }
-							}
-						);
+						return new Response(JSON.stringify({ message: 'You are offline' }), {
+							status: 503,
+							statusText: 'Service Unavailable',
+							headers: { 'Content-Type': 'application/json' }
+						});
 					})
 			);
 			return;

@@ -17,9 +17,9 @@
 	import { NoteEmbedNode } from './extensions/NoteEmbedNode';
 	import { YoutubeNode, isYoutubeUrl } from './extensions/YoutubeNode';
 	import { Markdown } from '@tiptap/markdown';
-import DragHandle from '@tiptap/extension-drag-handle';
-import { goto } from '$app/navigation';
-import { toAvifOrOriginal } from '$lib/utils/image-convert';
+	import DragHandle from '@tiptap/extension-drag-handle';
+	import { goto } from '$app/navigation';
+	import { toAvifOrOriginal } from '$lib/utils/image-convert';
 
 	const lowlight = createLowlight(all);
 
@@ -326,7 +326,11 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 
 		const tr = state.tr;
 		for (const t of targets.reverse()) {
-			tr.replaceWith(t.pos, t.pos + t.size, state.schema.nodes.noteEmbed.create({ title: t.title }));
+			tr.replaceWith(
+				t.pos,
+				t.pos + t.size,
+				state.schema.nodes.noteEmbed.create({ title: t.title })
+			);
 		}
 		tr.setMeta('addToHistory', false);
 		ed.view.dispatch(tr);
@@ -346,7 +350,10 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 		if (from === to) return;
 		const text = editor.state.doc.textBetween(from, to, '\n').trim();
 		if (!text) return;
-		const firstLine = text.split('\n')[0].replace(/^#+\s*/, '').trim();
+		const firstLine = text
+			.split('\n')[0]
+			.replace(/^#+\s*/, '')
+			.trim();
 		extractTitle = firstLine.slice(0, 60);
 		extractError = '';
 		showExtractDialog = true;
@@ -632,7 +639,11 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 						const text = event.clipboardData?.getData('text/plain')?.trim();
 						if (text && isYoutubeUrl(text)) {
 							event.preventDefault();
-							editor?.chain().focus().insertContent({ type: 'youtube', attrs: { src: text } }).run();
+							editor
+								?.chain()
+								.focus()
+								.insertContent({ type: 'youtube', attrs: { src: text } })
+								.run();
 							return true;
 						}
 
@@ -661,8 +672,7 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 				},
 				onSelectionUpdate: ({ editor: e }) => {
 					const { from, to } = e.state.selection;
-					hasSelection =
-						from !== to && e.state.doc.textBetween(from, to, ' ').trim().length > 0;
+					hasSelection = from !== to && e.state.doc.textBetween(from, to, ' ').trim().length > 0;
 				},
 				onTransaction: ({ editor: e }) => {
 					// トランザクションのたびにサジェスト状態を更新
@@ -915,7 +925,12 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 						>
 							キャンセル
 						</button>
-						<button type="button" class="btn btn-primary btn-sm" onclick={confirmExtract} disabled={extracting}>
+						<button
+							type="button"
+							class="btn btn-primary btn-sm"
+							onclick={confirmExtract}
+							disabled={extracting}
+						>
 							{#if extracting}<span class="loading loading-spinner loading-xs"></span>{/if}
 							切り出す
 						</button>

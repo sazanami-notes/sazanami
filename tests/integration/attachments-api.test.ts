@@ -78,8 +78,14 @@ afterAll(async () => {
 
 describe('POST /api/attachments', () => {
 	it('should upload a file, save metadata, and return the URL', async () => {
-		// 1. Create a mock file (image MIME type is required by the API)
-		const fileContent = 'This is a test file.';
+		// 1. Create a mock file (image MIME type + 実体がPNGであることが必要)
+		// 1x1 の透明PNG（APIはマジックバイトを検証する）
+		const fileContent = new Uint8Array(
+			Buffer.from(
+				'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+				'base64'
+			)
+		);
 		const fileName = 'test-file.png';
 		const file = new File([fileContent], fileName, { type: 'image/png' });
 
@@ -127,6 +133,26 @@ describe('POST /api/attachments', () => {
 			.then(() => true)
 			.catch(() => false);
 		expect(fileExists, 'Uploaded file should exist').toBe(true);
+	});
+
+	it('should reject a file whose content does not match the declared image type', async () => {
+		mockAuth.api.getSession.mockResolvedValue(mockSession);
+
+		const file = new File(['<script>alert(1)</script>'], 'evil.png', { type: 'image/png' });
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const request = new Request('http://localhost/api/attachments', {
+			method: 'POST',
+			body: formData
+		});
+		const event = {
+			request,
+			locals: { user: mockSession.user, session: mockSession.session }
+		} as unknown as RequestEvent;
+
+		const response = await POST(event as Parameters<typeof POST>[0]);
+		expect(response.status).toBe(415);
 	});
 
 	it('should return 401 if user is not authenticated', async () => {
