@@ -176,3 +176,29 @@ export const userSettings = sqliteTable('user_settings', {
 	blockHandleEnabled: integer('block_handle_enabled', { mode: 'boolean' }).notNull().default(true),
 	bio: text('bio')
 });
+
+// API TOKENS テーブル（外部API・MCP用の個人アクセストークン）
+// 平文トークンは保存せず、SHA-256ハッシュのみを持つ。発行時に一度だけ平文を返す。
+export const apiTokens = sqliteTable(
+	'api_tokens',
+	{
+		id: text('id')
+			.notNull()
+			.primaryKey()
+			.$defaultFn(() => ulid()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		tokenHash: text('token_hash').notNull(),
+		prefix: text('prefix').notNull(), // 表示用（例: sznm_a1b2c3d4）
+		scopes: text('scopes').notNull().default('read'), // カンマ区切り: read,write
+		lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
+		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
+		revokedAt: integer('revoked_at', { mode: 'timestamp_ms' }),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(table) => [uniqueIndex('api_tokens_hash_unique').on(table.tokenHash)]
+);
