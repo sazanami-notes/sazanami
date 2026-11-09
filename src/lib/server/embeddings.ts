@@ -79,10 +79,16 @@ export function scheduleNoteEmbedding(
 		console.error('Failed to embed note:', note.id, error);
 	});
 
-	const ctx = (platform as { ctx?: { waitUntil?: (p: Promise<unknown>) => void } } | undefined)
-		?.ctx;
-	if (ctx?.waitUntil) {
-		ctx.waitUntil(task);
+	const ctx = platform as
+		| {
+				context?: { waitUntil?: (p: Promise<unknown>) => void };
+				ctx?: { waitUntil?: (p: Promise<unknown>) => void };
+		  }
+		| undefined;
+	if (ctx?.context?.waitUntil) {
+		ctx.context.waitUntil(task);
+	} else if (ctx?.ctx?.waitUntil) {
+		ctx.ctx.waitUntil(task);
 	}
 }
 
@@ -106,6 +112,36 @@ export async function semanticSearch(
 		JOIN note_embeddings e ON e.rowid = k.id
 		JOIN notes n ON n.id = e.note_id
 		WHERE n.user_id = ${userId}
+			AND n.status NOT IN ('trash', 'box-deleted')
+		ORDER BY distance ASC
+		LIMIT ${limit}
+	`);
+}
+
+/**
+ * あるノートに意味が近いノートを返す（自分自身は除く）。
+ * ノート本文をその場で埋め込んでクエリにするので、保存済みベクトルが無くても動く。
+ */
+export async function relatedNotes(
+	ai: AiBinding,
+	userId: string,
+	note: EmbeddableNote,
+	limit = 6
+): Promise<SemanticHit[]> {
+	const text = embeddingText(note.title, note.content);
+	if (!text) return [];
+
+	const vector = await embedText(ai, text);
+	const json = toVectorJson(vector);
+	const candidates = Math.min(Math.max(limit * 3, limit), 100);
+
+	return db.all<SemanticHit>(sql`
+		SELECT n.id AS id, vector_distance_cos(e.embedding, vector32(${json})) AS distance
+		FROM vector_top_k('note_embeddings_vec_idx', vector32(${json}), ${candidates}) AS k
+		JOIN note_embeddings e ON e.rowid = k.id
+		JOIN notes n ON n.id = e.note_id
+		WHERE n.user_id = ${userId}
+			AND n.id != ${note.id}
 			AND n.status NOT IN ('trash', 'box-deleted')
 		ORDER BY distance ASC
 		LIMIT ${limit}
