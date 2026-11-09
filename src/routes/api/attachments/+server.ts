@@ -8,14 +8,30 @@ import { ulid } from 'ulid';
 import { eq, and, desc } from 'drizzle-orm';
 
 // 許可する MIME タイプ
-const ALLOWED_MIME_TYPES = [
-	'image/jpeg',
-	'image/png',
-	'image/gif',
-	'image/webp',
-	'image/svg+xml',
-	'image/avif'
-];
+// SVGは同一オリジンでスクリプトを実行できるため受け付けない（保存型XSS対策）
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+
+/** Content-Type はクライアント申告なので、先頭バイトで実体を確認する */
+function looksLikeImage(buffer: Buffer, mime: string): boolean {
+	const b = buffer;
+	if (b.length < 12) return false;
+	switch (mime) {
+		case 'image/png':
+			return b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+		case 'image/jpeg':
+			return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+		case 'image/gif':
+			return b.toString('ascii', 0, 4) === 'GIF8';
+		case 'image/webp':
+			return b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP';
+		case 'image/avif': {
+			const brand = b.toString('ascii', 8, 12);
+			return b.toString('ascii', 4, 8) === 'ftyp' && (brand === 'avif' || brand === 'avis');
+		}
+		default:
+			return false;
+	}
+}
 
 // 最大ファイルサイズ (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -70,6 +86,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const fileId = ulid();
 		const buffer = Buffer.from(await file.arrayBuffer());
+
+		if (!looksLikeImage(buffer, file.type)) {
+			return json({ message: 'File content does not match its type' }, { status: 415 });
+		}
 
 		const storage = await getStorageDriver((platform?.env as { R2?: R2Bucket } | undefined)?.R2);
 		const { url, filePath } = await storage.upload({

@@ -1,5 +1,5 @@
 import { noteLinks, notes, user } from './db/schema';
-import { eq, and, ne, inArray } from 'drizzle-orm';
+import { eq, and, ne, inArray, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import type { Note } from '$lib/types';
 import { generateSlug } from '$lib/utils/slug';
@@ -160,16 +160,26 @@ export const updateNoteLinks = async (
 	// 2. Find the corresponding notes for each link title
 	let targetNotes: { id: string; title: string }[] = [];
 	if (linkedTitles.length > 0) {
-		// ユーザーの全Boxノートを取得（性能上、数千件程度なら問題なし）
-		const allUserNotes = await db
-			.select({ id: notes.id, title: notes.title })
-			.from(notes)
-			.where(and(eq(notes.userId, userId), ne(notes.title, '')));
-
-		const lowerLinkedTitles = new Set(linkedTitles.map((t) => t.toLowerCase()));
-		targetNotes = allUserNotes.filter(
-			(n) => n.title && lowerLinkedTitles.has(n.title.toLowerCase())
+		// ユーザーの全ノートを毎回読み込むとノート数に比例して遅くなるため、
+		// リンク先タイトルに一致する行だけをDB側で絞る（大文字小文字は無視）。
+		const lowerLinkedTitles = [...new Set(linkedTitles.map((t) => t.toLowerCase()))].filter(
+			Boolean
 		);
+		const matchedNotes =
+			lowerLinkedTitles.length > 0
+				? await db
+						.select({ id: notes.id, title: notes.title })
+						.from(notes)
+						.where(
+							and(
+								eq(notes.userId, userId),
+								ne(notes.title, ''),
+								inArray(sql`lower(${notes.title})`, lowerLinkedTitles)
+							)
+						)
+				: [];
+
+		targetNotes = matchedNotes.filter((n) => n.title);
 	}
 	const targetNoteIds = targetNotes.map((n) => n.id);
 

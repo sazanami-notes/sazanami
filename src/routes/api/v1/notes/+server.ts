@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { and, asc, desc, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm';
 import { db, updateNoteLinks } from '$lib/server/db';
+import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 import { notes, tags, noteTags } from '$lib/server/db/schema';
 import { ulid } from 'ulid';
 import { getPrincipal, hasScope } from '$lib/server/api-auth';
@@ -110,7 +111,7 @@ type CreateBody = {
 	tags?: unknown;
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
 	if (!hasScope(principal, 'write'))
@@ -221,6 +222,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		.from(notes)
 		.where(and(eq(notes.id, noteId), eq(notes.userId, principal.userId)))
 		.limit(1);
+
+	// 保存レスポンスは待たせず、裏で埋め込みを更新する
+	scheduleNoteEmbedding(platform, fresh ?? created);
 
 	return apiJson({ note: toApiNote(fresh ?? created, tagNames) }, { status: 201 });
 };

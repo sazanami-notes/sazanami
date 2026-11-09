@@ -53,7 +53,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
 		return json({ success: true, isPinned: newPinnedState });
 	} catch (error) {
 		console.error('Error toggling pin status:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		return json({ message: `Internal Server Error: ${errorMessage}` }, { status: 500 });
+		// 内部エラーの詳細はクライアントに返さない（情報漏洩対策）。詳細はサーバーログのみ。
+		return json({ message: 'Internal Server Error' }, { status: 500 });
 	}
 };

@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { and, eq, ne } from 'drizzle-orm';
 import { db, deleteNote, updateBacklinksOnTitleChange, updateNoteLinks } from '$lib/server/db';
+import { scheduleNoteEmbedding } from '$lib/server/embeddings';
 import { notes } from '$lib/server/db/schema';
 import { getPrincipal, hasScope } from '$lib/server/api-auth';
 import { apiJson, apiError, preflight } from '$lib/server/api-response';
@@ -40,7 +41,7 @@ type UpdateBody = {
 	context?: unknown;
 };
 
-export const PUT: RequestHandler = async ({ request, params }) => {
+export const PUT: RequestHandler = async ({ request, params, platform }) => {
 	const principal = await getPrincipal(request);
 	if (!principal) return apiError(401, 'unauthorized', '認証が必要です');
 	if (!hasScope(principal, 'write'))
@@ -146,6 +147,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 
 	const fresh = await loadNote(principal.userId, noteId);
 	const tagMap = await getTagsMap([noteId]);
+	scheduleNoteEmbedding(platform, fresh ?? existing);
 	return apiJson({ note: toApiNote(fresh ?? existing, tagMap.get(noteId) ?? []) });
 };
 
