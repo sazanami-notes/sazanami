@@ -55,7 +55,7 @@ import { toAvifOrOriginal } from '$lib/utils/image-convert';
 	function normalizeMarkdown(markdown: string) {
 		return markdown
 			.replace(/\u00a0/g, ' ')
-			.replace(/^[ 	]*&nbsp;[ 	]*$/gm, '')
+			.replace(/^[^\S\n]*&nbsp;[^\S\n]*$/gm, '')
 			.replace(/&nbsp;/g, ' ');
 	}
 
