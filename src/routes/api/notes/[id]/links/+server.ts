@@ -13,8 +13,21 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 	const noteId = params.id;
+	if (!noteId) {
+		return json({ message: 'Note ID is required' }, { status: 400 });
+	}
 
 	try {
+		// 本人のノート以外は存在自体を隠す（404）。v1 の /api/v1/notes/[id]/links と同じ扱い
+		const owned = await db
+			.select({ id: notes.id })
+			.from(notes)
+			.where(and(eq(notes.id, noteId), eq(notes.userId, session.user.id)))
+			.limit(1);
+		if (owned.length === 0) {
+			return json({ message: 'Note not found' }, { status: 404 });
+		}
+
 		const attachTags = async (noteRecords: (typeof notes.$inferSelect)[]) => {
 			if (noteRecords.length === 0) return [];
 			const noteIds = noteRecords.map((r) => r.id);
