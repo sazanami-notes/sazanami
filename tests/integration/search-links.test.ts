@@ -483,6 +483,50 @@ describe('GET /api/notes/[id]/links', () => {
 		expect(body.backlinks).toEqual([]);
 		expect(body.twoHopLinks).toEqual([]);
 	});
+
+	it("should return 404 for another user's note (no link disclosure)", async () => {
+		const otherUserId = ulid();
+		const otherNoteId = ulid();
+		await db
+			.insert(user)
+			.values({
+				id: otherUserId,
+				email: 'search-links-other@example.com',
+				name: 'Other User',
+				emailVerified: false,
+				twoFactorEnabled: false,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			})
+			.onConflictDoNothing();
+		await db.insert(notes).values({
+			id: otherNoteId,
+			userId: otherUserId,
+			title: 'Other User Private Note',
+			slug: generateSlug('Other User Private Note'),
+			content: 'Secret content linked to [[Target Note]].',
+			isPublic: false,
+			status: 'inbox',
+			createdAt: new Date(),
+			updatedAt: new Date()
+		});
+
+		mockAuth.api.getSession.mockResolvedValueOnce(mockSession);
+		const params = await createMockRequestHandlerParams(
+			`http://localhost/api/notes/${otherNoteId}/links`,
+			'GET',
+			mockSession,
+			{ id: otherNoteId }
+		);
+		const response = await getNoteLinks(params as Parameters<typeof getNoteLinks>[0]);
+		expect(response.status).toBe(404);
+		const body = (await response.json()) as { message: string };
+		expect(body.message).toBe('Note not found');
+
+		await db.delete(noteLinks).where(eq(noteLinks.sourceNoteId, otherNoteId));
+		await db.delete(notes).where(eq(notes.id, otherNoteId));
+		await db.delete(user).where(eq(user.id, otherUserId));
+	});
 });
 
 describe('GET /api/notes/suggestions', () => {
