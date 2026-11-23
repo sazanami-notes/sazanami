@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { notes } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { getSessionCached } from '$lib/server/auth-session';
 export const GET: RequestHandler = async ({ url, request }) => {
 	const session = await getSessionCached(request.headers);
@@ -16,14 +16,17 @@ export const GET: RequestHandler = async ({ url, request }) => {
 	}
 
 	try {
-		// ユーザーのすべてのノートを取得してタイトルを大文字小文字無視で検索
-		const userNotes = await db
+		// タイトルの大文字小文字無視の完全一致をDB側で絞る
+		//（以前は全ノートの id/title/content を読み出してJSで探しており、
+		//  埋め込みを含むノートを開くたびに本文全体を転送していた）
+		const lowerTitle = title.toLowerCase();
+		const rows = await db
 			.select({ id: notes.id, title: notes.title, content: notes.content })
 			.from(notes)
-			.where(eq(notes.userId, session.user.id));
+			.where(and(eq(notes.userId, session.user.id), eq(sql`lower(${notes.title})`, lowerTitle)))
+			.limit(1);
 
-		const lowerTitle = title.toLowerCase();
-		const note = userNotes.find((n) => n.title?.toLowerCase() === lowerTitle);
+		const note = rows[0];
 
 		if (!note) {
 			return json({ message: 'Note not found' }, { status: 404 });
